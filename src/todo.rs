@@ -43,14 +43,14 @@ impl TodoList{
     }
 
     pub fn init(&mut self) -> Result<(), Box<dyn Error>> {
-        println!("Initializing..");
+        println!("Initializing..⧖");
         let mut file_path = home_dir().expect("✘ Could not resolve $HOME");
         file_path.push(".todo/.env");
         if file_path.exists() {
             println!("✔︎ Environmental setup found");
             return Ok(());
         }
-        println!("Setting up database..");
+        println!("Setting up database..⧖");
         fs::create_dir_all(
             file_path
                 .parent()
@@ -59,8 +59,11 @@ impl TodoList{
         let mut env = fs::File::create(file_path)?;
         env.write(b"TODO_DB=todo.db")?;
         self.db_path = util::get_todo_list_path();
-        println!("{:?}", &self.db_path);
         self.new_list(String::from("todo"))?;
+        println!("✔︎ Database located at {}", &self.db_path
+            .as_ref()
+            .map_or(String::from("No path to database found"), |path| path.display().to_string())
+            );
         println!("✔︎ All done");
         Ok(())
     }
@@ -93,7 +96,7 @@ impl TodoList{
         }
 
         pub fn new_list(&self, name: String) -> Result<(), Box<dyn Error>>{
-            println!("Creating new_list..");
+            println!("Creating new_list..⧖");
             let parent = if let Some(ref path) = &self.db_path {
                 path.parent()
                     .ok_or("Invalid path to the database")?
