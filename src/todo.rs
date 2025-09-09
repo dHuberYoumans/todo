@@ -68,20 +68,24 @@ impl TodoList{
         Ok(())
     }
 
-    pub fn list(&mut self) -> Result<(), Box<dyn Error>>{
+    pub fn list(&mut self, flag: Option<String>) -> Result<(), Box<dyn Error>>{
         let conn = if let Some(ref path) = &self.db_path {
             Connection::open(path)?
         } else {
             return Err("No path to database found. Consider 'todo init' to initialize a data base".into());
         };
-            let mut stmt = conn.prepare("SELECT * FROM tasks")?;
-            let tasks_iter = stmt.query_map([], |row| {
-                Ok(TodoItem {
-                    id: row.get(0)?,
-                    task: row.get(1)?,
-                    status: row.get(2)?,
-                    created_at: row.get(3)?
-                })
+        let mut stmt = match flag {
+            Some(opt) if opt =="--all"  => conn.prepare("SELECT * FROM tasks")?,
+            Some(opt) if opt == "--done" => conn.prepare("SELECT * FROM tasks WHERE status=0")?,
+            _ => conn.prepare("SELECT * FROM tasks WHERE status=1")?,
+        };
+        let tasks_iter = stmt.query_map([], |row| {
+            Ok(TodoItem {
+                id: row.get(0)?,
+                task: row.get(1)?,
+                status: row.get(2)?,
+                created_at: row.get(3)?
+            })
             })?;
             for task_result in tasks_iter {
                 let task = task_result?;

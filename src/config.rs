@@ -44,7 +44,7 @@ impl Config {
             },
             "list" => {
                 config.command = Cmd::List;
-                config.args = None;
+                config.args = cl_args.get(2).map(|arg| vec![arg.clone()]);
             },
             "close" => {
                 config.command = Cmd::Close;

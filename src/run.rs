@@ -20,7 +20,9 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>>{
         Cmd::Add => todo_list.add(
             config.args.unwrap()[0].clone()
         ).unwrap(),
-        Cmd::List => todo_list.list()?,
+        Cmd::List => todo_list.list(
+            config.args.and_then(|mut arg| arg.pop())
+        )?,
         Cmd::Open => todo_list.open(
             config.args
                 .unwrap()[0]
