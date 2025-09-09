@@ -28,19 +28,19 @@ impl Config {
             },
             "new-list" => {
                 config.command = Cmd::NewList;
-                config.args = Some(vec![cl_args[2].clone()]);
+                config.args = cl_args.get(2).map(|arg| vec![arg.clone()]);
             },
             "delete-list" => {
                 config.command = Cmd::DeleteList;
-                config.args = Some(vec![cl_args[2].clone()]);
+                config.args = cl_args.get(2).map(|arg| vec![arg.clone()]);
             },
             "load" => {
                 config.command = Cmd::Load;
-                config.args = Some(vec![cl_args[2].clone()]);
+                config.args = cl_args.get(2).map(|arg| vec![arg.clone()]);
             }
             "add" => { 
                 config.command = Cmd::Add;
-                config.args = Some(vec![cl_args[2].clone()]);
+                config.args = cl_args.get(2).map(|arg| vec![arg.clone()]);
             },
             "list" => {
                 config.command = Cmd::List;
@@ -48,15 +48,15 @@ impl Config {
             },
             "close" => {
                 config.command = Cmd::Close;
-                config.args = Some(vec![cl_args[2].clone()]);
+                config.args = cl_args.get(2).map(|arg| vec![arg.clone()]);
             }, 
             "open" => {
                 config.command = Cmd::Open;
-                config.args = Some(vec![cl_args[2].clone()]);
+                config.args = cl_args.get(2).map(|arg| vec![arg.clone()]);
             },
             "delete" => {
                 config.command = Cmd::Delete;
-                config.args = Some(vec![cl_args[2].clone()]);
+                config.args = cl_args.get(2).map(|arg| vec![arg.clone()]);
             },
             "delete-all" => {
                 config.command = Cmd::DeleteAll;
@@ -64,7 +64,7 @@ impl Config {
             },
             "reword" => {
                 config.command = Cmd::Reword;
-                config.args = Some(vec![cl_args[2].clone(), cl_args[3].clone()]);
+                config.args = cl_args.get(2..).map(|slice| slice.to_vec());
             },
             "help" => {
                 config.command = Cmd::Help;

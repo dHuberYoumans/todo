@@ -9,45 +9,40 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>>{
     match cmd {
         Cmd::Init => todo_list.init()?,
         Cmd::NewList => todo_list.new_list(
-            config.args.unwrap()[0].clone()
-        ).unwrap(),
+            config.args.and_then(|mut arg| arg.pop())
+        )?,
         Cmd::DeleteList => todo_list.delete_list(
-            config.args.unwrap()[0].clone()
-        ).unwrap(),
+            config.args.and_then(|mut arg| arg.pop())
+        )?,
         Cmd::Load => todo_list.load(
-            config.args.unwrap()[0].clone()
-        ).unwrap(),
+            config.args.and_then(|mut arg| arg.pop())
+        )?,
         Cmd::Add => todo_list.add(
-            config.args.unwrap()[0].clone()
-        ).unwrap(),
+            config.args.and_then(|mut arg| arg.pop())
+        )?,
         Cmd::List => todo_list.list(
             config.args.and_then(|mut arg| arg.pop())
         )?,
-        Cmd::Open => todo_list.open(
-            config.args
-                .unwrap()[0]
-                .parse::<i64>()?
-        ).unwrap(),
         Cmd::Close => todo_list.close(
-            config.args
-                .unwrap()[0]
-                .parse::<i64>()?
-        ).unwrap(),
+            config.args.and_then(|mut arg| arg.pop())
+        )?,
+        Cmd::Open => todo_list.open(
+            config.args.and_then(|mut arg| arg.pop())
+        )?,
         Cmd::Delete => todo_list.delete(
-            config.args
-                .unwrap()[0]
-                .parse::<i64>()?
-        ).unwrap(),
+            config.args.and_then(|mut arg| arg.pop())
+        )?,
         Cmd::DeleteAll => todo_list.delete_all()?,
-        Cmd::Reword => {
-            let input = config.args.unwrap();
-            todo_list.reword(
-                input[0].parse::<i64>()?,
-                input[1].clone()
-            ).unwrap()},
+        Cmd::Reword => todo_list.reword(
+            config.args.as_ref().and_then(|args| 
+                match (args.get(0), args.get(1)) {
+                    (Some(id), Some(task)) => Some((id.clone(), task.clone())),
+                        _ => None,
+                })
+        )?,
         Cmd::Help => todo_list.help(),
         _ => {
-            return Err(String::from("Invalid command.").into()); 
+            return Err(String::from("✘ Invalid command.").into()); 
         },
     }
     Ok(())
