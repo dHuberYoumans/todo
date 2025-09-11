@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::error::Error;
 use std::cmp::Reverse;
 use rusqlite::{Connection, Result, types::ToSql};
-use tabled::{Table, settings::Style};
+use tabled::{settings::{Modify, Style, Width, object::Columns}, Table};
 use dirs::home_dir;
 
 use crate::util::{self, Datetime, TodoItem};
@@ -94,6 +94,10 @@ impl TodoList{
             self.tasks.sort_by_key(|entry| {Reverse(entry.id.clone())});
             let mut table = Table::new(&self.tasks);
             table
+                .with(Modify::new(Columns::single(0)).with(Width::increase(5))) // id
+                .with(Modify::new(Columns::single(1)).with(Width::wrap(60))) // task
+                .with(Modify::new(Columns::single(2)).with(Width::increase(3))) // status
+                .with(Modify::new(Columns::single(3)).with(Width::increase(12))) // created_at
                 .with(Style::modern_rounded());
             println!("{}", table);
             Ok(())
