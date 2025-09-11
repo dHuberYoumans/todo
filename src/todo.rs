@@ -29,6 +29,7 @@ pub enum Cmd {
     Load {
         name: String,
     },
+    WhoIsThis,
     Add {
         task: String,
     },
@@ -214,6 +215,38 @@ impl TodoList{
         let mut file = fs::File::create(dotenv)?;
         file.write_all(new_content.as_bytes())?;
         println!("✔︎ Loaded todo list '{}'", db_name);
+        Ok(())
+    }
+
+    pub fn whoisthis(&self) -> Result<(), Box<dyn Error>>{
+        let dotenv = if let Some(path) = util::get_env_path() {
+            path
+        } else {
+            return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
+        };
+        let content = fs::read_to_string(&dotenv)?;
+        for line in content.lines() {
+            if line.starts_with("TODO_DB=") {
+                let db_name = line.split('=').last();
+                if let Some(list) = db_name {
+                    if let Some(list_without_db) = list.split('.').next() {
+                        println!("this is {}", list_without_db);
+                    } else {
+                        return Err(
+                            "✘ Oops... it seams that your list does not have a name yet"
+                                .to_string()
+                                .into()
+                        );
+                    };
+                } else {
+                    return Err(
+                        "✘ No todo list found"
+                            .to_string()
+                            .into()
+                    );
+              };
+            };
+        }
         Ok(())
     }
 

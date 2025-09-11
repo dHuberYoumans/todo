@@ -10,6 +10,7 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
             Cmd::NewList { name } => todo_list.new_list( Some(name) )?,
             Cmd::DeleteList { name } => todo_list.delete_list( Some(name) )?,
             Cmd::Load { name } => todo_list.load( Some(name) )?,
+            Cmd::WhoIsThis => todo_list.whoisthis()?,
             Cmd::Add { task } => todo_list.add( Some(task) )?,
             Cmd::List { all, done } => {
                 if all {
