@@ -6,26 +6,53 @@ use std::cmp::Reverse;
 use rusqlite::{Connection, Result, types::ToSql};
 use tabled::{settings::{Modify, Style, Width, object::Columns}, Table};
 use dirs::home_dir;
+use clap::{Parser, Subcommand};
 
-use crate::util::{self, Datetime, TodoItem};
-use crate::config::Status;
+use crate::util::{self, Status, Datetime, TodoItem};
 
-pub enum Cmd {
-    Idle,
-    Init,
-    NewList,
-    DeleteList,
-    Load,
-    Add,
-    List,
-    Close,
-    Open,
-    Delete,
-    DeleteAll,
-    Reword,
-    Help,
+#[derive(Parser,Debug)]
+#[command(name = "todo", version, about = "A simple todo cli to help you get things done from the comfort of your terminal")]
+pub struct Args {
+    #[command(subcommand)]
+    pub command: Option<Cmd>,
 }
 
+#[derive(Subcommand,Debug)]
+pub enum Cmd {
+    Init,
+    NewList {
+        name: String,
+    },
+    DeleteList {
+        name: String,
+    },
+    Load {
+        name: String,
+    },
+    Add {
+        task: String,
+    },
+    List {
+        #[arg(long, help = "Show all tasks")]
+        all: bool,
+        #[arg(long, help = "Show all completed tasks")]
+        done: bool,
+    },
+    Close {
+        id: i64,
+    },
+    Open {
+        id: i64,
+    },
+    Delete {
+        id: i64,
+    },
+    DeleteAll,
+    Reword {
+        id: i64,
+        new_task: String,
+    },
+}
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub struct TodoList{
@@ -318,24 +345,4 @@ impl TodoList{
         Ok(())
     }
 
-        pub fn help(self) -> () {
-            let cmds = [
-                ("init", "Initialize the cli"),
-                ("new-list [name]", "Add a new todo list 'name'"),
-                ("delete-list [name]", "Delete the todo list 'name'"),
-                ("load [name]", "Load the todo list 'name'"),
-                ("add [task]", "Add a new task with the given description"),
-                ("list", "Display all tasks in your current todo list"),
-                ("open [id]", "Mark the task with the given ID as not done / open"),
-                ("close [id]", "Mark the task with the given ID as done / completed"),
-                ("delete [id]", "Remove the task with the specified ID"),
-                ("delete-all", "Remove all tasks from the todo list"),
-                ("reword [id] [new task]", "Replace the description of the task with the given ID"),
-            ];
-            let max_len = cmds.iter().map(|(cmd,_)| {cmd.len()}).max().unwrap_or(0);
-            println!("Todo - A simple todo cli so you don't have to leave the terminal\n");
-            for (cmd, desc) in cmds.iter() {
-                println!(" {:<width$}    {}", cmd, desc, width=max_len);
-            }
-        }
-    }
+}

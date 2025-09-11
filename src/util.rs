@@ -5,8 +5,6 @@ use tabled::Tabled;
 use rusqlite::{Result, types::{FromSql, ToSql, ValueRef, FromSqlError, FromSqlResult, ToSqlOutput}};
 use dotenv::from_filename;
 
-use crate::config::Status;
-
 #[derive(Debug, Tabled, PartialEq, PartialOrd)]
 pub struct TodoItem{
     pub id: i64,
@@ -14,6 +12,42 @@ pub struct TodoItem{
     pub status: Status,
     pub created_at: Datetime,
 }
+
+#[derive(Debug, PartialEq, PartialOrd)]
+pub enum Status{
+    Closed,
+    Open
+}
+
+impl FromSql for Status {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        match value {
+            ValueRef::Integer(0) => Ok(Status::Open),
+            ValueRef::Integer(1) => Ok(Status::Closed),
+            _ => Err(FromSqlError::InvalidType),
+        }
+    }
+}
+
+impl ToSql for Status {
+    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
+        let value = match self {
+            Status::Open => 0,
+            Status::Closed => 1,
+        };
+        Ok(ToSqlOutput::from(value))
+    }
+}
+
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Status::Closed => write!(f, "✘"), 
+            Status::Open => write!(f, "✔︎"), 
+        }
+    }
+}
+
 
 
 #[derive(Debug, PartialEq, PartialOrd)]
