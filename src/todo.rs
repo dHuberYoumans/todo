@@ -22,6 +22,8 @@ pub enum Cmd {
     Init,
     NewList {
         name: String,
+        #[arg(long, short='c', help="Directly load new list")]
+        checkout: bool,
     },
     DeleteList {
         name: String,
@@ -34,9 +36,9 @@ pub enum Cmd {
         task: String,
     },
     List {
-        #[arg(long, help = "Show all tasks")]
+        #[arg(long, help="Show all tasks")]
         all: bool,
-        #[arg(long, help = "Show all completed tasks")]
+        #[arg(long, help="Show all completed tasks")]
         done: bool,
     },
     Close {
@@ -87,7 +89,7 @@ impl TodoList{
         let mut env = fs::File::create(file_path)?;
         env.write(b"TODO_DB=todo.db")?;
         self.db_path = util::get_todo_list_path();
-        self.new_list(Some(String::from("todo")))?;
+        self.new_list(Some(String::from("todo")), None)?;
         println!("✔︎ Database located at {}", &self.db_path
             .as_ref()
             .map_or(String::from("No path to database found"), |path| path.display().to_string())
@@ -131,14 +133,14 @@ impl TodoList{
             Ok(())
         }
 
-    pub fn new_list(&self, list: Option<String>) -> Result<(), Box<dyn Error>>{
-        let name = if let Some(list) = list {
+    pub fn new_list(&mut self, list: Option<String>, checkout: Option<bool>) -> Result<(), Box<dyn Error>>{
+        let name = if let Some(ref list) = list {
             list
         } else {
             return Err(
                 "✘ Missing argument. Please provide a name for your new list."
-                .to_string()
-                .into()
+                    .to_string()
+                    .into()
             );
         };
         println!("Creating new_list..⧖");
@@ -149,7 +151,7 @@ impl TodoList{
             return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
         };
         fs::create_dir_all(parent)?;
-        let db_file_path = parent.join(format!("{}.db",name));
+        let db_file_path = parent.join(format!("{}.db", name));
         let conn = Connection::open(db_file_path)?;
         conn.execute(
             r#"
@@ -161,6 +163,11 @@ impl TodoList{
             )"#,
             [])?;
         println!("✔︎ Created new todo list '{}'", name);
+        if let Some(true) = checkout {
+            println!("Checking out '{}'", name);
+            self.load(Some(name.to_string()))?;
+            println!("✔︎ Now using '{}'", name);
+        };
         Ok(())
     }
 

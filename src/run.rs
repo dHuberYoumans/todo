@@ -7,7 +7,7 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
     match args.command {
         Some(cmd) => match cmd {
             Cmd::Init => todo_list.init()?,
-            Cmd::NewList { name } => todo_list.new_list( Some(name) )?,
+            Cmd::NewList { name, checkout } => { println!("{:?}", checkout); todo_list.new_list( Some(name), Some(checkout) )?},
             Cmd::DeleteList { name } => todo_list.delete_list( Some(name) )?,
             Cmd::Load { name } => todo_list.load( Some(name) )?,
             Cmd::WhoIsThis => todo_list.whoisthis()?,
