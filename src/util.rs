@@ -1,5 +1,5 @@
 use std::{env, fmt, path::PathBuf, error::Error};
-use chrono::prelude::*;
+use chrono::{prelude::*};
 use chrono::{Datelike, Duration, Local, Weekday, NaiveDate};
 use dirs::home_dir;
 use tabled::Tabled;
@@ -89,7 +89,7 @@ impl fmt::Display for Prio {
            Prio::P1 => write!(f, "P1"), 
            Prio::P2 => write!(f, "P2"), 
            Prio::P3 => write!(f, "P3"), 
-            Prio::Empty => write!(f, ""),
+           Prio::Empty => write!(f, ""),
         }
     }
 }
@@ -127,10 +127,16 @@ impl ToSql for Datetime {
 
 impl fmt::Display for Datetime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if *self == epoch() {
-            write!(f, "") 
-        } else {
-            write!(f, "{}", self.timestamp.format("%Y-%m-%d")) 
+        let today = Local::now().date_naive();
+        let yesterday = today.pred_opt().unwrap(); // safe since epoch
+        let tomrrow = today.succ_opt().unwrap(); // safe until end of time
+        let this = self.timestamp.date_naive();
+        match this {
+            _ if *self == epoch() => write!(f, ""),
+            dt if dt == yesterday => write!(f, "Yesterday"),
+            dt if dt == today => write!(f, "Today"),
+            dt if dt == tomrrow => write!(f, "Tomorrow"),
+            _ => write!(f, "{}", self.timestamp.format("%Y-%m-%d")),
         }
     }
 }
@@ -156,12 +162,24 @@ pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
         let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
         let local_dt = Local.from_local_datetime(&naive_dt).unwrap();
         Ok(Datetime { timestamp: local_dt })
-    } else {
-        let date = NaiveDate::parse_from_str(input, "%d-%m-%Y")
-            .map_err(|_| "✘ Invalid date format. Use 3 letter days for the next weekday or dd-mm-yyyy for a specific day")?;
+    } 
+    else {
+        match input {
+            "today" => Ok(Datetime::new()),
+            "tomorrow" => {
+                let today = Local::now().date_naive();
+                let tomorrow = today.succ_opt().unwrap(); // safe until end of time
+                let tomorrow_dt = Local.from_local_datetime(&tomorrow.and_time(NaiveTime::MIN)).unwrap();
+                Ok( Datetime { timestamp:  tomorrow_dt})
+            },
+            _ => {
+                let date = NaiveDate::parse_from_str(input, "%d-%m-%Y")
+            .map_err(|_| "✘ Invalid date format.\nUse either of the following:\n* today\n* tomorrow\n* 3 letter days for the next weekday\n* dd-mm-yyyy for a specific day")?;
         let naive_dt = date.and_hms_opt(0,0,0).unwrap();
         let local_dt = Local.from_local_datetime(&naive_dt).single().unwrap();
         Ok(Datetime { timestamp: local_dt})
+            }
+        }
     }
 }
 
