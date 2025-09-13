@@ -1,5 +1,6 @@
-use std::{env, fmt, path::PathBuf};
+use std::{env, fmt, path::PathBuf, error::Error};
 use chrono::prelude::*;
+use chrono::{Datelike, Duration, Local, Weekday, NaiveDate};
 use dirs::home_dir;
 use tabled::Tabled;
 use rusqlite::{Result, types::{FromSql, ToSql, ValueRef, FromSqlError, FromSqlResult, ToSqlOutput}};
@@ -10,6 +11,8 @@ pub struct TodoItem{
     pub id: i64,
     pub task: String,
     pub status: Status,
+    pub prio: Prio,
+    pub due: Datetime,
     pub created_at: Datetime,
 }
 
@@ -48,7 +51,48 @@ impl fmt::Display for Status {
     }
 }
 
+#[derive(Debug, PartialEq, PartialOrd)]
+pub enum Prio{
+    P1,
+    P2,
+    P3,
+    Empty,
+}
 
+impl FromSql for Prio {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        match value {
+            ValueRef::Integer(1) => Ok(Prio::P1),
+            ValueRef::Integer(2) => Ok(Prio::P2),
+            ValueRef::Integer(3) => Ok(Prio::P3),
+            ValueRef::Integer(0) => Ok(Prio::Empty),
+            _ => Err(FromSqlError::InvalidType),
+        }
+    }
+}
+
+impl ToSql for Prio {
+    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
+        let value = match self {
+            Prio::P1 => 1,
+            Prio::P2 => 2,
+            Prio::P3 => 3,
+            Prio::Empty => 0
+        };
+        Ok(ToSqlOutput::from(value))
+    }
+}
+
+impl fmt::Display for Prio {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+           Prio::P1 => write!(f, "P1"), 
+           Prio::P2 => write!(f, "P2"), 
+           Prio::P3 => write!(f, "P3"), 
+            Prio::Empty => write!(f, ""),
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub struct Datetime{
@@ -83,8 +127,47 @@ impl ToSql for Datetime {
 
 impl fmt::Display for Datetime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-       write!(f, "{}", self.timestamp.format("%Y-%m-%d")) 
+        if *self == epoch() {
+            write!(f, "") 
+        } else {
+            write!(f, "{}", self.timestamp.format("%Y-%m-%d")) 
+        }
     }
+}
+
+pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
+    let target = match input.to_lowercase().as_str() {
+        "mon" => Some(Weekday::Mon),
+        "tue" => Some(Weekday::Tue),
+        "wed" => Some(Weekday::Wed),
+        "thu" => Some(Weekday::Thu),
+        "fri" => Some(Weekday::Fri),
+        "sat" => Some(Weekday::Sat),
+        "sun" => Some(Weekday::Sun),
+        _ => None,
+    };
+
+    if let Some(target) = target {
+        let today = Local::now();
+        let mut date = today.date_naive();
+        while date.weekday() != target {
+            date += Duration::days(1);
+        }
+        let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
+        let local_dt = Local.from_local_datetime(&naive_dt).unwrap();
+        Ok(Datetime { timestamp: local_dt })
+    } else {
+        let date = NaiveDate::parse_from_str(input, "%d-%m-%Y")
+            .map_err(|_| "✘ Invalid date format. Use 3 letter days for the next weekday or dd-mm-yyyy for a specific day")?;
+        let naive_dt = date.and_hms_opt(0,0,0).unwrap();
+        let local_dt = Local.from_local_datetime(&naive_dt).single().unwrap();
+        Ok(Datetime { timestamp: local_dt})
+    }
+}
+
+pub fn epoch() -> Datetime {
+    let epoch_local = DateTime::<Local>::from(DateTime::UNIX_EPOCH);
+    Datetime { timestamp: epoch_local }
 }
 
 pub fn get_todo_list_path() -> Option<PathBuf> {

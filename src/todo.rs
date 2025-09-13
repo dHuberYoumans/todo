@@ -8,7 +8,7 @@ use tabled::{settings::{Modify, Style, Width, object::Columns}, Table};
 use dirs::home_dir;
 use clap::{Parser, Subcommand};
 
-use crate::util::{self, Status, Datetime, TodoItem};
+use crate::util::{self, Status, Datetime, TodoItem, parse_date, epoch};
 
 #[derive(Parser,Debug)]
 #[command(name = "todo", version, about = "A simple todo cli to help you get things done from the comfort of your terminal")]
@@ -34,6 +34,10 @@ pub enum Cmd {
     WhoIsThis,
     Add {
         task: String,
+        #[arg(long, short='p', help = "Priority")]
+        prio: Option<String>,
+        #[arg(long, short='d', help = "Due date")]
+        due: Option<String>
     },
     List {
         #[arg(long, help="Show all tasks")]
@@ -73,14 +77,14 @@ impl TodoList{
     }
 
     pub fn init(&mut self) -> Result<(), Box<dyn Error>> {
-        println!("Initializing..⧖");
+        println!("⧖ Initializing..");
         let mut file_path = home_dir().expect("✘ Could not resolve $HOME");
         file_path.push(".todo/.env");
         if file_path.exists() {
             println!("✔︎ Environmental setup found");
             return Ok(());
         }
-        println!("Setting up database..⧖");
+        println!("⧖ Setting up database..");
         fs::create_dir_all(
             file_path
                 .parent()
@@ -114,24 +118,28 @@ impl TodoList{
                 id: row.get(0)?,
                 task: row.get(1)?,
                 status: row.get(2)?,
-                created_at: row.get(3)?
+                prio: row.get(3)?,
+                due: row.get(4)?,
+                created_at: row.get(5)?
             })
-            })?;
-            for task_result in tasks_iter {
-                let task = task_result?;
-                self.tasks.push(task);
-            }
-            self.tasks.sort_by_key(|entry| {Reverse(entry.id.clone())});
-            let mut table = Table::new(&self.tasks);
-            table
-                .with(Modify::new(Columns::single(0)).with(Width::increase(5))) // id
-                .with(Modify::new(Columns::single(1)).with(Width::wrap(60))) // task
-                .with(Modify::new(Columns::single(2)).with(Width::increase(3))) // status
-                .with(Modify::new(Columns::single(3)).with(Width::increase(12))) // created_at
-                .with(Style::modern_rounded());
-            println!("{}", table);
-            Ok(())
+        })?;
+        for task_result in tasks_iter {
+            let task = task_result?;
+            self.tasks.push(task);
         }
+        self.tasks.sort_by_key(|entry| {Reverse(entry.id.clone())});
+        let mut table = Table::new(&self.tasks);
+        table
+            .with(Modify::new(Columns::single(0)).with(Width::increase(5))) // id
+            .with(Modify::new(Columns::single(1)).with(Width::wrap(60))) // task
+            .with(Modify::new(Columns::single(2)).with(Width::increase(3))) // status
+            .with(Modify::new(Columns::single(3)).with(Width::increase(3))) // prio
+            .with(Modify::new(Columns::single(4)).with(Width::increase(3))) // due
+            .with(Modify::new(Columns::single(5)).with(Width::increase(12))) // created_at
+            .with(Style::modern_rounded());
+        println!("{}", table);
+        Ok(())
+    }
 
     pub fn new_list(&mut self, list: Option<String>, checkout: Option<bool>) -> Result<(), Box<dyn Error>>{
         let name = if let Some(ref list) = list {
@@ -143,7 +151,7 @@ impl TodoList{
                     .into()
             );
         };
-        println!("Creating new_list..⧖");
+        println!("⧖ Creating new_list..");
         let parent = if let Some(ref path) = &self.db_path {
             path.parent()
                 .ok_or("✘ Invalid path to the database")?
@@ -158,8 +166,10 @@ impl TodoList{
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 task TEXT NOT NULL,
-                status INTEGER NOT NULL DEFAULT 0,
-                created_at INTEGER NOT NULL
+                status INTEGER DEFAULT 0,
+                prio INTEGER,
+                due INTEGER,
+                created_at INTEGER
             )"#,
             [])?;
         println!("✔︎ Created new todo list '{}'", name);
@@ -257,17 +267,22 @@ impl TodoList{
         Ok(())
     }
 
-    pub fn add(&mut self, task: Option<String>) -> Result<(), Box<dyn Error>>{
+    pub fn add(&mut self, task: Option<String>, flags: (Option<String>, Option<String>)) -> Result<(), Box<dyn Error>>{
         let conn = if let Some(ref path) = &self.db_path {
             Connection::open(path)?
         } else {
             return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
         };
         if let Some(task) = task {
+            let (prio, due) = flags; 
+            let due_date: Option<Datetime> = match due {
+                Some(ref date) => Some(parse_date(date)?),
+                None => None,
+            };
             conn.execute(
-                "INSERT INTO tasks (task, status, created_at) VALUES (?1, ?2, ?3)",
-                (&task, &Status::Closed as &dyn ToSql, &Datetime::new() as &dyn ToSql)
-            )?; 
+                "INSERT INTO tasks (task, status, prio, due, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+                (&task, &Status::Closed as &dyn ToSql, &prio.unwrap_or("0".to_string()), &due_date.unwrap_or(epoch()), &Datetime::new() as &dyn ToSql)
+            )?;
         } else {
             return Err(
                 "✘ Missing argument. Please specify the task you want to add"
