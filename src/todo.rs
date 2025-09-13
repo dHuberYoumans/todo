@@ -44,6 +44,8 @@ pub enum Cmd {
         all: bool,
         #[arg(long, help="Show all completed tasks")]
         done: bool,
+        #[arg(long, short='s', help="Sort tasks")]
+        sort: Option<String>,
     },
     Close {
         id: i64,
@@ -102,15 +104,16 @@ impl TodoList{
         Ok(())
     }
 
-    pub fn list(&mut self, flag: Option<String>) -> Result<(), Box<dyn Error>>{
+    pub fn list(&mut self, flags: (Option<String>, Option<String>)) -> Result<(), Box<dyn Error>>{
         let conn = if let Some(ref path) = &self.db_path {
             Connection::open(path)?
         } else {
             return Err("No path to database found. Consider 'todo init' to initialize a data base".into());
         };
-        let mut stmt = match flag {
-            Some(opt) if opt =="--all"  => conn.prepare("SELECT * FROM tasks")?,
-            Some(opt) if opt == "--done" => conn.prepare("SELECT * FROM tasks WHERE status=0")?,
+        let opt = flags.0;
+        let mut stmt = match opt {
+            Some(ref opt) if opt =="--all"  => conn.prepare("SELECT * FROM tasks")?,
+            Some(ref opt) if opt == "--done" => conn.prepare("SELECT * FROM tasks WHERE status=0")?,
             _ => conn.prepare("SELECT * FROM tasks WHERE status=1")?,
         };
         let tasks_iter = stmt.query_map([], |row| {
@@ -127,7 +130,16 @@ impl TodoList{
             let task = task_result?;
             self.tasks.push(task);
         }
-        self.tasks.sort_by_key(|entry| {Reverse(entry.id.clone())});
+        let sort_key = flags.1.unwrap_or("id".to_string());
+        match sort_key.as_str() {
+            "id" => self.tasks.sort_by_key(|entry| { Reverse(entry.id.clone()) }),
+            "prio" => self.tasks.sort_by_key(|entry| { entry.prio.clone() }),
+            "due" => self.tasks.sort_by_key(|entry| {
+                let key = entry.due.clone();
+                (key == epoch(),key)
+            }),
+            _ => self.tasks.sort_by_key(|entry| { Reverse(entry.id.clone()) }),
+        };
         let mut table = Table::new(&self.tasks);
         table
             .with(Modify::new(Columns::single(0)).with(Width::increase(5))) // id

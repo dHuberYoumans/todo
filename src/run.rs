@@ -12,13 +12,13 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
             Cmd::Load { name } => todo_list.load( Some(name) )?,
             Cmd::WhoIsThis => todo_list.whoisthis()?,
             Cmd::Add { task, prio, due } => todo_list.add( Some(task), (prio, due) )?,
-            Cmd::List { all, done } => {
+            Cmd::List { all, done, sort } => {
                 if all {
-                    todo_list.list(Some("--all".into()))?;
+                    todo_list.list((Some("--all".into()), sort))?;
                 } else if done {
-                    todo_list.list(Some("--done".into()))?;
+                    todo_list.list((Some("--done".into()), sort))?;
                 } else {
-                    todo_list.list(None)?;
+                    todo_list.list((None,sort))?;
                 }
             },
             Cmd::Close { id } => todo_list.close( Some(id.to_string()) )?,
@@ -29,7 +29,7 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
                 Some((id.to_string(), new_task))
             )?,
         },
-        None => todo_list.list(None)?
+        None => todo_list.list((None,None))?
     }
     Ok(())
 }

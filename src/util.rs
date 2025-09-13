@@ -51,7 +51,7 @@ impl fmt::Display for Status {
     }
 }
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
 pub enum Prio{
     P1,
     P2,
@@ -94,7 +94,7 @@ impl fmt::Display for Prio {
     }
 }
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
 pub struct Datetime{
     pub timestamp: DateTime<Local>,
 }
