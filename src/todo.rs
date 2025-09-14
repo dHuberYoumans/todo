@@ -4,9 +4,7 @@ use std::path::PathBuf;
 use std::error::Error;
 use std::cmp::Reverse;
 use rusqlite::{
-    Connection,
-    Result,
-    types::ToSql};
+    params, types::ToSql, Connection, OptionalExtension, Result};
 use tabled::{
     settings::{
         Modify,
@@ -75,7 +73,8 @@ pub enum Cmd {
     DeleteAll,
     Reword {
         id: i64,
-        new_task: String,
+        #[arg(long, short='m', help = "Task description")]
+        task: Option<String>,
     },
 }
 
@@ -309,7 +308,7 @@ impl TodoList{
         let msg = if let Some(task) = task {
             task
         } else {
-            util::edit_in_editor()
+            util::edit_in_editor(None)
         };
         conn.execute(
             "INSERT INTO tasks (task, status, prio, due, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -386,24 +385,23 @@ impl TodoList{
             Ok(())
         }
 
-    pub fn reword(&mut self, input: Option<(String,String)>) -> Result<(), Box<dyn Error>>{
+    pub fn reword(&mut self, input: (i64, Option<String>)) -> Result<(), Box<dyn Error>>{
         let conn = if let Some(ref path) = &self.db_path {
             Connection::open(path)?
         } else {
             return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
         };
-        if let Some((id, task)) = input {
-            let task_id = id.parse::<i64>()?;
-            conn.execute("UPDATE tasks SET task=?2 WHERE id=?1",
-                (&task_id, &task)
-            )?;
+        let (id, task) = input;
+        let msg = if let Some(task) = task {
+            task
         } else {
-            return Err(
-                "✘ Missing argument. Please specify the id and the new description of the task."
-                    .to_string()
-                    .into()
-            );
-        }
+            let mut stmt = conn.prepare( "SELECT task FROM tasks WHERE id=?1",)?;
+            let text: Option<String> = stmt.query_row(params![id], |row| row.get(0)).optional()?;
+            util::edit_in_editor(text)
+        };
+        conn.execute("UPDATE tasks SET task=?2 WHERE id=?1",
+            (&id, &msg)
+        )?;
         Ok(())
     }
 

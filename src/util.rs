@@ -233,16 +233,19 @@ pub fn get_env_path() -> Option<PathBuf> {
     Some(home_dir()?.join(".todo/.env"))
 }
 
-pub fn edit_in_editor() -> String {
+pub fn edit_in_editor(old_text: Option<String>) -> String {
     let editor = env::var("EDITOR").unwrap_or(String::from("vi"));
     let path = PathBuf::from(TMP_FILE);
     fs::File::create(&path)
         .expect(format!("✘ Could not open file {}", TMP_FILE).as_str());
+    if let Some(text) = old_text {
+        fs::write(&path,text).expect(format!("✘ Could not write to file {}", TMP_FILE).as_str());
+    };
     process::Command::new(editor)
         .arg(&path)
         .status()
         .expect("✘ Couldn't open your editor");
-    let mut task = String::new();
+    let mut task = String::new(); 
     fs::File::open(&path)
         .expect(format!("✘ Could not open file {}", TMP_FILE).as_str())
         .read_to_string(&mut task)
