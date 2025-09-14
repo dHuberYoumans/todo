@@ -1,10 +1,37 @@
-use std::{env, fmt, path::PathBuf, error::Error};
+use std::{
+    fs,
+    env,
+    fmt,
+    path::PathBuf,
+    error::Error,
+    process,
+    io::Read
+};
+use glob;
 use chrono::{prelude::*};
-use chrono::{Datelike, Duration, Local, Weekday, NaiveDate};
+use chrono::{
+    Datelike,
+    Duration,
+    Local,
+    Weekday,
+    NaiveDate
+};
 use dirs::home_dir;
 use tabled::Tabled;
-use rusqlite::{Result, types::{FromSql, ToSql, ValueRef, FromSqlError, FromSqlResult, ToSqlOutput}};
+use rusqlite::{
+    Result,
+    types::{
+        FromSql,
+        ToSql,
+        ValueRef,
+        FromSqlError,
+        FromSqlResult,
+        ToSqlOutput
+    }
+};
 use dotenv::from_filename;
+
+const TMP_FILE: &str = "./EDIT_TASK";
 
 #[derive(Debug, Tabled, PartialEq, PartialOrd)]
 pub struct TodoItem{
@@ -204,4 +231,33 @@ pub fn get_todo_dir() -> Option<PathBuf> {
 
 pub fn get_env_path() -> Option<PathBuf> {
     Some(home_dir()?.join(".todo/.env"))
+}
+
+pub fn edit_in_editor() -> String {
+    let editor = env::var("EDITOR").unwrap_or(String::from("vi"));
+    let path = PathBuf::from(TMP_FILE);
+    fs::File::create(&path)
+        .expect(format!("✘ Could not open file {}", TMP_FILE).as_str());
+    process::Command::new(editor)
+        .arg(&path)
+        .status()
+        .expect("✘ Couldn't open your editor");
+    let mut task = String::new();
+    fs::File::open(&path)
+        .expect(format!("✘ Could not open file {}", TMP_FILE).as_str())
+        .read_to_string(&mut task)
+        .expect("✘ Couldn't parse task");
+    cleanup_tmp_files().expect("✘ Error during cleanup");
+    return task;
+}
+
+fn cleanup_tmp_files() -> Result<(), Box<dyn Error>> {
+    let pattern = format!("{TMP_FILE}*");
+    for file in glob::glob(&pattern)? {
+        match file {
+            Ok(path) => std::fs::remove_file(path)?,
+            Err(e) => eprintln!("✘ Could not find file: {e}"),
+        }
+    }
+    Ok(())
 }

@@ -3,12 +3,27 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::error::Error;
 use std::cmp::Reverse;
-use rusqlite::{Connection, Result, types::ToSql};
-use tabled::{settings::{Modify, Style, Width, object::Columns}, Table};
+use rusqlite::{
+    Connection,
+    Result,
+    types::ToSql};
+use tabled::{
+    settings::{
+        Modify,
+        Style,
+        Width,
+        object::Columns},
+    Table};
 use dirs::home_dir;
 use clap::{Parser, Subcommand};
 
-use crate::util::{self, Status, Datetime, TodoItem, parse_date, epoch};
+use crate::util::{
+    self,
+    Status,
+    Datetime,
+    TodoItem,
+    epoch,
+};
 
 #[derive(Parser,Debug)]
 #[command(name = "todo", version, about = "A simple todo cli to help you get things done from the comfort of your terminal")]
@@ -288,12 +303,17 @@ impl TodoList{
         };
         let (task, prio, due) = flags;
         let due_date: Option<Datetime> = match due {
-            Some(ref date) => Some(parse_date(date)?),
+            Some(ref date) => Some(util::parse_date(date)?),
             None => None,
+        };
+        let msg = if let Some(task) = task {
+            task
+        } else {
+            util::edit_in_editor()
         };
         conn.execute(
             "INSERT INTO tasks (task, status, prio, due, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
-            (&task, &Status::Closed as &dyn ToSql, &prio.unwrap_or("0".to_string()), &due_date.unwrap_or(epoch()), &Datetime::new() as &dyn ToSql)
+            (&msg, &Status::Closed as &dyn ToSql, &prio.unwrap_or("0".to_string()), &due_date.unwrap_or(epoch()), &Datetime::new() as &dyn ToSql)
         )?;
         Ok(())
     }
