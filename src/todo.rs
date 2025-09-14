@@ -318,47 +318,29 @@ impl TodoList{
         Ok(())
     }
 
-    pub fn close(&mut self, id: Option<String>) -> Result<(), Box<dyn Error>>{
+    pub fn close(&mut self, id: i64) -> Result<(), Box<dyn Error>>{
         let conn = if let Some(ref path) = &self.db_path {
             Connection::open(path)?
         } else {
             return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
         };
-        if let Some(id) = id {
-            let task_id = id.parse::<i64>()?;
-            conn.execute(
-                "UPDATE tasks SET status=0 WHERE id=?1",
-                &[&task_id]
-            )?;
-        } else {
-            return Err(
-                "✘ Missing argument. Please specify the id of the task you want to close."
-                    .to_string()
-                    .into()
-            );
-        };
+        conn.execute(
+            "UPDATE tasks SET status=0 WHERE id=?1",
+            &[&id]
+        )?;
         Ok(())
     }
 
-    pub fn open(&mut self, id: Option<String>) -> Result<(), Box<dyn Error>>{
+    pub fn open(&mut self, id: i64) -> Result<(), Box<dyn Error>>{
         let conn = if let Some(ref path) = &self.db_path {
             Connection::open(path)?
         } else {
             return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
         };
-        if let Some(id) = id {
-            let task_id = id.parse::<i64>()?;
-            conn.execute(
-                "UPDATE tasks SET status=1 WHERE id=?1",
-                &[&task_id]
-            )?;
-        } else {
-            return Err(
-                "✘ Missing argument. Please specify the id of the task you want to open."
-                    .to_string()
-                    .into()
-            );
-        }
+        conn.execute(
+            "UPDATE tasks SET status=1 WHERE id=?1",
+            &[&id]
+        )?;
         Ok(())
     }
 

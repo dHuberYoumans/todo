@@ -21,8 +21,8 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
                     todo_list.list((None,sort))?;
                 }
             },
-            Cmd::Close { id } => todo_list.close( Some(id.to_string()) )?,
-            Cmd::Open { id } => todo_list.open( Some(id.to_string()) )?,
+            Cmd::Close { id } => todo_list.close( id )?,
+            Cmd::Open { id } => todo_list.open( id )?,
             Cmd::Delete { id } => todo_list.delete( Some(id.to_string()) )?,
             Cmd::DeleteAll => todo_list.delete_all()?,
             Cmd::Reword { id, new_task } => todo_list.reword(
