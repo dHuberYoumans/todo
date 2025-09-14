@@ -32,19 +32,25 @@ pub struct Args {
 
 #[derive(Subcommand,Debug)]
 pub enum Cmd {
+    /// Initialize the cli in CWD  
     Init,
+    /// Create a new todo list
     NewList {
         name: String,
         #[arg(long, short='c', help="Directly load new list")]
         checkout: bool,
     },
+    /// Delete a todo list
     DeleteList {
         name: String,
     },
+    /// Load a todo list
     Load {
         name: String,
     },
+    /// Print the name of the todo list in use to stdout
     WhoIsThis,
+    /// Add a task
     Add {
         #[arg(long, short='m', help = "Task description")]
         task: Option<String>,
@@ -53,6 +59,7 @@ pub enum Cmd {
         #[arg(long, short='d', help = "Due date")]
         due: Option<String>
     },
+    /// Print the current todo list
     List {
         #[arg(long, help="Show all tasks")]
         all: bool,
@@ -61,16 +68,21 @@ pub enum Cmd {
         #[arg(long, short='s', help="Sort tasks")]
         sort: Option<String>,
     },
+    /// Mark a task as completed
     Close {
         id: i64,
     },
+    /// Open a task
     Open {
         id: i64,
     },
+    /// Delete a task
     Delete {
         id: i64,
     },
+    /// Delete all tasks in the current todo list
     DeleteAll,
+    /// Reword a task
     Reword {
         id: i64,
         #[arg(long, short='m', help = "Task description")]
