@@ -33,7 +33,8 @@ pub enum Cmd {
     },
     WhoIsThis,
     Add {
-        task: String,
+        #[arg(long, short='m', help = "Task description")]
+        task: Option<String>,
         #[arg(long, short='p', help = "Priority")]
         prio: Option<String>,
         #[arg(long, short='d', help = "Due date")]
@@ -279,29 +280,21 @@ impl TodoList{
         Ok(())
     }
 
-    pub fn add(&mut self, task: Option<String>, flags: (Option<String>, Option<String>)) -> Result<(), Box<dyn Error>>{
+    pub fn add(&mut self, flags: (Option<String>, Option<String>, Option<String>)) -> Result<(), Box<dyn Error>>{
         let conn = if let Some(ref path) = &self.db_path {
             Connection::open(path)?
         } else {
             return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
         };
-        if let Some(task) = task {
-            let (prio, due) = flags; 
-            let due_date: Option<Datetime> = match due {
-                Some(ref date) => Some(parse_date(date)?),
-                None => None,
-            };
-            conn.execute(
-                "INSERT INTO tasks (task, status, prio, due, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
-                (&task, &Status::Closed as &dyn ToSql, &prio.unwrap_or("0".to_string()), &due_date.unwrap_or(epoch()), &Datetime::new() as &dyn ToSql)
-            )?;
-        } else {
-            return Err(
-                "✘ Missing argument. Please specify the task you want to add"
-                    .to_string()
-                    .into()
-            );
-        }
+        let (task, prio, due) = flags;
+        let due_date: Option<Datetime> = match due {
+            Some(ref date) => Some(parse_date(date)?),
+            None => None,
+        };
+        conn.execute(
+            "INSERT INTO tasks (task, status, prio, due, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+            (&task, &Status::Closed as &dyn ToSql, &prio.unwrap_or("0".to_string()), &due_date.unwrap_or(epoch()), &Datetime::new() as &dyn ToSql)
+        )?;
         Ok(())
     }
 
