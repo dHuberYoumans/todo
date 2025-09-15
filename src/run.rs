@@ -7,9 +7,9 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
     match args.command {
         Some(cmd) => match cmd {
             Cmd::Init => todo_list.init()?,
-            Cmd::NewList { name, checkout } => { println!("{:?}", checkout); todo_list.new_list( Some(name), Some(checkout) )?},
-            Cmd::DeleteList { name } => todo_list.delete_list( Some(name) )?,
-            Cmd::Load { name } => todo_list.load( Some(name) )?,
+            Cmd::NewList { name, checkout } => todo_list.new_list( name, checkout )?,
+            Cmd::DeleteList { name } => todo_list.delete_list( name )?,
+            Cmd::Load { name } => todo_list.load( name )?,
             Cmd::WhoIsThis => todo_list.whoisthis()?,
             Cmd::Add { task, prio, due } => todo_list.add( (task, prio, due) )?,
             Cmd::List { all, done, sort } => {
@@ -23,7 +23,7 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
             },
             Cmd::Close { id } => todo_list.close( id )?,
             Cmd::Open { id } => todo_list.open( id )?,
-            Cmd::Delete { id } => todo_list.delete( Some(id.to_string()) )?,
+            Cmd::Delete { id } => todo_list.delete( id )?,
             Cmd::DeleteAll => todo_list.delete_all()?,
             Cmd::Reword { id, task } => todo_list.reword(
                 (id, task)

@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::{
     fs,
     env,
@@ -7,6 +8,7 @@ use std::{
     process,
     io::Read
 };
+use toml;
 use glob;
 use chrono::{prelude::*};
 use chrono::{
@@ -20,16 +22,21 @@ use dirs::home_dir;
 use tabled::Tabled;
 use rusqlite::{
     Result,
+    Connection,
     types::{
         FromSql,
         ToSql,
         ValueRef,
         FromSqlError,
         FromSqlResult,
-        ToSqlOutput
+        ToSqlOutput,
     }
 };
-use dotenv::from_filename;
+use clap::{ValueEnum};
+
+use crate::config;
+use crate::queries;
+use crate::paths::UserPaths;
 
 const TMP_FILE: &str = "./EDIT_TASK";
 
@@ -43,8 +50,8 @@ pub struct TodoItem{
     pub created_at: Datetime,
 }
 
-#[derive(Debug, PartialEq, PartialOrd)]
-pub enum Status{
+#[derive(Debug, PartialEq, PartialOrd, ValueEnum, Clone)]
+pub enum Status {
     Closed,
     Open
 }
@@ -62,8 +69,8 @@ impl FromSql for Status {
 impl ToSql for Status {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
         let value = match self {
-            Status::Open => 0,
-            Status::Closed => 1,
+            Status::Open => 1,
+            Status::Closed => 0,
         };
         Ok(ToSqlOutput::from(value))
     }
@@ -78,11 +85,12 @@ impl fmt::Display for Status {
     }
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Default)]
 pub enum Prio{
     P1,
     P2,
     P3,
+    #[default]
     Empty,
 }
 
@@ -215,22 +223,19 @@ pub fn epoch() -> Datetime {
     Datetime { timestamp: epoch_local }
 }
 
-pub fn get_todo_list_path() -> Option<PathBuf> {
-    let parent = home_dir()?.join(".todo");
-    let path = parent
-        .clone()
-        .join(".env");
-    from_filename(&path).ok();
-    let db = env::var("TODO_DB").ok()?;
-    Some(PathBuf::from(&path.parent()?).join(db))
+pub fn get_db_path() -> Option<PathBuf> {
+    let user_paths = UserPaths::new();
+    let home = user_paths.home;
+    let env = home.join(".todo").join(".env");
+    dotenv::from_filename(env).ok();
+    let config_path = std::env::var("CONFIG").ok()?;
+    let config_file = fs::read_to_string(config_path).ok()?;
+    let config: config::Config = toml::from_str(&config_file).ok()?;
+    PathBuf::from_str(&config.database.todo_db).ok()//.expect("❌ damn");
 }
 
 pub fn get_todo_dir() -> Option<PathBuf> {
     Some(home_dir()?.join(".todo"))
-}
-
-pub fn get_env_path() -> Option<PathBuf> {
-    Some(home_dir()?.join(".todo/.env"))
 }
 
 pub fn edit_in_editor(old_text: Option<String>) -> String {
@@ -263,4 +268,51 @@ fn cleanup_tmp_files() -> Result<(), Box<dyn Error>> {
         }
     }
     Ok(())
+}
+
+pub fn connect_to_db(db: &Option<PathBuf>) -> Result<Connection, Box<dyn Error>> {
+        let conn = if let Some(path) = db {
+            Connection::open(&path)?
+        } else {
+            return Err("No path to database found. Consider 'todo init' to initialize a data base".into());
+        };
+        Ok(conn)
+    }
+
+
+pub fn dotenv() -> Result<PathBuf, Box<dyn Error>> {
+    let dotenv = if let Some(path) = get_env_path() {
+        path
+    } else {
+       return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
+    };
+    Ok(dotenv)
+}
+
+fn get_env_path() -> Option<PathBuf> {
+    Some(home_dir()?.join(".todo/.env"))
+}
+
+pub fn get_active_list_name() -> Result<String, Box<dyn Error>> {
+    let dotenv = dotenv()?;
+    let content = fs::read_to_string(&dotenv)?;
+    let mut current = String::new();
+    for line in content.lines() {
+        if line.starts_with("CURRENT=") {
+            current.push_str(
+                line
+                    .split('=')
+                    .last()
+                    .unwrap_or("")
+            );
+        } 
+    }
+    Ok(current)
+}
+
+pub fn get_active_list_id(db: &Option<PathBuf>, name: &str) -> Result<i64, Box<dyn Error>> {
+    let conn = connect_to_db(db)?;
+    let mut stmt = conn.prepare(&queries::fetch_list_id(name))?;
+    let id: i64 = stmt.query_row([], |row| row.get(0))?;
+    Ok(id)
 }

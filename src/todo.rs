@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::error::Error;
 use std::cmp::Reverse;
 use rusqlite::{
-    params, types::ToSql, Connection, OptionalExtension, Result};
+    params, Connection, OptionalExtension, Result, ToSql};
 use tabled::{
     settings::{
         Modify,
@@ -12,16 +12,19 @@ use tabled::{
         Width,
         object::Columns},
     Table};
-use dirs::home_dir;
 use clap::{Parser, Subcommand};
 
 use crate::util::{
     self,
     Status,
+    Prio,
     Datetime,
     TodoItem,
     epoch,
+    connect_to_db,
 };
+use crate::paths::UserPaths;
+use crate::queries;
 
 #[derive(Parser,Debug)]
 #[command(name = "todo", version, about = "A simple todo cli to help you get things done from the comfort of your terminal")]
@@ -55,7 +58,7 @@ pub enum Cmd {
         #[arg(long, short='m', help = "Task description")]
         task: Option<String>,
         #[arg(long, short='p', help = "Priority")]
-        prio: Option<String>,
+        prio: Option<i64>,
         #[arg(long, short='d', help = "Due date")]
         due: Option<String>
     },
@@ -98,7 +101,7 @@ pub struct TodoList{
 
 impl TodoList{
     pub fn new() -> Self{
-        let db_path = util::get_todo_list_path();
+        let db_path = util::get_db_path();
         Self{
             tasks: Vec::new(),
             db_path,
@@ -107,7 +110,9 @@ impl TodoList{
 
     pub fn init(&mut self) -> Result<(), Box<dyn Error>> {
         println!("⧖ Initializing..");
-        let mut file_path = home_dir().expect("✘ Could not resolve $HOME");
+        let user_paths = UserPaths::new();
+        let home = user_paths.home;
+        let mut file_path = home.to_path_buf();// home_dir().expect("✘ Could not resolve $HOME");
         file_path.push(".todo/.env");
         if file_path.exists() {
             println!("✔︎ Environmental setup found");
@@ -119,38 +124,57 @@ impl TodoList{
                 .parent()
                 .unwrap()
         )?;
-        let mut env = fs::File::create(file_path)?;
-        env.write(b"TODO_DB=todo.db")?;
-        self.db_path = util::get_todo_list_path();
-        self.new_list(Some(String::from("todo")), None)?;
+        let mut env = fs::OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(file_path)?;
+
+        if let Some(config) = user_paths.config {
+            writeln!(env, "CONFIG={}", config.to_string_lossy())?
+        } else {
+            writeln!(env, "CONFIG=")?
+        }
+        writeln!(env, "CURRENT=todo")?;
+        writeln!(env, "PREVIOUS=todo")?;
+        self.db_path = util::get_db_path();
+        let conn = if let Some(path) = &self.db_path {
+            Connection::open(&path)?
+        } else{
+            return Err(
+                "✘ Something went wrong setting up the the database"
+                    .to_string()
+                    .into()
+            )
+        };
+        conn.execute(&queries::create_collection(), [])?;
+        self.new_list(String::from("todo"), false)?;
         println!("✔︎ Database located at {}", &self.db_path
             .as_ref()
             .map_or(String::from("No path to database found"), |path| path.display().to_string())
-            );
+        );
         println!("✔︎ All done");
         Ok(())
     }
 
     pub fn list(&mut self, flags: (Option<String>, Option<String>)) -> Result<(), Box<dyn Error>>{
-        let conn = if let Some(ref path) = &self.db_path {
-            Connection::open(path)?
-        } else {
-            return Err("No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
+        let conn = connect_to_db(&self.db_path)?;
+        let current_list = util::get_active_list_name()?;
+        let current_list_id = util::get_active_list_id(&self.db_path, &current_list)?;
         let opt = flags.0;
-        let mut stmt = match opt {
-            Some(ref opt) if opt =="--all"  => conn.prepare("SELECT * FROM tasks")?,
-            Some(ref opt) if opt == "--done" => conn.prepare("SELECT * FROM tasks WHERE status=0")?,
-            _ => conn.prepare("SELECT * FROM tasks WHERE status=1")?,
+        let query = match opt.as_deref() {
+            Some("--all") => format!("SELECT * FROM {current_list} WHERE list_id = ?"),
+            Some("--done") => format!("SELECT * FROM {current_list} WHERE status=0 AND list_id = ?"),
+            _ => format!("SELECT * FROM {current_list} WHERE status=1 AND list_id = ?"),
         };
-        let tasks_iter = stmt.query_map([], |row| {
+        let mut stmt = conn.prepare(&query)?;
+        let tasks_iter = stmt.query_map(params![current_list_id], |row| {
             Ok(TodoItem {
-                id: row.get(0)?,
-                task: row.get(1)?,
-                status: row.get(2)?,
-                prio: row.get(3)?,
-                due: row.get(4)?,
-                created_at: row.get(5)?
+                id: row.get::<_,i64>("id")?,
+                task: row.get::<_,String>("task")?,
+                status: row.get::<_,Status>("status")?,
+                prio: row.get::<_,Prio>("prio")?,
+                due: row.get::<_,Datetime>("due")?,
+                created_at: row.get::<_,Datetime>("created_at")?
             })
         })?;
         for task_result in tasks_iter {
@@ -180,138 +204,90 @@ impl TodoList{
         Ok(())
     }
 
-    pub fn new_list(&mut self, list: Option<String>, checkout: Option<bool>) -> Result<(), Box<dyn Error>>{
-        let name = if let Some(ref list) = list {
-            list
-        } else {
-            return Err(
-                "✘ Missing argument. Please provide a name for your new list."
-                    .to_string()
-                    .into()
-            );
-        };
+    pub fn new_list(&mut self, list: String, checkout: bool) -> Result<(), Box<dyn Error>>{
         println!("⧖ Creating new_list..");
-        let parent = if let Some(ref path) = &self.db_path {
-            path.parent()
-                .ok_or("✘ Invalid path to the database")?
-        } else {
-            return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
-        fs::create_dir_all(parent)?;
-        let db_file_path = parent.join(format!("{}.db", name));
-        let conn = Connection::open(db_file_path)?;
-        conn.execute(
-            r#"
-            CREATE TABLE IF NOT EXISTS tasks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                task TEXT NOT NULL,
-                status INTEGER DEFAULT 0,
-                prio INTEGER,
-                due INTEGER,
-                created_at INTEGER
-            )"#,
-            [])?;
-        println!("✔︎ Created new todo list '{}'", name);
-        if let Some(true) = checkout {
-            println!("Checking out '{}'", name);
-            self.load(Some(name.to_string()))?;
-            println!("✔︎ Now using '{}'", name);
+        let conn = connect_to_db(&self.db_path)?;
+        conn.execute( &queries::create_list(&list), [])?;
+        println!("✔︎ Created new todo list '{}'", &list);
+        conn.execute( &queries::add_to_collection(&list), [])?;
+        println!("✔︎ Added {} to collection", &list);
+        if checkout {
+            self.load(list.clone())?;
+            println!("✔︎ Now using '{}'", &list);
         };
         Ok(())
     }
 
-    pub fn delete_list(self, list: Option<String>) -> Result<(), Box<dyn Error>> {
-        let db_name = if let Some(list) = list {
-            list
-        } else {
-            return Err(
-                "✘ Missing argument. Please chose the list you want to delete."
-                .to_string()
-                .into()
-            );
-        };
-        let db = if let Some(db_file) = util::get_todo_dir()
-            .map(|dir| dir.join(format!("{}.db", db_name))) {
-            db_file
-        } else {
-                return Err(
-                format!("✘ No list named {} found", db_name)
-                    .into()
-            );
-        };
-        fs::remove_file(db)?;
-        println!("✔︎ list '{}' removed", db_name);
+    pub fn delete_list(self, list: String) -> Result<(), Box<dyn Error>> {
+        let conn = connect_to_db(&self.db_path)?;
+        conn.execute(&queries::delete_list(&list), [])?;
+        println!("✔︎ List '{}' removed", &list);
+        let dotenv = util::dotenv()?;
+        let mut new_content = String::new();
+        let content = fs::read_to_string(&dotenv)?;
+        let mut current = String::new();
+        for line in content.lines().rev() {
+            if line.starts_with("PREVIOUS=") {
+                current.push_str(
+                    line
+                        .split('=')
+                        .last()
+                        .unwrap_or("")
+                );
+                new_content.push_str(format!("PREVIOUS={}\n", line).as_str());
+            } else if line.starts_with("CURRENT=") {
+                new_content.push_str(format!("CURRENT={}\n", &current).as_str());
+            } else {
+                new_content.push_str(format!("PREVIOUS={}\n", line).as_str());
+            };
+        }
+        let mut file = fs::File::create(dotenv)?;
+        file.write_all(new_content.as_bytes())?;
+        println!("✔︎ Checked out '{}'", &current);
         Ok(())
     }
 
-    pub fn load(&mut self, list: Option<String>) -> Result<(), Box<dyn Error>> {
-        let db_name = if let Some(list) = list {
-            list
-        } else {
-            return Err(
-                "✘ Missing argument. Please provide the list you want to load"
-                    .to_string()
-                    .into()
-            );
-        };
-        let dotenv = if let Some(path) = util::get_env_path() {
-            path
-        } else {
-            return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
+    pub fn load(&mut self, list: String) -> Result<(), Box<dyn Error>> {
+        let dotenv = util::dotenv()?;
         let content = fs::read_to_string(&dotenv)?;
         let mut new_content = String::new();
+        let mut previous = String::from("");
         for line in content.lines(){
-            if line.starts_with("TODO_DB=") {
-                new_content.push_str(format!("TODO_DB={}.db\n",db_name).as_str());
-            } else {
+            if line.starts_with("CURRENT=") {
+                previous.push_str(
+                    line
+                        .split('=')
+                        .last()
+                        .unwrap_or("")
+                );
+                new_content.push_str(format!("CURRENT={}\n",&list).as_str());
+            } else if line.starts_with("PREVIOUS=") {
+                new_content.push_str(format!("PREVIOUS={}\n",&previous).as_str());
+            }
+            else {
                 new_content.push_str(format!("{}\n",line).as_str());
             }
         }
         let mut file = fs::File::create(dotenv)?;
         file.write_all(new_content.as_bytes())?;
-        println!("✔︎ Loaded todo list '{}'", db_name);
+        println!("✔︎ Checked out '{}'", &list);
         Ok(())
     }
 
-    pub fn whoisthis(&self) -> Result<(), Box<dyn Error>>{
-        let dotenv = if let Some(path) = util::get_env_path() {
-            path
+    pub fn whoisthis(&self) -> Result<(), Box<dyn Error>> {
+        let current = util::get_active_list_name()?;
+        if current.is_empty() {
+            eprintln!("✘ Currently, no list is active");
         } else {
-            return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
-        let content = fs::read_to_string(&dotenv)?;
-        for line in content.lines() {
-            if line.starts_with("TODO_DB=") {
-                let db_name = line.split('=').last();
-                if let Some(list) = db_name {
-                    if let Some(list_without_db) = list.split('.').next() {
-                        println!("this is {}", list_without_db);
-                    } else {
-                        return Err(
-                            "✘ Oops... it seams that your list does not have a name yet"
-                                .to_string()
-                                .into()
-                        );
-                    };
-                } else {
-                    return Err(
-                        "✘ No todo list found"
-                            .to_string()
-                            .into()
-                    );
-              };
-            };
+            println!("This is {current}. Ready for duty!");
         }
         Ok(())
     }
 
-    pub fn add(&mut self, flags: (Option<String>, Option<String>, Option<String>)) -> Result<(), Box<dyn Error>>{
-        let conn = if let Some(ref path) = &self.db_path {
-            Connection::open(path)?
-        } else {
-            return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
+    pub fn add(&mut self, flags: (Option<String>, Option<i64>, Option<String>)) -> Result<(), Box<dyn Error>>{
+        let current_list = util::get_active_list_name()?;
+        let current_list_id = util::get_active_list_id(&self.db_path, &current_list)?;
+        let conn = util::connect_to_db(&self.db_path)?;
         let (task, prio, due) = flags;
         let due_date: Option<Datetime> = match due {
             Some(ref date) => Some(util::parse_date(date)?),
@@ -323,74 +299,61 @@ impl TodoList{
             util::edit_in_editor(None)
         };
         conn.execute(
-            "INSERT INTO tasks (task, status, prio, due, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
-            (&msg, &Status::Closed as &dyn ToSql, &prio.unwrap_or("0".to_string()), &due_date.unwrap_or(epoch()), &Datetime::new() as &dyn ToSql)
-        )?;
+            &queries::add_to_table(
+                &current_list,
+                current_list_id
+            )
+            ,[
+                &msg,
+                &Status::Open as &dyn ToSql,
+                &prio.unwrap_or_default() as &dyn ToSql,
+                &due_date.unwrap_or(epoch()),
+                &Datetime::new() as &dyn ToSql
+            ])?;
         Ok(())
     }
 
     pub fn close(&mut self, id: i64) -> Result<(), Box<dyn Error>>{
-        let conn = if let Some(ref path) = &self.db_path {
-            Connection::open(path)?
-        } else {
-            return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
+        let current = util::get_active_list_name()?;
+        let conn = util::connect_to_db(&self.db_path)?;
         conn.execute(
-            "UPDATE tasks SET status=0 WHERE id=?1",
-            &[&id]
+            &queries::update_status(&current),
+            (&Status::Closed, &id),
         )?;
         Ok(())
     }
 
     pub fn open(&mut self, id: i64) -> Result<(), Box<dyn Error>>{
-        let conn = if let Some(ref path) = &self.db_path {
-            Connection::open(path)?
-        } else {
-            return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
+        let current = util::get_active_list_name()?;
+        let conn = util::connect_to_db(&self.db_path)?;
         conn.execute(
-            "UPDATE tasks SET status=1 WHERE id=?1",
-            &[&id]
+            &queries::update_status(&current),
+            (&Status::Open, &id),
         )?;
         Ok(())
     }
 
-    pub fn delete(&mut self, id: Option<String>) -> Result<(), Box<dyn Error>>{
-        let conn = if let Some(ref path) = &self.db_path {
-            Connection::open(path)?
-        } else {
-            return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
-        if let Some(id) = id {
-            let task_id = id.parse::<i64>()?;
-            conn.execute(
-                "DELETE FROM tasks WHERE id=?1",
-                &[&task_id]
-            )?;
-        } else {
-            return Err(
-                "✘ Missing argument. Please specify the id of the task you want to delete."
-                    .to_string()
-                    .into()
-            );
-        }
+    pub fn delete(&mut self, id: i64) -> Result<(), Box<dyn Error>>{
+        let current = util::get_active_list_name()?;
+        let conn = util::connect_to_db(&self.db_path)?;
+        conn.execute(
+            &queries::delete_task(&current, id),
+            []
+        )?;
         Ok(())
     }
 
         pub fn delete_all(&mut self) -> Result<(), Box<dyn Error>>{
-            let conn = if let Some(ref path) = &self.db_path {
-                Connection::open(path)?
-            } else {
-                return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
-            };
-            let mut stmt = conn.prepare( "SELECT id FROM tasks")?;
+            let conn = util::connect_to_db(&self.db_path)?;
+            let current_list = util::get_active_list_name()?;
+            let mut stmt = conn.prepare(&queries::get_all_ids(&current_list))?;
             let ids_iter = stmt.query_map([], |row| {
-                let id: i64 = row.get(0)?;
+                let id = row.get::<_,i64>("id")?;
                 Ok(id)
             })?;
             for id in ids_iter {
                 conn.execute(
-                    "DELETE FROM tasks WHERE id=?1",
+                    &queries::delete_by_id(&current_list),
                     &[&id.unwrap()]
                 )?;
             }
@@ -398,20 +361,17 @@ impl TodoList{
         }
 
     pub fn reword(&mut self, input: (i64, Option<String>)) -> Result<(), Box<dyn Error>>{
-        let conn = if let Some(ref path) = &self.db_path {
-            Connection::open(path)?
-        } else {
-            return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
+        let conn = util::connect_to_db(&self.db_path)?;
+        let current_list = util::get_active_list_name()?;
         let (id, task) = input;
         let msg = if let Some(task) = task {
             task
         } else {
-            let mut stmt = conn.prepare( "SELECT task FROM tasks WHERE id=?1",)?;
-            let text: Option<String> = stmt.query_row(params![id], |row| row.get(0)).optional()?;
+            let mut stmt = conn.prepare(&queries::fetch_task_by_id(&current_list))?;
+            let text: Option<String> = stmt.query_row(params![id], |row| row.get::<_,String>("task")).optional()?;
             util::edit_in_editor(text)
         };
-        conn.execute("UPDATE tasks SET task=?2 WHERE id=?1",
+        conn.execute(&queries::unpdate_task_by_id(&current_list),
             (&id, &msg)
         )?;
         Ok(())
