@@ -111,8 +111,12 @@ impl TodoList{
     pub fn init(&mut self) -> Result<(), Box<dyn Error>> {
         println!("⧖ Initializing..");
         let user_paths = UserPaths::new();
-        let home = user_paths.home;
-        let mut file_path = home.to_path_buf();// home_dir().expect("✘ Could not resolve $HOME");
+        let home = if let Ok(path) = std::env::var("HOME") { // hijack env for testing
+            PathBuf::from(path)
+        } else {
+            user_paths.home
+        };
+        let mut file_path = home.to_path_buf();
         file_path.push(".todo/.env");
         if file_path.exists() {
             println!("✔︎ Environmental setup found");

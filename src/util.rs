@@ -231,7 +231,7 @@ pub fn get_db_path() -> Option<PathBuf> {
     let config_path = std::env::var("CONFIG").ok()?;
     let config_file = fs::read_to_string(config_path).ok()?;
     let config: config::Config = toml::from_str(&config_file).ok()?;
-    PathBuf::from_str(&config.database.todo_db).ok()//.expect("❌ damn");
+    PathBuf::from_str(&config.database.todo_db).ok()
 }
 
 pub fn get_todo_dir() -> Option<PathBuf> {
