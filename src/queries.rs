@@ -5,9 +5,18 @@ pub fn create_collection() -> String {
         r#"
             CREATE TABLE IF NOT EXISTS {table} (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL
+                name TEXT NOT NULL UNIQUE
             );"#,
         table = COLLECTION,
+    )
+}
+
+pub fn fetch_collection() -> String {
+    format!(
+        r#"
+            SELECT (name) FROM {table};
+        "#,
+        table=COLLECTION,
     )
 }
 
@@ -57,15 +66,19 @@ pub fn get_all_ids(list: &str) -> String {
 pub fn delete_list(list: &str) -> String {
     format!(
         r#"
+            BEGIN;
+            DELETE FROM {collection} WHERE name='{list}';
             DROP TABLE IF EXISTS {list};
-        "#
+            COMMIT;
+        "#,
+        collection=COLLECTION
     )
 }
 
 pub fn delete_by_id(list: &str) -> String {
     format!(
         r#"
-            DELETE FROM {list} WHERE id=?1
+            DELETE FROM {list} WHERE id=?1;
         "#
     )
 }
@@ -110,4 +123,3 @@ pub fn delete_task(list: &str, id: i64) -> String {
         "#
     )
 }
-

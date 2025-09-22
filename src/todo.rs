@@ -224,30 +224,40 @@ impl TodoList{
 
     pub fn delete_list(self, list: String) -> Result<(), Box<dyn Error>> {
         let conn = connect_to_db(&self.db_path)?;
-        conn.execute(&queries::delete_list(&list), [])?;
-        println!("✔︎ List '{}' removed", &list);
         let dotenv = util::dotenv()?;
-        let mut new_content = String::new();
         let content = fs::read_to_string(&dotenv)?;
-        let mut current = String::new();
-        for line in content.lines().rev() {
-            if line.starts_with("PREVIOUS=") {
-                current.push_str(
-                    line
-                        .split('=')
-                        .last()
-                        .unwrap_or("")
-                );
-                new_content.push_str(format!("PREVIOUS={}\n", line).as_str());
-            } else if line.starts_with("CURRENT=") {
-                new_content.push_str(format!("CURRENT={}\n", &current).as_str());
+        let mut new_content = String::new();
+        for line in content.lines() {
+            if line.starts_with("CURRENT=") {
+                let current_list = line
+                    .split('=')
+                    .last()
+                    .unwrap_or("");
+                if &list == current_list {
+                    return Err(
+                        format!("✘ can't delete the list '{}' since currently in use", &list)
+                            .into()
+                    );
+                };
+                new_content.push_str(&format!("{line}\n"));
+            } else if line.starts_with("PREVIOUS=") {
+                let current_list = line
+                    .split('=')
+                    .last()
+                    .unwrap_or("");
+                if &list == current_list {
+                    new_content.push_str("PREVIOUS=\n");
+                } else {
+                    new_content.push_str(&format!("{line}\n"));
+                };
             } else {
-                new_content.push_str(format!("PREVIOUS={}\n", line).as_str());
-            };
+                new_content.push_str(&format!("{line}\n"));
+            }
         }
+        conn.execute_batch(&queries::delete_list(&list))?;
+        println!("✔︎ List '{}' removed", &list);
         let mut file = fs::File::create(dotenv)?;
         file.write_all(new_content.as_bytes())?;
-        println!("✔︎ Checked out '{}'", &current);
         Ok(())
     }
 
