@@ -262,6 +262,19 @@ impl TodoList{
     }
 
     pub fn load(&mut self, list: String) -> Result<(), Box<dyn Error>> {
+        let conn = connect_to_db(&self.db_path)?;
+        let mut stmt = conn.prepare(&queries::fetch_collection())?;
+        let collection_iter = stmt.query_map([], |row| {
+            let list = row.get::<_,String>("name")?;
+            Ok(list)
+        })?;
+        let collection: Vec<_> = collection_iter.filter_map(Result::ok).collect();
+        if !collection.contains(&list) {
+            return Err(
+                format!("✘ Can't find list '{}'", &list)
+                    .into()
+            );
+        }
         let dotenv = util::dotenv()?;
         let content = fs::read_to_string(&dotenv)?;
         let mut new_content = String::new();
