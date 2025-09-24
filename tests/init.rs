@@ -36,6 +36,7 @@ fn init_flow() {
     let config_path = mock_data.config_path;
     let config_file = mock_data.config_file;
     Command::cargo_bin("todo").unwrap()
+        .env("RUST_LOG", "debug")
         .env("HOME", home)
         .env("CONFIG", config_file)
         .arg("init")

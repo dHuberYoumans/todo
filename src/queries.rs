@@ -54,7 +54,7 @@ pub fn create_list(table: &str) -> String {
     )
 }
 
-pub fn get_all_ids(list: &str) -> String {
+pub fn fetch_all_ids(list: &str) -> String {
     format!(
         r#"
             SELECT id FROM {table};
@@ -97,7 +97,7 @@ pub fn fetch_list_id(name: &str) -> String {
             SELECT id FROM {table} WHERE name='{name}';
         "#, 
         table=COLLECTION,
-        name=name)
+        )
 }
 
 pub fn unpdate_task_by_id(list: &str) -> String {

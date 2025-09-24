@@ -33,6 +33,7 @@ use rusqlite::{
     }
 };
 use clap::{ValueEnum};
+use log;
 
 use crate::config;
 use crate::queries;
@@ -59,8 +60,8 @@ pub enum Status {
 impl FromSql for Status {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         match value {
-            ValueRef::Integer(0) => Ok(Status::Open),
-            ValueRef::Integer(1) => Ok(Status::Closed),
+            ValueRef::Integer(1) => Ok(Status::Open),
+            ValueRef::Integer(0) => Ok(Status::Closed),
             _ => Err(FromSqlError::InvalidType),
         }
     }
@@ -79,8 +80,8 @@ impl ToSql for Status {
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Status::Closed => write!(f, "✘"), 
-            Status::Open => write!(f, "✔︎"), 
+            Status::Open => write!(f, "✘"), 
+            Status::Closed => write!(f, "✔︎"), 
         }
     }
 }
@@ -224,13 +225,18 @@ pub fn epoch() -> Datetime {
 }
 
 pub fn get_db_path() -> Option<PathBuf> {
+    log::debug!("calling 'get_db_path'");
     let user_paths = UserPaths::new();
     let home = user_paths.home;
     let env = home.join(".todo").join(".env");
+    log::debug!("env found at {env:?}");
     dotenv::from_filename(env).ok();
     let config_path = std::env::var("CONFIG").ok()?;
+    log::debug!("config found at {config_path:?}");
     let config_file = fs::read_to_string(config_path).ok()?;
+    log::debug!("reading config {config_file:?}");
     let config: config::Config = toml::from_str(&config_file).ok()?;
+    log::debug!("found config: {config:?}");
     PathBuf::from_str(&config.database.todo_db).ok()
 }
 
@@ -271,6 +277,7 @@ fn cleanup_tmp_files() -> Result<(), Box<dyn Error>> {
 }
 
 pub fn connect_to_db(db: &Option<PathBuf>) -> Result<Connection, Box<dyn Error>> {
+        log::info!("connecting to database at {}", log_opt_path(db));
         let conn = if let Some(path) = db {
             Connection::open(&path)?
         } else {
@@ -293,26 +300,17 @@ fn get_env_path() -> Option<PathBuf> {
     Some(home_dir()?.join(".todo/.env"))
 }
 
-pub fn get_active_list_name() -> Result<String, Box<dyn Error>> {
-    let dotenv = dotenv()?;
-    let content = fs::read_to_string(&dotenv)?;
-    let mut current = String::new();
-    for line in content.lines() {
-        if line.starts_with("CURRENT=") {
-            current.push_str(
-                line
-                    .split('=')
-                    .last()
-                    .unwrap_or("")
-            );
-        } 
-    }
-    Ok(current)
-}
-
-pub fn get_active_list_id(db: &Option<PathBuf>, name: &str) -> Result<i64, Box<dyn Error>> {
+pub fn fetch_active_list_id(db: &Option<PathBuf>) -> Result<i64, Box<dyn Error>> {
+    log::debug!("fetching active list id");
     let conn = connect_to_db(db)?;
-    let mut stmt = conn.prepare(&queries::fetch_list_id(name))?;
+    let current = std::env::var("CURRENT")?;
+    let mut stmt = conn.prepare(&queries::fetch_list_id(&current))?;
     let id: i64 = stmt.query_row([], |row| row.get(0))?;
     Ok(id)
+}
+
+pub fn log_opt_path(p: &Option<PathBuf>) -> String {
+    p.as_deref()
+        .map(|p| p.display().to_string())
+        .unwrap_or("<none>".into())
 }
