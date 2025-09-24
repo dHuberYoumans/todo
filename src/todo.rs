@@ -37,6 +37,8 @@ pub struct Args {
 pub enum Cmd {
     /// Initialize the cli in CWD  
     Init,
+    /// Open config
+    Config,
     /// Create a new todo list
     NewList {
         name: String,
@@ -134,7 +136,6 @@ impl TodoList{
             .append(true)
             .create(true)
             .open(file_path)?;
-
         if let Some(config) = user_paths.config {
             writeln!(env, "CONFIG={}", config.to_string_lossy())?
         } else {
@@ -159,6 +160,15 @@ impl TodoList{
             .map_or(String::from("No path to database found"), |path| path.display().to_string())
         );
         println!("✔︎ All done");
+        Ok(())
+    }
+
+    pub fn config(self) -> Result<(), Box<dyn Error>>{
+        let path = std::env::var("CONFIG")?;
+        let config = fs::read_to_string(&path).ok();
+        let new_config = util::edit_in_editor(config);
+        fs::write(path, new_config)?;
+        println!("✔︎ Config written");
         Ok(())
     }
 

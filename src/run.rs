@@ -37,6 +37,7 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
             Cmd::Reword { id, task } => todo_list.reword(
                 (id, task)
             )?,
+            Cmd::Config => todo_list.config()?,
         },
         None => todo_list.list((None,None))?
     }
