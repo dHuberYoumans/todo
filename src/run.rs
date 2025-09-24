@@ -19,11 +19,13 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
             },
             Cmd::WhoIsThis => todo_list.whoisthis()?,
             Cmd::Add { task, prio, due } => todo_list.add( (task, prio, due) )?,
-            Cmd::List { all, done, sort } => {
+            Cmd::List { all, done, sort, collection } => {
                 if all {
                     todo_list.list((Some("--all".into()), sort))?;
                 } else if done {
                     todo_list.list((Some("--done".into()), sort))?;
+                } else if collection {
+                    todo_list.list_collection()?;
                 } else {
                     todo_list.list((None,sort))?;
                 }

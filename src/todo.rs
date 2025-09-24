@@ -64,12 +64,14 @@ pub enum Cmd {
     },
     /// Print the current todo list
     List {
-        #[arg(long, help="Show all tasks")]
+        #[arg(long, short='a', help="Show all tasks")]
         all: bool,
         #[arg(long, help="Show all completed tasks")]
         done: bool,
         #[arg(long, short='s', help="Sort tasks")]
         sort: Option<String>,
+        #[arg(long, help="Show collection")]
+        collection: bool,
     },
     /// Mark a task as completed
     Close {
@@ -258,6 +260,23 @@ impl TodoList{
         println!("✔︎ List '{}' removed", &list);
         let mut file = fs::File::create(dotenv)?;
         file.write_all(new_content.as_bytes())?;
+        Ok(())
+    }
+
+
+    pub fn list_collection(&self) -> Result<(), Box<dyn Error>> {
+        let conn = connect_to_db(&self.db_path)?;
+        let mut stmt = conn.prepare(&queries::fetch_collection())?;
+        let collection_iter = stmt.query_map([], |row| {
+            let list = row.get::<_,String>("name")?;
+            Ok(list)
+        })?;
+        println!("Your collection\n===============");
+        for list in collection_iter {
+            if let Ok(list) = list {
+                println!("• {}", &list);
+            }
+        }
         Ok(())
     }
 
