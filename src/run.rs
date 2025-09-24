@@ -9,7 +9,14 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>>{
             Cmd::Init => todo_list.init()?,
             Cmd::NewList { name, checkout } => todo_list.new_list( name, checkout )?,
             Cmd::DeleteList { name } => todo_list.delete_list( name )?,
-            Cmd::Load { name } => todo_list.load( name )?,
+            Cmd::Load { name } => {
+                if name == "-" {
+                    let previous = std::env::var("PREVIOUS")?;
+                    todo_list.load(previous)?
+                } else {
+                    todo_list.load( name )?
+                }
+            },
             Cmd::WhoIsThis => todo_list.whoisthis()?,
             Cmd::Add { task, prio, due } => todo_list.add( (task, prio, due) )?,
             Cmd::List { all, done, sort } => {
