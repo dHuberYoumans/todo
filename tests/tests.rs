@@ -41,8 +41,8 @@ impl MockData {
         cmd
     }
 
-    fn add(&self, task: &str, prio: &str, due: &str) -> Command {
-        let input = format!("add -m {task} --prio={prio} --due={due}");
+    fn add(&self, task: &str, prio: &str, due: &str, tag: &str) -> Command {
+        let input = format!("add -m {task} --prio={prio} --due={due} --tag={tag}");
         let args: Vec<&str> = input.split_whitespace().collect();
         let mut add_task = self.cmd();
         add_task.args(&args);
@@ -51,7 +51,8 @@ impl MockData {
 
     fn get_stdout(&self, flag: Option<&str>) -> Vec<u8> {
         let out = if let Some(flag) = flag {
-            &self.cmd()
+            &self
+                .cmd()
                 .arg("list")
                 .arg(flag)
                 .assert()
@@ -59,12 +60,7 @@ impl MockData {
                 .stdout
                 .clone()
         } else {
-            &self.cmd()
-                .arg("list")
-                .assert()
-                .get_output()
-                .stdout
-                .clone()
+            &self.cmd().arg("list").assert().get_output().stdout.clone()
         };
         out.clone()
     }
@@ -91,9 +87,9 @@ fn init() {
 #[test]
 fn list() {
     let expected = r#"
-╭───────┬──────┬────────┬──────┬─────┬──────────────╮
-│ id    │ task │ status │ prio │ due │ created_at   │
-╰───────┴──────┴────────┴──────┴─────┴──────────────╯"#;
+╭───────┬──────┬────────┬──────┬─────┬─────╮
+│ id    │ task │ status │ prio │ due │ tag │
+╰───────┴──────┴────────┴──────┴─────┴─────╯"#;
     let mock = MockData::new();
     mock.cmd().arg("init").assert().success();
     let out = mock.get_stdout(None);
@@ -104,15 +100,15 @@ fn list() {
 #[test]
 fn add() {
     let expected = r#"
-╭───────┬───────┬────────┬──────┬───────┬──────────────╮
-│ id    │ task  │ status │ prio │ due   │ created_at   │
-├───────┼───────┼────────┼──────┼───────┼──────────────┤
-│ 1     │ first │ ✘      │ P1   │ Today │ Today        │
-╰───────┴───────┴────────┴──────┴───────┴──────────────╯
+╭───────┬───────┬────────┬──────┬───────┬──────╮
+│ id    │ task  │ status │ prio │ due   │ tag  │
+├───────┼───────┼────────┼──────┼───────┼──────┤
+│ 1     │ first │ ✘      │ P1   │ Today │ #tag │
+╰───────┴───────┴────────┴──────┴───────┴──────╯
 "#;
     let mock = MockData::new();
     mock.cmd().arg("init").assert().success();
-    mock.add("first","1","today").assert().success();
+    mock.add("first", "1", "today", "tag").assert().success();
     let out = mock.get_stdout(None);
     let stdout = String::from_utf8_lossy(&out).trim().to_string();
     assert_eq!(stdout, expected.trim());
@@ -121,22 +117,23 @@ fn add() {
 #[test]
 fn close_open() {
     let open = r#"
-╭───────┬───────┬────────┬──────┬───────┬──────────────╮
-│ id    │ task  │ status │ prio │ due   │ created_at   │
-├───────┼───────┼────────┼──────┼───────┼──────────────┤
-│ 1     │ first │ ✘      │ P1   │ Today │ Today        │
-╰───────┴───────┴────────┴──────┴───────┴──────────────╯
+╭───────┬───────┬────────┬──────┬───────┬──────╮
+│ id    │ task  │ status │ prio │ due   │ tag  │
+├───────┼───────┼────────┼──────┼───────┼──────┤
+│ 1     │ first │ ✘      │ P1   │ Today │ #tag │
+╰───────┴───────┴────────┴──────┴───────┴──────╯
 "#;
     let closed = r#"
-╭───────┬───────┬────────┬──────┬───────┬──────────────╮
-│ id    │ task  │ status │ prio │ due   │ created_at   │
-├───────┼───────┼────────┼──────┼───────┼──────────────┤
-│ 1     │ first │ ✔      │ P1   │ Today │ Today        │
-╰───────┴───────┴────────┴──────┴───────┴──────────────╯
+╭───────┬───────┬────────┬──────┬───────┬──────╮
+│ id    │ task  │ status │ prio │ due   │ tag  │
+├───────┼───────┼────────┼──────┼───────┼──────┤
+│ 1     │ first │ ✔      │ P1   │ Today │ #tag │
+╰───────┴───────┴────────┴──────┴───────┴──────╯
 "#;
+
     let mock = MockData::new();
     mock.cmd().arg("init").assert().success();
-    mock.add("first", "1", "today").assert().success(); 
+    mock.add("first", "1", "today", "tag").assert().success();
     mock.cmd().arg("close").arg("1").assert().success();
     // close the task
     let out_closed = mock.get_stdout(Some("--done"));
@@ -152,18 +149,20 @@ fn close_open() {
 #[test]
 fn delete_delete_all() {
     let expected = r#"
-╭───────┬──────┬────────┬──────┬─────┬──────────────╮
-│ id    │ task │ status │ prio │ due │ created_at   │
-╰───────┴──────┴────────┴──────┴─────┴──────────────╯"#;
+╭───────┬──────┬────────┬──────┬─────┬─────╮
+│ id    │ task │ status │ prio │ due │ tag │
+╰───────┴──────┴────────┴──────┴─────┴─────╯"#;
     let mock = MockData::new();
     mock.cmd().arg("init").assert().success();
-    mock.add("first","1","today").assert().success();
+    mock.add("first", "1", "today", "tag").assert().success();
     mock.cmd().arg("delete").arg("1").assert().success();
     let mut out = mock.get_stdout(None);
     let mut stdout = String::from_utf8_lossy(&out).trim().to_string();
     assert_eq!(stdout, expected.trim());
-    mock.add("first","1","today").assert().success();
-    mock.add("second","2","tomorrow").assert().success();
+    mock.add("first", "1", "today", "tag1").assert().success();
+    mock.add("second", "2", "tomorrow", "tag2")
+        .assert()
+        .success();
     mock.cmd().arg("delete-all").assert().success();
     out = mock.get_stdout(None);
     stdout = String::from_utf8_lossy(&out).trim().to_string();
@@ -177,7 +176,8 @@ fn new_list_load_and_who_is_this() {
     mock.cmd().arg("init").assert().success();
     mock.cmd().arg("new-list").arg("foo").assert().success();
     mock.cmd().arg("load").arg("foo").assert().success();
-    let out = mock.cmd()
+    let out = mock
+        .cmd()
         .arg("who-is-this")
         .assert()
         .success()
@@ -187,4 +187,3 @@ fn new_list_load_and_who_is_this() {
     let stdout = String::from_utf8_lossy(&out).trim().to_string();
     assert_eq!(stdout, expected.trim());
 }
-

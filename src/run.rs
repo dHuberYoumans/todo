@@ -18,7 +18,12 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>> {
                 }
             }
             Cmd::WhoIsThis => todo_list.whoisthis()?,
-            Cmd::Add { task, prio, due } => todo_list.add((task, prio, due))?,
+            Cmd::Add {
+                task,
+                prio,
+                due,
+                tag,
+            } => todo_list.add((task, prio, due, tag))?,
             Cmd::List {
                 all,
                 done,

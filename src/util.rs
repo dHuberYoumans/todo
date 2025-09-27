@@ -26,7 +26,7 @@ pub struct TodoItem {
     pub status: Status,
     pub prio: Prio,
     pub due: Datetime,
-    pub created_at: Datetime,
+    pub tag: Tag,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, ValueEnum, Clone)]
@@ -61,6 +61,35 @@ impl fmt::Display for Status {
             Status::Open => write!(f, "✘"),
             Status::Closed => write!(f, "✔"),
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub struct Tag(pub String);
+
+impl ToSql for Tag {
+    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(format!("#{}", self.0)))
+    }
+}
+
+impl FromSql for Tag {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        match value {
+            ValueRef::Text(bytes) => {
+                let sql_str = std::str::from_utf8(bytes)
+                    .map_err(|_| FromSqlError::Other("Invalid UTF-8".into()))?;
+                let stripped = sql_str.strip_prefix("#").unwrap_or(sql_str);
+                Ok(Tag(stripped.to_string()))
+            }
+            _ => Err(FromSqlError::InvalidType),
+        }
+    }
+}
+
+impl fmt::Display for Tag {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "#{}", self.0)
     }
 }
 

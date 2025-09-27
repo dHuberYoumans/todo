@@ -33,8 +33,8 @@ pub fn add_to_collection(list: &str) -> String {
 pub fn add_to_table(table: &str, list_id: i64) -> String {
     format!(
         r#"
-        INSERT INTO {table} (task, list_id, status, prio, due, created_at)
-        VALUES (?1, {list_id}, ?2, ?3, ?4, ?5);
+        INSERT INTO {table} (task, list_id, status, prio, due, tag, created_at)
+        VALUES (?1, {list_id}, ?2, ?3, ?4, ?5, ?6);
         "#
     )
 }
@@ -49,6 +49,7 @@ pub fn create_list(table: &str) -> String {
                 status INTEGER DEFAULT 0,
                 prio INTEGER,
                 due INTEGER,
+                tag TEXT,
                 created_at INTEGER
             );"#,
         collection = COLLECTION

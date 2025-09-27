@@ -13,7 +13,7 @@ use tabled::{
 
 use crate::paths::UserPaths;
 use crate::queries;
-use crate::util::{self, connect_to_db, epoch, Datetime, Prio, Status, TodoItem};
+use crate::util::{self, connect_to_db, epoch, Datetime, Prio, Status, Tag, TodoItem};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -54,6 +54,8 @@ pub enum Cmd {
         prio: Option<i64>,
         #[arg(long, short = 'd', help = "Due date")]
         due: Option<String>,
+        #[arg(long, short = 't', help = "Tag")]
+        tag: Option<String>,
     },
     /// Print the current todo list
     List {
@@ -192,7 +194,7 @@ impl TodoList {
                 status: row.get::<_, Status>("status")?,
                 prio: row.get::<_, Prio>("prio")?,
                 due: row.get::<_, Datetime>("due")?,
-                created_at: row.get::<_, Datetime>("created_at")?,
+                tag: row.get::<_, Tag>("tag")?,
             })
         })?;
         for task_result in tasks_iter {
@@ -217,7 +219,7 @@ impl TodoList {
             .with(Modify::new(Columns::single(2)).with(Width::increase(3))) // status
             .with(Modify::new(Columns::single(3)).with(Width::increase(3))) // prio
             .with(Modify::new(Columns::single(4)).with(Width::increase(3))) // due
-            .with(Modify::new(Columns::single(5)).with(Width::increase(12))) // created_at
+            .with(Modify::new(Columns::single(5)).with(Width::wrap(12))) // tag
             .with(Style::modern_rounded());
         println!("{}", table);
         Ok(())
@@ -340,13 +342,14 @@ impl TodoList {
 
     pub fn add(
         &mut self,
-        flags: (Option<String>, Option<i64>, Option<String>),
+        flags: (Option<String>, Option<i64>, Option<String>, Option<String>),
     ) -> Result<(), Box<dyn Error>> {
         let current_list = std::env::var("CURRENT")?;
         log::info!("currently on list {current_list}");
         let current_list_id = util::fetch_active_list_id(&self.db_path)?;
         let conn = util::connect_to_db(&self.db_path)?;
-        let (task, prio, due) = flags;
+        let (task, prio, due, raw_tag) = flags;
+        let tag: Option<Tag> = raw_tag.map(Tag);
         let due_date: Option<Datetime> = match due {
             Some(ref date) => Some(util::parse_date(date)?),
             None => None,
@@ -378,6 +381,7 @@ impl TodoList {
                 &Status::Open as &dyn ToSql,
                 &prio.unwrap_or_default() as &dyn ToSql,
                 &due_date.unwrap_or(epoch()),
+                &tag,
                 &Datetime::new() as &dyn ToSql,
             ],
         )?;
