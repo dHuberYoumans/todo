@@ -6,11 +6,17 @@ pub struct UserPaths {
     pub config: Option<PathBuf>,
 }
 
+impl Default for UserPaths {
+    fn default() -> Self {
+        UserPaths::new()
+    }
+}
+
 impl UserPaths {
-    pub fn new() -> Self{
+    pub fn new() -> Self {
         let xdg = Xdg::new().expect("✘ Could not reslove XDG directories");
         let home = xdg.home().to_path_buf();
         let config = xdg.config().map(|conf| conf.join("todo/todo.config")).ok();
-        Self { home, config } 
+        Self { home, config }
     }
 }

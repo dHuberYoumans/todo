@@ -16,7 +16,7 @@ pub fn fetch_collection() -> String {
         r#"
             SELECT (name) FROM {table};
         "#,
-        table=COLLECTION,
+        table = COLLECTION,
     )
 }
 
@@ -40,7 +40,8 @@ pub fn add_to_table(table: &str, list_id: i64) -> String {
 }
 
 pub fn create_list(table: &str) -> String {
-    format!(r#"
+    format!(
+        r#"
             CREATE TABLE IF NOT EXISTS {table} (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 list_id INTEGER NOT NULL REFERENCES {collection}(id),
@@ -49,8 +50,8 @@ pub fn create_list(table: &str) -> String {
                 prio INTEGER,
                 due INTEGER,
                 created_at INTEGER
-            );"#, 
-        collection=COLLECTION
+            );"#,
+        collection = COLLECTION
     )
 }
 
@@ -59,7 +60,7 @@ pub fn fetch_all_ids(list: &str) -> String {
         r#"
             SELECT id FROM {table};
         "#,
-        table=list,
+        table = list,
     )
 }
 
@@ -71,7 +72,7 @@ pub fn delete_list(list: &str) -> String {
             DROP TABLE IF EXISTS {list};
             COMMIT;
         "#,
-        collection=COLLECTION
+        collection = COLLECTION
     )
 }
 
@@ -95,9 +96,9 @@ pub fn fetch_list_id(name: &str) -> String {
     format!(
         r#"
             SELECT id FROM {table} WHERE name='{name}';
-        "#, 
-        table=COLLECTION,
-        )
+        "#,
+        table = COLLECTION,
+    )
 }
 
 pub fn unpdate_task_by_id(list: &str) -> String {

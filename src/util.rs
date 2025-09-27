@@ -1,48 +1,26 @@
-use std::str::FromStr;
-use std::{
-    fs,
-    env,
-    fmt,
-    path::PathBuf,
-    error::Error,
-    process,
-    io::Read
-};
-use toml;
-use glob;
-use chrono::{prelude::*};
-use chrono::{
-    Datelike,
-    Duration,
-    Local,
-    Weekday,
-    NaiveDate
-};
+use chrono::prelude::*;
+use chrono::{Datelike, Duration, Local, NaiveDate, Weekday};
+use clap::ValueEnum;
 use dirs::home_dir;
-use tabled::Tabled;
-use rusqlite::{
-    Result,
-    Connection,
-    types::{
-        FromSql,
-        ToSql,
-        ValueRef,
-        FromSqlError,
-        FromSqlResult,
-        ToSqlOutput,
-    }
-};
-use clap::{ValueEnum};
+use glob;
 use log;
+use rusqlite::{
+    types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
+    Connection, Result,
+};
+use std::str::FromStr;
+use std::{env, error::Error, fmt, fs, io::Read, path::PathBuf, process};
+use tabled::Tabled;
+use toml;
 
 use crate::config;
-use crate::queries;
 use crate::paths::UserPaths;
+use crate::queries;
 
 const TMP_FILE: &str = "./EDIT_TASK";
 
 #[derive(Debug, Tabled, PartialEq, PartialOrd)]
-pub struct TodoItem{
+pub struct TodoItem {
     pub id: i64,
     pub task: String,
     pub status: Status,
@@ -54,7 +32,7 @@ pub struct TodoItem{
 #[derive(Debug, PartialEq, PartialOrd, ValueEnum, Clone)]
 pub enum Status {
     Closed,
-    Open
+    Open,
 }
 
 impl FromSql for Status {
@@ -80,14 +58,14 @@ impl ToSql for Status {
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Status::Open => write!(f, "✘"), 
-            Status::Closed => write!(f, "✔︎"), 
+            Status::Open => write!(f, "✘"),
+            Status::Closed => write!(f, "✔︎"),
         }
     }
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Default)]
-pub enum Prio{
+pub enum Prio {
     P1,
     P2,
     P3,
@@ -113,7 +91,7 @@ impl ToSql for Prio {
             Prio::P1 => 1,
             Prio::P2 => 2,
             Prio::P3 => 3,
-            Prio::Empty => 0
+            Prio::Empty => 0,
         };
         Ok(ToSqlOutput::from(value))
     }
@@ -122,38 +100,47 @@ impl ToSql for Prio {
 impl fmt::Display for Prio {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-           Prio::P1 => write!(f, "P1"), 
-           Prio::P2 => write!(f, "P2"), 
-           Prio::P3 => write!(f, "P3"), 
-           Prio::Empty => write!(f, ""),
+            Prio::P1 => write!(f, "P1"),
+            Prio::P2 => write!(f, "P2"),
+            Prio::P3 => write!(f, "P3"),
+            Prio::Empty => write!(f, ""),
         }
     }
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
-pub struct Datetime{
+pub struct Datetime {
     pub timestamp: DateTime<Local>,
+}
+
+impl Default for Datetime {
+    fn default() -> Self {
+        Datetime::new()
+    }
 }
 
 impl Datetime {
     pub fn new() -> Self {
-        Self { 
+        Self {
             timestamp: Local::now(),
         }
     }
 }
 
-
 impl FromSql for Datetime {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         match value {
             ValueRef::Integer(timestamp) => {
-                let utc_time = DateTime::from_timestamp(timestamp, 0).ok_or(FromSqlError::InvalidType)?;
-                Ok(Datetime { timestamp:  DateTime::with_timezone(&utc_time,&Local)})
+                let utc_time =
+                    DateTime::from_timestamp(timestamp, 0).ok_or(FromSqlError::InvalidType)?;
+                Ok(Datetime {
+                    timestamp: DateTime::with_timezone(&utc_time, &Local),
+                })
             }
-            _ => Err(FromSqlError::InvalidType)
+            _ => Err(FromSqlError::InvalidType),
         }
-    }}
+    }
+}
 
 impl ToSql for Datetime {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
@@ -197,23 +184,30 @@ pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
         }
         let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
         let local_dt = Local.from_local_datetime(&naive_dt).unwrap();
-        Ok(Datetime { timestamp: local_dt })
-    } 
-    else {
+        Ok(Datetime {
+            timestamp: local_dt,
+        })
+    } else {
         match input {
             "today" => Ok(Datetime::new()),
             "tomorrow" => {
                 let today = Local::now().date_naive();
                 let tomorrow = today.succ_opt().unwrap(); // safe until end of time
-                let tomorrow_dt = Local.from_local_datetime(&tomorrow.and_time(NaiveTime::MIN)).unwrap();
-                Ok( Datetime { timestamp:  tomorrow_dt})
-            },
+                let tomorrow_dt = Local
+                    .from_local_datetime(&tomorrow.and_time(NaiveTime::MIN))
+                    .unwrap();
+                Ok(Datetime {
+                    timestamp: tomorrow_dt,
+                })
+            }
             _ => {
                 let date = NaiveDate::parse_from_str(input, "%d-%m-%Y")
             .map_err(|_| "✘ Invalid date format.\nUse either of the following:\n* today\n* tomorrow\n* 3 letter days for the next weekday\n* dd-mm-yyyy for a specific day")?;
-        let naive_dt = date.and_hms_opt(0,0,0).unwrap();
-        let local_dt = Local.from_local_datetime(&naive_dt).single().unwrap();
-        Ok(Datetime { timestamp: local_dt})
+                let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
+                let local_dt = Local.from_local_datetime(&naive_dt).single().unwrap();
+                Ok(Datetime {
+                    timestamp: local_dt,
+                })
             }
         }
     }
@@ -221,7 +215,9 @@ pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
 
 pub fn epoch() -> Datetime {
     let epoch_local = DateTime::<Local>::from(DateTime::UNIX_EPOCH);
-    Datetime { timestamp: epoch_local }
+    Datetime {
+        timestamp: epoch_local,
+    }
 }
 
 pub fn get_db_path() -> Option<PathBuf> {
@@ -247,22 +243,21 @@ pub fn get_todo_dir() -> Option<PathBuf> {
 pub fn edit_in_editor(old_text: Option<String>) -> String {
     let editor = env::var("EDITOR").unwrap_or(String::from("vi"));
     let path = PathBuf::from(TMP_FILE);
-    fs::File::create(&path)
-        .expect(format!("✘ Could not open file {}", TMP_FILE).as_str());
+    fs::File::create(&path).unwrap_or_else(|_| panic!("✘ Could not open file {}", TMP_FILE));
     if let Some(text) = old_text {
-        fs::write(&path,text).expect(format!("✘ Could not write to file {}", TMP_FILE).as_str());
+        fs::write(&path, text).unwrap_or_else(|_| panic!("✘ Could not write to file {}", TMP_FILE));
     };
     process::Command::new(editor)
         .arg(&path)
         .status()
         .expect("✘ Couldn't open your editor");
-    let mut task = String::new(); 
+    let mut task = String::new();
     fs::File::open(&path)
-        .expect(format!("✘ Could not open file {}", TMP_FILE).as_str())
+        .unwrap_or_else(|_| panic!("✘ Could not open file {}", TMP_FILE))
         .read_to_string(&mut task)
         .expect("✘ Couldn't parse task");
     cleanup_tmp_files().expect("✘ Error during cleanup");
-    return task;
+    task
 }
 
 fn cleanup_tmp_files() -> Result<(), Box<dyn Error>> {
@@ -277,21 +272,24 @@ fn cleanup_tmp_files() -> Result<(), Box<dyn Error>> {
 }
 
 pub fn connect_to_db(db: &Option<PathBuf>) -> Result<Connection, Box<dyn Error>> {
-        log::info!("connecting to database at {}", log_opt_path(db));
-        let conn = if let Some(path) = db {
-            Connection::open(&path)?
-        } else {
-            return Err("No path to database found. Consider 'todo init' to initialize a data base".into());
-        };
-        Ok(conn)
-    }
-
+    log::info!("connecting to database at {}", log_opt_path(db));
+    let conn = if let Some(path) = db {
+        Connection::open(path)?
+    } else {
+        return Err(
+            "No path to database found. Consider 'todo init' to initialize a data base".into(),
+        );
+    };
+    Ok(conn)
+}
 
 pub fn dotenv() -> Result<PathBuf, Box<dyn Error>> {
     let dotenv = if let Some(path) = get_env_path() {
         path
     } else {
-       return Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into());
+        return Err(
+            "✘ No path to database found. Consider 'todo init' to initialize a data base".into(),
+        );
     };
     Ok(dotenv)
 }
