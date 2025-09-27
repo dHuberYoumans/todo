@@ -1,0 +1,190 @@
+use assert_cmd::Command;
+use assert_fs::prelude::*;
+use assert_fs::TempDir;
+use predicates::prelude::*;
+use std::path::PathBuf;
+
+struct MockData {
+    tmp: TempDir,
+    home: PathBuf,
+    config_path: PathBuf,
+    config_file: PathBuf,
+}
+
+impl MockData {
+    fn new() -> Self {
+        let tmp = TempDir::new().unwrap();
+        let home = tmp.to_path_buf();
+        let config_file = tmp.child("config.toml");
+        let config_path = tmp.path().join(".todo/.test.db");
+        config_file
+            .write_str(
+                format!(
+                    r#"[database]
+    TODO_DB="{}""#,
+                    config_path.to_string_lossy()
+                )
+                .as_str(),
+            )
+            .unwrap();
+        Self {
+            tmp,
+            home: home,
+            config_path: config_path.to_path_buf(),
+            config_file: config_file.to_path_buf(),
+        }
+    }
+
+    fn cmd(&self) -> Command {
+        let mut cmd = Command::cargo_bin("todo").unwrap();
+        cmd.env("HOME", &self.home).env("CONFIG", &self.config_file);
+        cmd
+    }
+
+    fn add(&self, task: &str, prio: &str, due: &str) -> Command {
+        let input = format!("add -m {task} --prio={prio} --due={due}");
+        let args: Vec<&str> = input.split_whitespace().collect();
+        let mut add_task = self.cmd();
+        add_task.args(&args);
+        add_task
+    }
+
+    fn get_stdout(&self, flag: Option<&str>) -> Vec<u8> {
+        let out = if let Some(flag) = flag {
+            &self.cmd()
+                .arg("list")
+                .arg(flag)
+                .assert()
+                .get_output()
+                .stdout
+                .clone()
+        } else {
+            &self.cmd()
+                .arg("list")
+                .assert()
+                .get_output()
+                .stdout
+                .clone()
+        };
+        out.clone()
+    }
+}
+
+#[test]
+fn init() {
+    let mock = MockData::new();
+    mock.cmd()
+        .arg("init")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Initializing.."))
+        .stdout(predicate::str::contains("Setting up database.."))
+        .stdout(predicate::str::contains("Creating new_list.."))
+        .stdout(predicate::str::contains("✔ Created new list 'todo'"))
+        .stdout(predicate::str::contains("✔ Added 'todo' to collection"))
+        .stdout(predicate::str::contains("✔ All done"));
+    mock.tmp
+        .child(mock.config_path)
+        .assert(predicates::path::exists());
+}
+
+#[test]
+fn list() {
+    let expected = r#"
+╭───────┬──────┬────────┬──────┬─────┬──────────────╮
+│ id    │ task │ status │ prio │ due │ created_at   │
+╰───────┴──────┴────────┴──────┴─────┴──────────────╯"#;
+    let mock = MockData::new();
+    mock.cmd().arg("init").assert().success();
+    let out = mock.get_stdout(None);
+    let stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, expected.trim());
+}
+
+#[test]
+fn add() {
+    let expected = r#"
+╭───────┬───────┬────────┬──────┬───────┬──────────────╮
+│ id    │ task  │ status │ prio │ due   │ created_at   │
+├───────┼───────┼────────┼──────┼───────┼──────────────┤
+│ 1     │ first │ ✘      │ P1   │ Today │ Today        │
+╰───────┴───────┴────────┴──────┴───────┴──────────────╯
+"#;
+    let mock = MockData::new();
+    mock.cmd().arg("init").assert().success();
+    mock.add("first","1","today").assert().success();
+    let out = mock.get_stdout(None);
+    let stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, expected.trim());
+}
+
+#[test]
+fn close_open() {
+    let open = r#"
+╭───────┬───────┬────────┬──────┬───────┬──────────────╮
+│ id    │ task  │ status │ prio │ due   │ created_at   │
+├───────┼───────┼────────┼──────┼───────┼──────────────┤
+│ 1     │ first │ ✘      │ P1   │ Today │ Today        │
+╰───────┴───────┴────────┴──────┴───────┴──────────────╯
+"#;
+    let closed = r#"
+╭───────┬───────┬────────┬──────┬───────┬──────────────╮
+│ id    │ task  │ status │ prio │ due   │ created_at   │
+├───────┼───────┼────────┼──────┼───────┼──────────────┤
+│ 1     │ first │ ✔      │ P1   │ Today │ Today        │
+╰───────┴───────┴────────┴──────┴───────┴──────────────╯
+"#;
+    let mock = MockData::new();
+    mock.cmd().arg("init").assert().success();
+    mock.add("first", "1", "today").assert().success(); 
+    mock.cmd().arg("close").arg("1").assert().success();
+    // close the task
+    let out_closed = mock.get_stdout(Some("--done"));
+    let mut stdout = String::from_utf8_lossy(&out_closed).trim().to_string();
+    assert_eq!(stdout, closed.trim());
+    // open the task
+    mock.cmd().arg("open").arg("1").assert().success();
+    let out_open = mock.get_stdout(None);
+    stdout = String::from_utf8_lossy(&out_open).trim().to_string();
+    assert_eq!(stdout, open.trim());
+}
+
+#[test]
+fn delete_delete_all() {
+    let expected = r#"
+╭───────┬──────┬────────┬──────┬─────┬──────────────╮
+│ id    │ task │ status │ prio │ due │ created_at   │
+╰───────┴──────┴────────┴──────┴─────┴──────────────╯"#;
+    let mock = MockData::new();
+    mock.cmd().arg("init").assert().success();
+    mock.add("first","1","today").assert().success();
+    mock.cmd().arg("delete").arg("1").assert().success();
+    let mut out = mock.get_stdout(None);
+    let mut stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, expected.trim());
+    mock.add("first","1","today").assert().success();
+    mock.add("second","2","tomorrow").assert().success();
+    mock.cmd().arg("delete-all").assert().success();
+    out = mock.get_stdout(None);
+    stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, expected.trim());
+}
+
+#[test]
+fn new_list_load_and_who_is_this() {
+    let expected = "This is foo. Ready for duty!";
+    let mock = MockData::new();
+    mock.cmd().arg("init").assert().success();
+    mock.cmd().arg("new-list").arg("foo").assert().success();
+    mock.cmd().arg("load").arg("foo").assert().success();
+    let out = mock.cmd()
+        .arg("who-is-this")
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, expected.trim());
+}
+
