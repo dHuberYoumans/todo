@@ -117,7 +117,7 @@ impl TodoList {
         let mut file_path = home.to_path_buf();
         file_path.push(".todo/.env");
         if file_path.exists() {
-            println!("✔︎ Environmental setup found");
+            println!("✔ Environmental setup found");
             return Ok(());
         }
         println!("⧖ Setting up database..");
@@ -148,7 +148,7 @@ impl TodoList {
         conn.execute(&queries::create_collection(), [])?;
         log::info!("creating new table");
         self.new_list(String::from("todo"), false)?;
-        println!("✔︎ All done");
+        println!("✔ All done");
         Ok(())
     }
 
@@ -159,7 +159,7 @@ impl TodoList {
         let new_config = util::edit_in_editor(config);
         log::info!("write new config");
         fs::write(path, new_config)?;
-        println!("✔︎ Config written");
+        println!("✔ Config written");
         Ok(())
     }
 
@@ -228,14 +228,14 @@ impl TodoList {
         let conn = connect_to_db(&self.db_path)?;
         log::debug!("executing query `{}`", &queries::create_list(&list));
         conn.execute(&queries::create_list(&list), [])?;
-        println!("✔︎ Created new list '{list}'");
+        println!("✔ Created new list '{list}'");
         log::debug!("executing query `{}`", &queries::add_to_collection(&list));
         conn.execute(&queries::add_to_collection(&list), [])?;
-        println!("✔︎ Added '{list}' to collection");
+        println!("✔ Added '{list}' to collection");
         if checkout {
             log::info!("checking out list '{list}'");
             self.load(list.clone())?;
-            println!("✔︎ Now using '{list}'");
+            println!("✔ Now using '{list}'");
         };
         Ok(())
     }
@@ -268,7 +268,7 @@ impl TodoList {
         }
         log::debug!("executing query `{}`", &queries::delete_list(&list));
         conn.execute_batch(&queries::delete_list(&list))?;
-        println!("✔︎ List '{list}' removed");
+        println!("✔ List '{list}' removed");
         log::debug!("writing dotenv `{new_content}`");
         let mut file = fs::File::create(dotenv)?;
         file.write_all(new_content.as_bytes())?;
@@ -324,7 +324,7 @@ impl TodoList {
         let mut file = fs::File::create(dotenv)?;
         log::info!("writing back to .env");
         file.write_all(new_content.as_bytes())?;
-        println!("✔︎ Checked out '{list}'");
+        println!("✔ Checked out '{list}'");
         Ok(())
     }
 

@@ -59,7 +59,7 @@ impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Status::Open => write!(f, "✘"),
-            Status::Closed => write!(f, "✔︎"),
+            Status::Closed => write!(f, "✔"),
         }
     }
 }
