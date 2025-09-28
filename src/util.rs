@@ -64,7 +64,7 @@ impl fmt::Display for Status {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Tag(pub String);
 
 impl ToSql for Tag {

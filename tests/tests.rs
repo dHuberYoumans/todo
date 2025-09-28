@@ -50,17 +50,51 @@ impl MockData {
     }
 
     fn get_stdout(&self, flag: Option<&str>) -> Vec<u8> {
-        let out = if let Some(flag) = flag {
-            &self
+        let out = match flag {
+            Some("--done") => &self
                 .cmd()
                 .arg("list")
-                .arg(flag)
+                .arg("--done")
                 .assert()
                 .get_output()
                 .stdout
-                .clone()
-        } else {
-            &self.cmd().arg("list").assert().get_output().stdout.clone()
+                .clone(),
+            Some("--all") => &self
+                .cmd()
+                .arg("list")
+                .arg("--all")
+                .assert()
+                .get_output()
+                .stdout
+                .clone(),
+            Some("--sort tag") => &self
+                .cmd()
+                .arg("list")
+                .arg("--sort")
+                .arg("tag")
+                .assert()
+                .get_output()
+                .stdout
+                .clone(),
+            Some("--sort prio") => &self
+                .cmd()
+                .arg("list")
+                .arg("--sort")
+                .arg("prio")
+                .assert()
+                .get_output()
+                .stdout
+                .clone(),
+            Some("--sort due") => &self
+                .cmd()
+                .arg("list")
+                .arg("--sort")
+                .arg("due")
+                .assert()
+                .get_output()
+                .stdout
+                .clone(),
+            _ => &self.cmd().arg("list").assert().get_output().stdout.clone(),
         };
         out.clone()
     }
@@ -112,6 +146,62 @@ fn add() {
     let out = mock.get_stdout(None);
     let stdout = String::from_utf8_lossy(&out).trim().to_string();
     assert_eq!(stdout, expected.trim());
+}
+
+#[test]
+fn sort() {
+    let by_tag = r#"
+╭───────┬────────┬────────┬──────┬────────────┬──────╮
+│ id    │ task   │ status │ prio │ due        │ tag  │
+├───────┼────────┼────────┼──────┼────────────┼──────┤
+│ 2     │ second │ ✘      │ P2   │ Today      │ #abc │
+├───────┼────────┼────────┼──────┼────────────┼──────┤
+│ 1     │ first  │ ✘      │ P1   │ Tomorrow   │ #tag │
+├───────┼────────┼────────┼──────┼────────────┼──────┤
+│ 3     │ third  │ ✘      │ P3   │ 2020-01-01 │ #xyz │
+╰───────┴────────┴────────┴──────┴────────────┴──────╯
+    "#;
+    let by_prio = r#"
+╭───────┬────────┬────────┬──────┬────────────┬──────╮
+│ id    │ task   │ status │ prio │ due        │ tag  │
+├───────┼────────┼────────┼──────┼────────────┼──────┤
+│ 1     │ first  │ ✘      │ P1   │ Tomorrow   │ #tag │
+├───────┼────────┼────────┼──────┼────────────┼──────┤
+│ 2     │ second │ ✘      │ P2   │ Today      │ #abc │
+├───────┼────────┼────────┼──────┼────────────┼──────┤
+│ 3     │ third  │ ✘      │ P3   │ 2020-01-01 │ #xyz │
+╰───────┴────────┴────────┴──────┴────────────┴──────╯
+"#;
+    let by_due = r#"
+╭───────┬────────┬────────┬──────┬────────────┬──────╮
+│ id    │ task   │ status │ prio │ due        │ tag  │
+├───────┼────────┼────────┼──────┼────────────┼──────┤
+│ 3     │ third  │ ✘      │ P3   │ 2020-01-01 │ #xyz │
+├───────┼────────┼────────┼──────┼────────────┼──────┤
+│ 2     │ second │ ✘      │ P2   │ Today      │ #abc │
+├───────┼────────┼────────┼──────┼────────────┼──────┤
+│ 1     │ first  │ ✘      │ P1   │ Tomorrow   │ #tag │
+╰───────┴────────┴────────┴──────┴────────────┴──────╯
+"#;
+    let mock = MockData::new();
+    mock.cmd().arg("init").assert().success();
+    mock.add("first", "1", "tomorrow", "tag").assert().success();
+    mock.add("second", "2", "today", "abc").assert().success();
+    mock.add("third", "3", "01-01-2020", "xyz")
+        .assert()
+        .success();
+    // sort by tag
+    let mut out = mock.get_stdout(Some("--sort tag"));
+    let mut stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, by_tag.trim());
+    // sort by prio
+    out = mock.get_stdout(Some("--sort prio"));
+    stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, by_prio.trim());
+    // sort by due
+    out = mock.get_stdout(Some("--sort due"));
+    stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, by_due.trim());
 }
 
 #[test]

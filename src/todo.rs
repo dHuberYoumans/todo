@@ -206,6 +206,7 @@ impl TodoList {
         match sort_key {
             "id" => self.tasks.sort_by_key(|entry| Reverse(entry.id)),
             "prio" => self.tasks.sort_by_key(|entry| entry.prio.clone()),
+            "tag" => self.tasks.sort_by_key(|entry| entry.tag.clone()),
             "due" => self.tasks.sort_by_key(|entry| {
                 let key = entry.due.clone();
                 (key == epoch(), key)
