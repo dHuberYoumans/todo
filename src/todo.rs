@@ -67,6 +67,8 @@ pub enum Cmd {
         sort: Option<String>,
         #[arg(long, help = "Show collection")]
         collection: bool,
+        #[arg(long, help = "Display available tags")]
+        tags: bool,
     },
     /// Mark a task as completed
     Close { id: i64 },
@@ -288,6 +290,21 @@ impl TodoList {
         println!("Your collection\n===============");
         for list in collection_iter.flatten() {
             println!("• {list}");
+        }
+        Ok(())
+    }
+
+    pub fn list_tags(&self) -> Result<(), Box<dyn Error>> {
+        let conn = connect_to_db(&self.db_path)?;
+        let current = std::env::var("CURRENT")?;
+        let mut stmt = conn.prepare(&queries::fetch_tags(&current))?;
+        let tags_iter = stmt.query_map([], |row| {
+            let list = row.get::<_, String>("tag")?;
+            Ok(list)
+        })?;
+        println!("Your tags\n==========");
+        for tag in tags_iter.flatten() {
+            println!("• {tag}");
         }
         Ok(())
     }

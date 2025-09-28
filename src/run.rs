@@ -29,6 +29,7 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>> {
                 done,
                 sort,
                 collection,
+                tags,
             } => {
                 if all {
                     todo_list.list((Some("--all".into()), sort))?;
@@ -36,6 +37,8 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>> {
                     todo_list.list((Some("--done".into()), sort))?;
                 } else if collection {
                     todo_list.list_collection()?;
+                } else if tags {
+                    todo_list.list_tags()?;
                 } else {
                     todo_list.list((None, sort))?;
                 }

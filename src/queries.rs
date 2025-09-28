@@ -102,6 +102,14 @@ pub fn fetch_list_id(name: &str) -> String {
     )
 }
 
+pub fn fetch_tags(list: &str) -> String {
+    format!(
+        r#"
+            SELECT DISTINCT tag FROM {list};
+        "#,
+    )
+}
+
 pub fn unpdate_task_by_id(list: &str) -> String {
     format!(
         r#"
