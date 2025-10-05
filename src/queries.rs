@@ -20,6 +20,16 @@ pub fn fetch_collection() -> String {
     )
 }
 
+pub fn fetch_due_date(date: i64) -> String {
+    let current = std::env::var("CURRENT").unwrap_or("todo".into());
+    format!(
+        r#"
+        SELECT * FROM {current}
+        WHERE due={date};
+    "#,
+    )
+}
+
 pub fn add_to_collection(list: &str) -> String {
     format!(
         r#"

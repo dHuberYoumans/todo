@@ -208,7 +208,6 @@ pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
         "sun" => Some(Weekday::Sun),
         _ => None,
     };
-
     if let Some(target) = target {
         let today = Local::now();
         let mut date = today.date_naive();
@@ -222,7 +221,14 @@ pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
         })
     } else {
         match input {
-            "today" => Ok(Datetime::new()),
+            "today" => {
+                let today = Local::now().date_naive();
+                let naive_dt = today.and_hms_opt(0, 0, 0).unwrap();
+                let local_dt = Local.from_local_datetime(&naive_dt).unwrap();
+                Ok(Datetime {
+                    timestamp: local_dt,
+                })
+            }
             "tomorrow" => {
                 let today = Local::now().date_naive();
                 let tomorrow = today.succ_opt().unwrap(); // safe until end of time

@@ -69,6 +69,7 @@ pub enum Cmd {
         collection: bool,
         #[arg(long, help = "Display available tags")]
         tags: bool,
+        arg: Option<String>,
     },
     /// Mark a task as completed
     Close { id: i64 },
@@ -199,9 +200,8 @@ impl TodoList {
                 tag: row.get::<_, Tag>("tag")?,
             })
         })?;
-        for task_result in tasks_iter {
-            let task = task_result?;
-            self.tasks.push(task);
+        for task in tasks_iter {
+            self.tasks.push(task?);
         }
         let sort_key = flags.1.as_deref().unwrap_or("id");
         log::debug!("using sort key {sort_key}");
@@ -215,6 +215,42 @@ impl TodoList {
             }),
             _ => self.tasks.sort_by_key(|entry| Reverse(entry.id)),
         };
+        let mut table = Table::new(&self.tasks);
+        table
+            .with(Modify::new(Columns::single(0)).with(Width::increase(5))) // id
+            .with(Modify::new(Columns::single(1)).with(Width::wrap(60))) // task
+            .with(Modify::new(Columns::single(2)).with(Width::increase(3))) // status
+            .with(Modify::new(Columns::single(3)).with(Width::increase(3))) // prio
+            .with(Modify::new(Columns::single(4)).with(Width::increase(3))) // due
+            .with(Modify::new(Columns::single(5)).with(Width::wrap(12))) // tag
+            .with(Style::modern_rounded());
+        println!("{}", table);
+        Ok(())
+    }
+
+    pub fn list_due_date(&mut self, date_str: String) -> Result<(), Box<dyn Error>> {
+        let date = if let Some(date) = date_str.strip_prefix("@") {
+            util::parse_date(date)?.timestamp.timestamp()
+        } else {
+            return Err("✘ Invalid date".into());
+        };
+        log::debug!("parsing date -- found '{date}'");
+        let conn = connect_to_db(&self.db_path)?;
+        log::debug!("executing query `{}`", &queries::fetch_due_date(date));
+        let mut stmt = conn.prepare(&queries::fetch_due_date(date))?;
+        let entries = stmt.query_map([], |row| {
+            Ok(TodoItem {
+                id: row.get::<_, i64>("id")?,
+                task: row.get::<_, String>("task")?,
+                status: row.get::<_, Status>("status")?,
+                prio: row.get::<_, Prio>("prio")?,
+                due: row.get::<_, Datetime>("due")?,
+                tag: row.get::<_, Tag>("tag")?,
+            })
+        })?;
+        for entry in entries {
+            let _ = &self.tasks.push(entry?);
+        }
         let mut table = Table::new(&self.tasks);
         table
             .with(Modify::new(Columns::single(0)).with(Width::increase(5))) // id

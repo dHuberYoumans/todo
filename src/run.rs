@@ -30,19 +30,23 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>> {
                 sort,
                 collection,
                 tags,
-            } => {
-                if all {
-                    todo_list.list((Some("--all".into()), sort))?;
-                } else if done {
-                    todo_list.list((Some("--done".into()), sort))?;
-                } else if collection {
-                    todo_list.list_collection()?;
-                } else if tags {
-                    todo_list.list_tags()?;
-                } else {
-                    todo_list.list((None, sort))?;
+                arg,
+            } => match arg {
+                Some(arg) => todo_list.list_due_date(arg)?,
+                _ => {
+                    if all {
+                        todo_list.list((Some("--all".into()), sort))?;
+                    } else if done {
+                        todo_list.list((Some("--done".into()), sort))?;
+                    } else if collection {
+                        todo_list.list_collection()?;
+                    } else if tags {
+                        todo_list.list_tags()?;
+                    } else {
+                        todo_list.list((None, sort))?;
+                    }
                 }
-            }
+            },
             Cmd::Close { id } => todo_list.close(id)?,
             Cmd::Open { id } => todo_list.open(id)?,
             Cmd::Delete { id } => todo_list.delete(id)?,
