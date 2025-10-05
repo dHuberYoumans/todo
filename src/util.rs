@@ -82,14 +82,18 @@ impl FromSql for Tag {
                 let stripped = sql_str.strip_prefix("#").unwrap_or(sql_str);
                 Ok(Tag(stripped.to_string()))
             }
-            _ => Err(FromSqlError::InvalidType),
+            _ => Ok(Tag(String::new())),
         }
     }
 }
 
 impl fmt::Display for Tag {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "#{}", self.0)
+        if self.0.is_empty() {
+            write!(f, "")
+        } else {
+            write!(f, "#{}", self.0)
+        }
     }
 }
 
