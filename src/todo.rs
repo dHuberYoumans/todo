@@ -132,11 +132,27 @@ impl TodoList {
             .create(true)
             .open(file_path)?;
         if let Some(config) = user_paths.config {
-            log::debug!("$CONFIG={:?}", &config);
-            writeln!(env, "CONFIG={}", config.to_string_lossy())?
+            log::debug!("$CONFIG={config:?}");
+            writeln!(env, "CONFIG={}", config.to_string_lossy())?;
+            log::info!("Creating default config file");
+            if let Some(parent) = config.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            let mut config_file = fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open(&config)?;
+            let mut db_path = home.to_path_buf();
+            db_path.push(".todo/todo.db");
+            writeln!(
+                config_file,
+                "[database]\ntodo_db = \"{}\"",
+                db_path.to_string_lossy()
+            )?;
         } else {
             log::debug!("CONFIG not found. Setting CONFIG=");
-            writeln!(env, "CONFIG=")?
+            writeln!(env, "CONFIG=")?;
         }
         writeln!(env, "CURRENT=todo")?;
         writeln!(env, "PREVIOUS=todo")?;

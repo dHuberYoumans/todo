@@ -21,7 +21,7 @@ impl MockData {
             .write_str(
                 format!(
                     r#"[database]
-    TODO_DB="{}""#,
+    todo_db="{}""#,
                     config_path.to_string_lossy()
                 )
                 .as_str(),

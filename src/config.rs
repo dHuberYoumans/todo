@@ -7,6 +7,5 @@ pub struct Config {
 
 #[derive(Debug, Deserialize)]
 pub struct Database {
-    #[serde(rename = "TODO_DB")]
     pub todo_db: String,
 }
