@@ -32,7 +32,8 @@ pub fn run(args: Args) -> Result<(), Box<dyn Error>> {
                 tags,
                 arg,
             } => match arg {
-                Some(arg) => todo_list.list_due_date(arg)?,
+                Some(arg) if arg.starts_with('@') => todo_list.list_due_date(arg)?,
+                Some(arg) if arg.starts_with('#') => todo_list.list_tag(arg)?,
                 _ => {
                     if all {
                         todo_list.list((Some("--all".into()), sort))?;

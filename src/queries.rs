@@ -30,6 +30,16 @@ pub fn fetch_due_date(date: i64) -> String {
     )
 }
 
+pub fn fetch_tag(tag: &str) -> String {
+    let current = std::env::var("CURRENT").unwrap_or("todo".into());
+    format!(
+        r#"
+        SELECT * FROM {current}
+        WHERE tag='{tag}';
+    "#,
+    )
+}
+
 pub fn add_to_collection(list: &str) -> String {
     format!(
         r#"
