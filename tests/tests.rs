@@ -50,51 +50,17 @@ impl MockData {
     }
 
     fn get_stdout(&self, flag: Option<&str>) -> Vec<u8> {
-        let out = match flag {
-            Some("--done") => &self
+        let out = if let Some(flag) = flag {
+            &self
                 .cmd()
                 .arg("list")
-                .arg("--done")
+                .arg(flag)
                 .assert()
                 .get_output()
                 .stdout
-                .clone(),
-            Some("--all") => &self
-                .cmd()
-                .arg("list")
-                .arg("--all")
-                .assert()
-                .get_output()
-                .stdout
-                .clone(),
-            Some("--sort tag") => &self
-                .cmd()
-                .arg("list")
-                .arg("--sort")
-                .arg("tag")
-                .assert()
-                .get_output()
-                .stdout
-                .clone(),
-            Some("--sort prio") => &self
-                .cmd()
-                .arg("list")
-                .arg("--sort")
-                .arg("prio")
-                .assert()
-                .get_output()
-                .stdout
-                .clone(),
-            Some("--sort due") => &self
-                .cmd()
-                .arg("list")
-                .arg("--sort")
-                .arg("due")
-                .assert()
-                .get_output()
-                .stdout
-                .clone(),
-            _ => &self.cmd().arg("list").assert().get_output().stdout.clone(),
+                .clone()
+        } else {
+            &self.cmd().arg("list").assert().get_output().stdout.clone()
         };
         out.clone()
     }
@@ -191,15 +157,15 @@ fn sort() {
         .assert()
         .success();
     // sort by tag
-    let mut out = mock.get_stdout(Some("--sort tag"));
+    let mut out = mock.get_stdout(Some("--sort=tag"));
     let mut stdout = String::from_utf8_lossy(&out).trim().to_string();
     assert_eq!(stdout, by_tag.trim());
     // sort by prio
-    out = mock.get_stdout(Some("--sort prio"));
+    out = mock.get_stdout(Some("--sort=prio"));
     stdout = String::from_utf8_lossy(&out).trim().to_string();
     assert_eq!(stdout, by_prio.trim());
     // sort by due
-    out = mock.get_stdout(Some("--sort due"));
+    out = mock.get_stdout(Some("--sort=due"));
     stdout = String::from_utf8_lossy(&out).trim().to_string();
     assert_eq!(stdout, by_due.trim());
 }
