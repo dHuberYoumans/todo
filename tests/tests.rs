@@ -277,3 +277,49 @@ fn new_list_load_and_who_is_this() {
     let stdout = String::from_utf8_lossy(&out).trim().to_string();
     assert_eq!(stdout, expected.trim());
 }
+
+#[test]
+fn list_specific_due_date() {
+    let expected = r#"
+╭───────┬───────┬────────┬──────┬───────┬──────╮
+│ id    │ task  │ status │ prio │ due   │ tag  │
+├───────┼───────┼────────┼──────┼───────┼──────┤
+│ 1     │ first │ ✘      │ P1   │ Today │ #tag │
+╰───────┴───────┴────────┴──────┴───────┴──────╯
+    "#;
+    let mock = MockData::new();
+    mock.cmd().arg("init").assert().success();
+    mock.add("first", "1", "today", "tag").assert().success();
+    mock.add("second", "2", "tomorrow", "abc")
+        .assert()
+        .success();
+    mock.add("third", "3", "01-01-2020", "xyz")
+        .assert()
+        .success();
+    let out = mock.get_stdout(Some("@today"));
+    let stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, expected.trim());
+}
+
+#[test]
+fn list_specific_tag() {
+    let expected = r#"
+╭───────┬───────┬────────┬──────┬───────┬──────╮
+│ id    │ task  │ status │ prio │ due   │ tag  │
+├───────┼───────┼────────┼──────┼───────┼──────┤
+│ 1     │ first │ ✘      │ P1   │ Today │ #tag │
+╰───────┴───────┴────────┴──────┴───────┴──────╯
+    "#;
+    let mock = MockData::new();
+    mock.cmd().arg("init").assert().success();
+    mock.add("first", "1", "today", "tag").assert().success();
+    mock.add("second", "2", "tomorrow", "abc")
+        .assert()
+        .success();
+    mock.add("third", "3", "01-01-2020", "xyz")
+        .assert()
+        .success();
+    let out = mock.get_stdout(Some("#tag"));
+    let stdout = String::from_utf8_lossy(&out).trim().to_string();
+    assert_eq!(stdout, expected.trim());
+}
