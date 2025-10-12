@@ -11,9 +11,9 @@ use tabled::{
     Table,
 };
 
-use crate::paths::UserPaths;
 use crate::queries;
 use crate::util::{self, connect_to_db, epoch, Datetime, Prio, Status, Tag, TodoItem};
+use crate::{config::Config, paths::UserPaths};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -116,44 +116,29 @@ impl TodoList {
             // hijack env for testing
             PathBuf::from(path)
         } else {
-            user_paths.home
+            user_paths.home.clone()
         };
         log::debug!("$HOME={:?}", &home);
-        let mut file_path = home.to_path_buf();
-        file_path.push(".todo/.env");
-        if file_path.exists() {
+        let mut env_path = home.to_path_buf();
+        env_path.push(".todo/.env");
+        if env_path.exists() {
             println!("✔ Environmental setup found");
             return Ok(());
         }
         println!("⧖ Setting up database..");
-        fs::create_dir_all(file_path.parent().unwrap())?;
+        fs::create_dir_all(env_path.parent().unwrap())?;
         let mut env = fs::OpenOptions::new()
             .append(true)
             .create(true)
-            .open(file_path)?;
-        if let Some(config) = user_paths.config {
-            log::debug!("$CONFIG={config:?}");
+            .open(env_path)?;
+        log::debug!("$CONFIG={:?}", user_paths.config);
+        if let Some(config) = user_paths.config.clone() {
             writeln!(env, "CONFIG={}", config.to_string_lossy())?;
-            log::info!("Creating default config file");
-            if let Some(parent) = config.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            let mut config_file = fs::OpenOptions::new()
-                .write(true)
-                .create(true)
-                .truncate(true)
-                .open(&config)?;
-            let mut db_path = home.to_path_buf();
-            db_path.push(".todo/todo.db");
-            writeln!(
-                config_file,
-                "[database]\ntodo_db = \"{}\"",
-                db_path.to_string_lossy()
-            )?;
         } else {
             log::debug!("CONFIG not found. Setting CONFIG=");
             writeln!(env, "CONFIG=")?;
         }
+        Config::init()?;
         writeln!(env, "CURRENT=todo")?;
         writeln!(env, "PREVIOUS=todo")?;
         self.db_path = util::get_db_path();

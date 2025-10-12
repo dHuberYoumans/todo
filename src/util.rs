@@ -11,10 +11,8 @@ use rusqlite::{
 use std::str::FromStr;
 use std::{env, error::Error, fmt, fs, io::Read, path::PathBuf, process};
 use tabled::Tabled;
-use toml;
 
 use crate::config;
-use crate::paths::UserPaths;
 use crate::queries;
 
 const TMP_FILE: &str = "./EDIT_TASK";
@@ -260,17 +258,10 @@ pub fn epoch() -> Datetime {
 }
 
 pub fn get_db_path() -> Option<PathBuf> {
-    log::debug!("calling 'get_db_path'");
-    let user_paths = UserPaths::new();
-    let home = user_paths.home;
-    let env = home.join(".todo").join(".env");
-    log::debug!("env found at {env:?}");
-    dotenv::from_filename(env).ok();
-    let config_path = std::env::var("CONFIG").ok()?;
-    log::debug!("config found at {config_path:?}");
-    let config_file = fs::read_to_string(config_path).ok()?;
-    log::debug!("reading config {config_file:?}");
-    let config: config::Config = toml::from_str(&config_file).ok()?;
+    if let Err(e) = std::env::var("CONFIG") {
+        log::debug!("CONFIG env var not set: {e:?}");
+    }
+    let config = config::Config::read().ok()?;
     log::debug!("found config: {config:?}");
     PathBuf::from_str(&config.database.todo_db).ok()
 }
@@ -323,18 +314,11 @@ pub fn connect_to_db(db: &Option<PathBuf>) -> Result<Connection, Box<dyn Error>>
 }
 
 pub fn dotenv() -> Result<PathBuf, Box<dyn Error>> {
-    let dotenv = if let Some(path) = get_env_path() {
-        path
+    if let Some(home) = home_dir() {
+        Ok(home.join("./todo/.env"))
     } else {
-        return Err(
-            "✘ No path to database found. Consider 'todo init' to initialize a data base".into(),
-        );
-    };
-    Ok(dotenv)
-}
-
-fn get_env_path() -> Option<PathBuf> {
-    Some(home_dir()?.join(".todo/.env"))
+        Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into())
+    }
 }
 
 pub fn fetch_active_list_id(db: &Option<PathBuf>) -> Result<i64, Box<dyn Error>> {

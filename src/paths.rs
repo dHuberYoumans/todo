@@ -1,6 +1,7 @@
 use microxdg::Xdg;
 use std::path::PathBuf;
 
+#[derive(Clone)]
 pub struct UserPaths {
     pub home: PathBuf,
     pub config: Option<PathBuf>,
