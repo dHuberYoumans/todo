@@ -204,7 +204,9 @@ impl TodoList {
         for task in tasks_iter {
             self.tasks.push(task?);
         }
-        let sort_key = flags.1.as_deref().unwrap_or("id");
+        let mut sort_key_default = Config::read()?.style.sort_by;
+        if sort_key_default.is_empty() { sort_key_default = "id".to_string() };
+        let sort_key = flags.1.as_deref().unwrap_or(&sort_key_default);
         log::debug!("using sort key {sort_key}");
         match sort_key {
             "id" => self.tasks.sort_by_key(|entry| Reverse(entry.id)),
