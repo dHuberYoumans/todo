@@ -205,13 +205,18 @@ impl TodoList {
             self.tasks.push(task?);
         }
         let mut sort_key_default = Config::read()?.style.sort_by;
-        if sort_key_default.is_empty() { sort_key_default = "id".to_string() };
+        if sort_key_default.is_empty() {
+            sort_key_default = "id".to_string()
+        };
         let sort_key = flags.1.as_deref().unwrap_or(&sort_key_default);
         log::debug!("using sort key {sort_key}");
         match sort_key {
             "id" => self.tasks.sort_by_key(|entry| Reverse(entry.id)),
             "prio" => self.tasks.sort_by_key(|entry| entry.prio.clone()),
-            "tag" => self.tasks.sort_by_key(|entry| entry.tag.clone()),
+            "tag" => self.tasks.sort_by_key(|entry| {
+                let key = entry.tag.clone();
+                (key.0.is_empty(), key)
+            }),
             "due" => self.tasks.sort_by_key(|entry| {
                 let key = entry.due.clone();
                 (key == epoch(), key)
