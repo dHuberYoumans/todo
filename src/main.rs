@@ -1,10 +1,15 @@
 use clap::Parser;
 use std::process;
 
+use todo::paths::UserPaths;
 use todo::run::run;
 use todo::todo::Args;
 
 fn main() {
+    let env_path = UserPaths::new().home.join(".todo").join(".env");
+    if dotenv::from_filename(&env_path).is_err() {
+        eprintln!("✘ No .env file found at {env_path:?}");
+    }
     let args = Args::parse();
     if args.verbose {
         std::env::set_var("RUST_LOG", "info");
