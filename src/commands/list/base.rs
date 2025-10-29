@@ -1,0 +1,80 @@
+use rusqlite::params;
+use std::cmp::Reverse;
+use std::error::Error;
+use tabled::{
+    settings::{object::Columns, Modify, Style, Width},
+    Table,
+};
+
+use crate::config::Config;
+use crate::todo::TodoList;
+use crate::util::{self, epoch, Datetime, Prio, Status, Tag, TodoItem};
+
+impl TodoList {
+    pub fn list(&mut self, flags: (Option<String>, Option<String>)) -> Result<(), Box<dyn Error>> {
+        let conn = util::connect_to_db(&self.db_path)?;
+        let current_list = std::env::var("CURRENT")?;
+        let current_list_id = util::fetch_active_list_id(&self.db_path)?;
+        log::debug!(
+            "found current list '{}' with ID={}",
+            &current_list,
+            &current_list_id
+        );
+        let opt = flags.0.as_deref().unwrap_or("None");
+        log::debug!("using option '{opt}'");
+        let query = match opt {
+            "--all" => format!("SELECT * FROM {current_list} WHERE list_id = ?"),
+            "--done" => format!("SELECT * FROM {current_list} WHERE status=0 AND list_id = ?"),
+            _ => format!("SELECT * FROM {current_list} WHERE status=1 AND list_id = ?"),
+        };
+        log::debug!(
+            "executing query `{}` \n with params [{}]",
+            &query,
+            &current_list_id
+        );
+        let mut stmt = conn.prepare(&query)?;
+        let tasks_iter = stmt.query_map(params![current_list_id], |row| {
+            Ok(TodoItem {
+                id: row.get::<_, i64>("id")?,
+                task: row.get::<_, String>("task")?,
+                status: row.get::<_, Status>("status")?,
+                prio: row.get::<_, Prio>("prio")?,
+                due: row.get::<_, Datetime>("due")?,
+                tag: row.get::<_, Tag>("tag")?,
+            })
+        })?;
+        for task in tasks_iter {
+            self.tasks.push(task?);
+        }
+        let mut sort_key_default = Config::read()?.style.sort_by;
+        if sort_key_default.is_empty() {
+            sort_key_default = "id".to_string()
+        };
+        let sort_key = flags.1.as_deref().unwrap_or(&sort_key_default);
+        log::debug!("using sort key {sort_key}");
+        match sort_key {
+            "id" => self.tasks.sort_by_key(|entry| Reverse(entry.id)),
+            "prio" => self.tasks.sort_by_key(|entry| entry.prio.clone()),
+            "tag" => self.tasks.sort_by_key(|entry| {
+                let key = entry.tag.clone();
+                (key.0.is_empty(), key)
+            }),
+            "due" => self.tasks.sort_by_key(|entry| {
+                let key = entry.due.clone();
+                (key == epoch(), key)
+            }),
+            _ => self.tasks.sort_by_key(|entry| Reverse(entry.id)),
+        };
+        let mut table = Table::new(&self.tasks);
+        table
+            .with(Modify::new(Columns::single(0)).with(Width::increase(5))) // id
+            .with(Modify::new(Columns::single(1)).with(Width::wrap(60))) // task
+            .with(Modify::new(Columns::single(2)).with(Width::increase(3))) // status
+            .with(Modify::new(Columns::single(3)).with(Width::increase(3))) // prio
+            .with(Modify::new(Columns::single(4)).with(Width::increase(3))) // due
+            .with(Modify::new(Columns::single(5)).with(Width::wrap(12))) // tag
+            .with(Style::modern_rounded());
+        println!("{}", table);
+        Ok(())
+    }
+}
