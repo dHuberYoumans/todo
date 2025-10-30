@@ -2,13 +2,13 @@ use std::error::Error;
 use std::fs;
 use std::io::Write;
 
-use crate::queries;
+use crate::queries::collection::Collection;
 use crate::todo::TodoList;
 use crate::util;
 
 impl TodoList {
     pub fn delete_list(self, list: String) -> Result<(), Box<dyn Error>> {
-        let conn = util::connect_to_db(&self.db_path)?;
+        let mut conn = util::connect_to_db(&self.db_path)?;
         let dotenv = util::dotenv()?;
         let content = fs::read_to_string(&dotenv)?;
         log::debug!("reading env {:?}", dotenv);
@@ -33,8 +33,7 @@ impl TodoList {
                 new_content.push_str(&format!("{line}\n"));
             }
         }
-        log::debug!("executing query `{}`", &queries::delete_list(&list));
-        conn.execute_batch(&queries::delete_list(&list))?;
+        Collection::delete(&mut conn, &list)?;
         println!("✔ List '{list}' removed");
         log::debug!("writing dotenv `{new_content}`");
         let mut file = fs::File::create(dotenv)?;

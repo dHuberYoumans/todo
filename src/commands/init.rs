@@ -6,7 +6,7 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::queries;
+use crate::queries::collection::Collection;
 use crate::util;
 use crate::{config::Config, paths::UserPaths};
 
@@ -53,7 +53,8 @@ impl TodoList {
                 .into());
         };
         log::info!("creating new collection");
-        conn.execute(&queries::create_collection(), [])?;
+        Collection::create_table(&conn)?;
+        // conn.execute(&queries::create_collection(), [])?;
         log::info!("creating new table");
         self.new_list(String::from("todo"), false)?;
         println!("✔ All done");

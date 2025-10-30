@@ -2,21 +2,15 @@ use std::error::Error;
 use std::fs;
 use std::io::Write;
 
-use crate::queries;
+use crate::queries::collection::Collection;
 use crate::todo::TodoList;
 use crate::util;
 
 impl TodoList {
     pub fn load(&mut self, list: String) -> Result<(), Box<dyn Error>> {
         let conn = util::connect_to_db(&self.db_path)?;
-        log::debug!("executing query {}", &queries::fetch_collection());
-        let mut stmt = conn.prepare(&queries::fetch_collection())?;
+        let collection = Collection::fetch_all(&conn)?;
         log::info!("checking if lists exists in collection");
-        let collection_iter = stmt.query_map([], |row| {
-            let list = row.get::<_, String>("name")?;
-            Ok(list)
-        })?;
-        let collection: Vec<_> = collection_iter.filter_map(Result::ok).collect();
         log::debug!("collection {:?}", &collection);
         if !collection.contains(&list) {
             return Err(format!("✘ Can't find list '{list}'").into());

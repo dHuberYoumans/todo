@@ -2,7 +2,8 @@ use clap::{Parser, Subcommand};
 use log;
 use std::path::PathBuf;
 
-use crate::util::{self, TodoItem};
+use crate::queries::schema::{Prio, TodoItem};
+use crate::util;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -40,7 +41,7 @@ pub enum Cmd {
         #[arg(long, short = 'm', help = "Task description")]
         task: Option<String>,
         #[arg(long, short = 'p', help = "Priority")]
-        prio: Option<i64>,
+        prio: Option<Prio>,
         #[arg(long, short = 'd', help = "Due date")]
         due: Option<String>,
         #[arg(long, short = 't', help = "Tag")]

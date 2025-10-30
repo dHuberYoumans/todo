@@ -7,8 +7,9 @@ use tabled::{
 };
 
 use crate::config::Config;
+use crate::queries::schema::{epoch, Datetime, Prio, Status, Tag, TodoItem};
 use crate::todo::TodoList;
-use crate::util::{self, epoch, Datetime, Prio, Status, Tag, TodoItem};
+use crate::util;
 
 impl TodoList {
     pub fn list(&mut self, flags: (Option<String>, Option<String>)) -> Result<(), Box<dyn Error>> {

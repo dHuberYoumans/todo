@@ -1,199 +1,17 @@
 use chrono::prelude::*;
 use chrono::{Datelike, Duration, Local, NaiveDate, Weekday};
-use clap::ValueEnum;
 use dirs::home_dir;
 use glob;
 use log;
-use rusqlite::{
-    types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
-    Connection, Result,
-};
+use rusqlite::Connection;
 use std::str::FromStr;
-use std::{env, error::Error, fmt, fs, io::Read, path::PathBuf, process};
-use tabled::Tabled;
+use std::{env, error::Error, fs, io::Read, path::PathBuf, process};
 
 use crate::config;
-use crate::queries;
+use crate::queries::collection::Collection;
+use crate::queries::schema::Datetime;
 
 const TMP_FILE: &str = "./EDIT_TASK";
-
-#[derive(Debug, Tabled, PartialEq, PartialOrd)]
-pub struct TodoItem {
-    pub id: i64,
-    pub task: String,
-    pub status: Status,
-    pub prio: Prio,
-    pub due: Datetime,
-    pub tag: Tag,
-}
-
-#[derive(Debug, PartialEq, PartialOrd, ValueEnum, Clone)]
-pub enum Status {
-    Closed,
-    Open,
-}
-
-impl FromSql for Status {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        match value {
-            ValueRef::Integer(1) => Ok(Status::Open),
-            ValueRef::Integer(0) => Ok(Status::Closed),
-            _ => Err(FromSqlError::InvalidType),
-        }
-    }
-}
-
-impl ToSql for Status {
-    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
-        let value = match self {
-            Status::Open => 1,
-            Status::Closed => 0,
-        };
-        Ok(ToSqlOutput::from(value))
-    }
-}
-
-impl fmt::Display for Status {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Status::Open => write!(f, "✘"),
-            Status::Closed => write!(f, "✔"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
-pub struct Tag(pub String);
-
-impl ToSql for Tag {
-    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(format!("#{}", self.0)))
-    }
-}
-
-impl FromSql for Tag {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        match value {
-            ValueRef::Text(bytes) => {
-                let sql_str = std::str::from_utf8(bytes)
-                    .map_err(|_| FromSqlError::Other("Invalid UTF-8".into()))?;
-                let stripped = sql_str.strip_prefix("#").unwrap_or(sql_str);
-                Ok(Tag(stripped.to_string()))
-            }
-            _ => Ok(Tag(String::new())),
-        }
-    }
-}
-
-impl fmt::Display for Tag {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.0.is_empty() {
-            write!(f, "")
-        } else {
-            write!(f, "#{}", self.0)
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Default)]
-pub enum Prio {
-    P1,
-    P2,
-    P3,
-    #[default]
-    Empty,
-}
-
-impl FromSql for Prio {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        match value {
-            ValueRef::Integer(1) => Ok(Prio::P1),
-            ValueRef::Integer(2) => Ok(Prio::P2),
-            ValueRef::Integer(3) => Ok(Prio::P3),
-            ValueRef::Integer(0) => Ok(Prio::Empty),
-            _ => Err(FromSqlError::InvalidType),
-        }
-    }
-}
-
-impl ToSql for Prio {
-    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
-        let value = match self {
-            Prio::P1 => 1,
-            Prio::P2 => 2,
-            Prio::P3 => 3,
-            Prio::Empty => 0,
-        };
-        Ok(ToSqlOutput::from(value))
-    }
-}
-
-impl fmt::Display for Prio {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Prio::P1 => write!(f, "P1"),
-            Prio::P2 => write!(f, "P2"),
-            Prio::P3 => write!(f, "P3"),
-            Prio::Empty => write!(f, ""),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
-pub struct Datetime {
-    pub timestamp: DateTime<Local>,
-}
-
-impl Default for Datetime {
-    fn default() -> Self {
-        Datetime::new()
-    }
-}
-
-impl Datetime {
-    pub fn new() -> Self {
-        Self {
-            timestamp: Local::now(),
-        }
-    }
-}
-
-impl FromSql for Datetime {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        match value {
-            ValueRef::Integer(timestamp) => {
-                let utc_time =
-                    DateTime::from_timestamp(timestamp, 0).ok_or(FromSqlError::InvalidType)?;
-                Ok(Datetime {
-                    timestamp: DateTime::with_timezone(&utc_time, &Local),
-                })
-            }
-            _ => Err(FromSqlError::InvalidType),
-        }
-    }
-}
-
-impl ToSql for Datetime {
-    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self.timestamp.timestamp()))
-    }
-}
-
-impl fmt::Display for Datetime {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let today = Local::now().date_naive();
-        let yesterday = today.pred_opt().unwrap(); // safe since epoch
-        let tomrrow = today.succ_opt().unwrap(); // safe until end of time
-        let this = self.timestamp.date_naive();
-        match this {
-            _ if *self == epoch() => write!(f, ""),
-            dt if dt == yesterday => write!(f, "Yesterday"),
-            dt if dt == today => write!(f, "Today"),
-            dt if dt == tomrrow => write!(f, "Tomorrow"),
-            _ => write!(f, "{}", self.timestamp.format("%Y-%m-%d")),
-        }
-    }
-}
 
 pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
     let target = match input.to_lowercase().as_str() {
@@ -237,6 +55,16 @@ pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
                     timestamp: tomorrow_dt,
                 })
             }
+            "yesterday" => {
+                let today = Local::now().date_naive();
+                let yesteday = today.pred_opt().unwrap(); // safe until end of time
+                let yesterday_dt = Local
+                    .from_local_datetime(&yesteday.and_time(NaiveTime::MIN))
+                    .unwrap();
+                Ok(Datetime {
+                    timestamp: yesterday_dt,
+                })
+            }
             _ => {
                 let date = NaiveDate::parse_from_str(input, "%d-%m-%Y")
             .map_err(|_| "✘ Invalid date format.\nUse either of the following:\n* today\n* tomorrow\n* 3 letter days for the next weekday\n* dd-mm-yyyy for a specific day")?;
@@ -247,13 +75,6 @@ pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
                 })
             }
         }
-    }
-}
-
-pub fn epoch() -> Datetime {
-    let epoch_local = DateTime::<Local>::from(DateTime::UNIX_EPOCH);
-    Datetime {
-        timestamp: epoch_local,
     }
 }
 
@@ -324,9 +145,8 @@ pub fn dotenv() -> Result<PathBuf, Box<dyn Error>> {
 pub fn fetch_active_list_id(db: &Option<PathBuf>) -> Result<i64, Box<dyn Error>> {
     log::debug!("fetching active list id");
     let conn = connect_to_db(db)?;
-    let current = std::env::var("CURRENT")?;
-    let mut stmt = conn.prepare(&queries::fetch_list_id(&current))?;
-    let id: i64 = stmt.query_row([], |row| row.get(0))?;
+    let current_list = std::env::var("CURRENT")?;
+    let id = Collection::fetch_id(&conn, &current_list)?;
     Ok(id)
 }
 
