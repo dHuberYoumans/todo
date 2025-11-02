@@ -1,7 +1,7 @@
 pub mod commands;
 pub mod config;
+pub mod domain;
 pub mod paths;
-pub mod queries;
+pub mod persistence;
 pub mod run;
-pub mod todo;
 pub mod util;

@@ -1,12 +1,12 @@
 use std::error::Error;
 
-use crate::todo::TodoList;
+use crate::domain::TodoList;
 use rusqlite::{Connection, Result};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::queries::collection::Collection;
+use crate::persistence::collection::Collection;
 use crate::util;
 use crate::{config::Config, paths::UserPaths};
 

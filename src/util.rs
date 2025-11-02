@@ -8,8 +8,8 @@ use std::str::FromStr;
 use std::{env, error::Error, fs, io::Read, path::PathBuf, process};
 
 use crate::config;
-use crate::queries::collection::Collection;
-use crate::queries::schema::Datetime;
+use crate::domain::Datetime;
+use crate::persistence::collection::Collection;
 
 const TMP_FILE: &str = "./EDIT_TASK";
 

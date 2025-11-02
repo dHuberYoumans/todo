@@ -7,8 +7,9 @@ use tabled::{
 };
 
 use crate::config::Config;
-use crate::queries::schema::{epoch, Datetime, Prio, Status, Tag, TodoItem};
-use crate::todo::TodoList;
+use crate::domain::{Datetime, Prio, Status, Tag};
+use crate::domain::{TodoItem, TodoList};
+use crate::persistence::schema::epoch;
 use crate::util;
 
 impl TodoList {

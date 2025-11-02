@@ -1,8 +1,9 @@
 use clap::{Parser, Subcommand};
 use log;
 use std::path::PathBuf;
+use tabled::Tabled;
 
-use crate::queries::schema::{Prio, TodoItem};
+use crate::domain::{Datetime, Prio, Status, Tag};
 use crate::util;
 
 #[derive(Parser, Debug)]
@@ -98,4 +99,14 @@ impl TodoList {
             db_path,
         }
     }
+}
+
+#[derive(Debug, Tabled, PartialEq, PartialOrd)]
+pub struct TodoItem {
+    pub id: i64,
+    pub task: String,
+    pub status: Status,
+    pub prio: Prio,
+    pub due: Datetime,
+    pub tag: Tag,
 }

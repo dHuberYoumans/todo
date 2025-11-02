@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fs;
 
-use crate::todo::TodoList;
+use crate::domain::TodoList;
 use crate::util;
 
 impl TodoList {

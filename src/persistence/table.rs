@@ -1,7 +1,8 @@
 use rusqlite::{named_params, Connection, OptionalExtension, Result};
 
-use crate::queries::collection::Collection;
-use crate::queries::schema::{Datetime, Prio, Status, Tag, TodoItem};
+use crate::domain::TodoItem;
+use crate::domain::{Datetime, Prio, Status, Tag};
+use crate::persistence::collection::Collection;
 
 pub struct Table<'conn> {
     pub name: &'conn str,

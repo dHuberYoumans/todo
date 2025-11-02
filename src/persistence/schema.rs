@@ -1,28 +1,12 @@
 use chrono::prelude::*;
 use chrono::Local;
-use clap::ValueEnum;
 use rusqlite::{
     types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
     Result,
 };
 use std::fmt;
-use tabled::Tabled;
 
-#[derive(Debug, Tabled, PartialEq, PartialOrd)]
-pub struct TodoItem {
-    pub id: i64,
-    pub task: String,
-    pub status: Status,
-    pub prio: Prio,
-    pub due: Datetime,
-    pub tag: Tag,
-}
-
-#[derive(Debug, PartialEq, PartialOrd, ValueEnum, Clone)]
-pub enum Status {
-    Closed,
-    Open,
-}
+use crate::domain::{Datetime, Prio, Status, Tag};
 
 impl FromSql for Status {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
@@ -53,9 +37,6 @@ impl fmt::Display for Status {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord)]
-pub struct Tag(pub String);
-
 impl ToSql for Tag {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::from(self.0.clone()))
@@ -84,15 +65,6 @@ impl fmt::Display for Tag {
             write!(f, "#{}", self.0)
         }
     }
-}
-
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Default, ValueEnum)]
-pub enum Prio {
-    P1,
-    P2,
-    P3,
-    #[default]
-    Empty,
 }
 
 impl FromSql for Prio {
@@ -127,34 +99,6 @@ impl fmt::Display for Prio {
             Prio::P3 => write!(f, "P3"),
             Prio::Empty => write!(f, ""),
         }
-    }
-}
-
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
-pub struct Datetime {
-    pub timestamp: DateTime<Local>,
-}
-
-impl Default for Datetime {
-    fn default() -> Self {
-        Datetime::now()
-    }
-}
-
-impl Datetime {
-    pub fn new(timestamp: Option<i64>) -> Self {
-        let ts = match timestamp {
-            Some(dt) => Local
-                .timestamp_opt(dt, 0)
-                .single()
-                .unwrap_or_else(Local::now),
-            None => Local::now(),
-        };
-        Self { timestamp: ts }
-    }
-
-    pub fn now() -> Self {
-        Self::new(None)
     }
 }
 

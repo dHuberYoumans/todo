@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use crate::todo::{Args, Cmd, TodoList};
+use crate::domain::todo::{Args, Cmd, TodoList};
 
 pub fn run(args: Args) -> Result<(), Box<dyn Error>> {
     let mut todo_list = TodoList::new();

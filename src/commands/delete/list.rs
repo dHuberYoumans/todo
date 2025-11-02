@@ -2,8 +2,8 @@ use std::error::Error;
 use std::fs;
 use std::io::Write;
 
-use crate::queries::collection::Collection;
-use crate::todo::TodoList;
+use crate::domain::TodoList;
+use crate::persistence::collection::Collection;
 use crate::util;
 
 impl TodoList {

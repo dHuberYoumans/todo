@@ -1,9 +1,10 @@
 use rusqlite::Result;
 use std::error::Error;
 
-use crate::queries::schema::{epoch, Datetime, Prio, Status, Tag};
-use crate::queries::table::Table;
-use crate::todo::TodoList;
+use crate::domain::TodoList;
+use crate::domain::{Datetime, Prio, Status, Tag};
+use crate::persistence::schema::epoch;
+use crate::persistence::Table;
 use crate::util;
 
 impl TodoList {

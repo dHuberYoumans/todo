@@ -1,8 +1,8 @@
 use rusqlite::Result;
 use std::error::Error;
 
-use crate::queries::table::Table;
-use crate::todo::TodoList;
+use crate::domain::TodoList;
+use crate::persistence::table::Table;
 use crate::util;
 
 impl TodoList {

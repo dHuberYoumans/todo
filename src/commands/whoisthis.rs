@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use crate::todo::TodoList;
+use crate::domain::TodoList;
 
 impl TodoList {
     pub fn whoisthis(&self) -> Result<(), Box<dyn Error>> {

@@ -1,9 +1,9 @@
 use clap::Parser;
 use std::process;
 
+use todo::domain::todo::Args;
 use todo::paths::UserPaths;
 use todo::run::run;
-use todo::todo::Args;
 
 fn main() {
     let env_path = UserPaths::new().home.join(".todo").join(".env");
