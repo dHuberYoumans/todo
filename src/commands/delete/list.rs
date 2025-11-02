@@ -1,14 +1,12 @@
-use std::error::Error;
+use anyhow::{anyhow, Result};
 use std::fs;
 use std::io::Write;
 
-use crate::domain::TodoList;
-use crate::persistence::collection::Collection;
+use crate::domain::{TodoList, TodoListRepository};
 use crate::util;
 
 impl TodoList {
-    pub fn delete_list(self, list: String) -> Result<(), Box<dyn Error>> {
-        let mut conn = util::connect_to_db(&self.db_path)?;
+    pub fn delete_list(self, repo: &impl TodoListRepository, list: String) -> Result<()> {
         let dotenv = util::dotenv()?;
         let content = fs::read_to_string(&dotenv)?;
         log::debug!("reading env {:?}", dotenv);
@@ -17,9 +15,9 @@ impl TodoList {
             if line.starts_with("CURRENT=") {
                 let current_list = line.split('=').next_back().unwrap_or("");
                 if list == current_list {
-                    return Err(
-                        format!("✘ can't delete the list '{list}' since currently in use").into(),
-                    );
+                    return Err(anyhow!(
+                        "✘ can't delete the list '{list}' since currently in use"
+                    ));
                 };
                 new_content.push_str(&format!("{line}\n"));
             } else if line.starts_with("PREVIOUS=") {
@@ -33,7 +31,7 @@ impl TodoList {
                 new_content.push_str(&format!("{line}\n"));
             }
         }
-        Collection::delete(&mut conn, &list)?;
+        repo.delete(&list)?;
         println!("✔ List '{list}' removed");
         log::debug!("writing dotenv `{new_content}`");
         let mut file = fs::File::create(dotenv)?;

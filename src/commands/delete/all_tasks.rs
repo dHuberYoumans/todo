@@ -1,21 +1,12 @@
-use std::error::Error;
+use anyhow::Result;
 
-use crate::domain::TodoList;
-use crate::persistence::table::Table;
-use crate::util;
+use crate::domain::{TodoItemRepository, TodoList};
 
 impl TodoList {
-    pub fn delete_all(&mut self) -> Result<(), Box<dyn Error>> {
-        let conn = util::connect_to_db(&self.db_path)?;
-        let current_list = std::env::var("CURRENT")?;
-        log::info!("found current list '{}'", &current_list);
-        let table = Table {
-            name: &current_list,
-            conn: &conn,
-        };
-        let ids = table.fetch_all_ids()?;
+    pub fn delete_all(&mut self, repo: &impl TodoItemRepository) -> Result<()> {
+        let ids = repo.fetch_all_ids()?;
         for id in ids.iter() {
-            table.delete_by_id(*id)?;
+            repo.delete_task(*id)?;
         }
         Ok(())
     }

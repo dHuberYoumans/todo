@@ -1,6 +1,6 @@
 use chrono::prelude::*;
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub struct Datetime {
     pub timestamp: DateTime<Local>,
 }

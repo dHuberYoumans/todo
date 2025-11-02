@@ -1,18 +1,10 @@
-use std::error::Error;
+use anyhow::Result;
 
-use crate::domain::TodoList;
-use crate::persistence::table::Table;
-use crate::util;
+use crate::domain::{TodoItemRepository, TodoList};
 
 impl TodoList {
-    pub fn list_tags(&self) -> Result<(), Box<dyn Error>> {
-        let conn = util::connect_to_db(&self.db_path)?;
-        let current_list = std::env::var("CURRENT")?;
-        let table = Table {
-            name: &current_list,
-            conn: &conn,
-        };
-        let tags = table.fetch_tags()?;
+    pub fn list_tags(&self, repo: &impl TodoItemRepository) -> Result<()> {
+        let tags = repo.fetch_tags()?;
         println!("Your tags\n==========");
         for tag in tags.iter() {
             println!("• {tag}");

@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use chrono::prelude::*;
 use chrono::{Datelike, Duration, Local, NaiveDate, Weekday};
 use dirs::home_dir;
@@ -5,15 +6,15 @@ use glob;
 use log;
 use rusqlite::Connection;
 use std::str::FromStr;
-use std::{env, error::Error, fs, io::Read, path::PathBuf, process};
+use std::{env, fs, io::Read, path::PathBuf, process};
 
 use crate::config;
 use crate::domain::Datetime;
-use crate::persistence::collection::Collection;
+use crate::paths::UserPaths;
 
 const TMP_FILE: &str = "./EDIT_TASK";
 
-pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
+pub fn parse_date(input: &str) -> Result<Datetime> {
     let target = match input.to_lowercase().as_str() {
         "mon" => Some(Weekday::Mon),
         "tue" => Some(Weekday::Tue),
@@ -67,7 +68,7 @@ pub fn parse_date(input: &str) -> Result<Datetime, Box<dyn Error>> {
             }
             _ => {
                 let date = NaiveDate::parse_from_str(input, "%d-%m-%Y")
-            .map_err(|_| "✘ Invalid date format.\nUse either of the following:\n* today\n* tomorrow\n* 3 letter days for the next weekday\n* dd-mm-yyyy for a specific day")?;
+            .map_err(|_| anyhow!("✘ Invalid date format.\nUse either of the following:\n* today\n* tomorrow\n* 3 letter days for the next weekday\n* dd-mm-yyyy for a specific day"))?;
                 let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
                 let local_dt = Local.from_local_datetime(&naive_dt).single().unwrap();
                 Ok(Datetime {
@@ -111,7 +112,7 @@ pub fn edit_in_editor(old_text: Option<String>) -> String {
     task
 }
 
-fn cleanup_tmp_files() -> Result<(), Box<dyn Error>> {
+fn cleanup_tmp_files() -> Result<()> {
     let pattern = format!("{TMP_FILE}*");
     for file in glob::glob(&pattern)? {
         match file {
@@ -122,32 +123,35 @@ fn cleanup_tmp_files() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn connect_to_db(db: &Option<PathBuf>) -> Result<Connection, Box<dyn Error>> {
+pub fn connect_to_db(db: &Option<PathBuf>) -> Result<Connection> {
     log::info!("connecting to database at {}", log_opt_path(db));
     let conn = if let Some(path) = db {
         Connection::open(path)?
     } else {
-        return Err(
-            "No path to database found. Consider 'todo init' to initialize a data base".into(),
-        );
+        return Err(anyhow!(
+            "No path to database found. Consider 'todo init' to initialize a data base"
+        ));
     };
+    conn.execute("PRAGMA foreign_keys = ON;", [])?;
     Ok(conn)
 }
 
-pub fn dotenv() -> Result<PathBuf, Box<dyn Error>> {
+pub fn load_env() -> Result<()> {
+    let env_path = UserPaths::new().home.join(".todo").join(".env");
+    if dotenv::from_filename(&env_path).is_err() {
+        return Err(anyhow!("✘ No .env file found at {env_path:?}"));
+    }
+    Ok(())
+}
+
+pub fn dotenv() -> Result<PathBuf> {
     if let Some(home) = home_dir() {
         Ok(home.join("./todo/.env"))
     } else {
-        Err("✘ No path to database found. Consider 'todo init' to initialize a data base".into())
+        Err(anyhow!(
+            "✘ No path to database found. Consider 'todo init' to initialize a data base"
+        ))
     }
-}
-
-pub fn fetch_active_list_id(db: &Option<PathBuf>) -> Result<i64, Box<dyn Error>> {
-    log::debug!("fetching active list id");
-    let conn = connect_to_db(db)?;
-    let current_list = std::env::var("CURRENT")?;
-    let id = Collection::fetch_id(&conn, &current_list)?;
-    Ok(id)
 }
 
 pub fn log_opt_path(p: &Option<PathBuf>) -> String {

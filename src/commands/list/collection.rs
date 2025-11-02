@@ -1,13 +1,10 @@
-use std::error::Error;
+use anyhow::Result;
 
-use crate::domain::TodoList;
-use crate::persistence::collection::Collection;
-use crate::util;
+use crate::domain::{TodoList, TodoListRepository};
 
 impl TodoList {
-    pub fn list_collection(&self) -> Result<(), Box<dyn Error>> {
-        let conn = util::connect_to_db(&self.db_path)?;
-        let collection = Collection::fetch_all(&conn)?;
+    pub fn list_collection(&self, repo: &impl TodoListRepository) -> Result<()> {
+        let collection = repo.fetch_all()?;
         println!("Your collection\n===============");
         for list in collection.iter() {
             println!("• {list}");

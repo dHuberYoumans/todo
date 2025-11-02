@@ -1,6 +1,6 @@
+use anyhow::Result;
 use rusqlite::params;
 use std::cmp::Reverse;
-use std::error::Error;
 use tabled::{
     settings::{object::Columns, Modify, Style, Width},
     Table,
@@ -8,15 +8,19 @@ use tabled::{
 
 use crate::config::Config;
 use crate::domain::{Datetime, Prio, Status, Tag};
-use crate::domain::{TodoItem, TodoList};
+use crate::domain::{TodoItem, TodoList, TodoListRepository};
 use crate::persistence::schema::epoch;
 use crate::util;
 
 impl TodoList {
-    pub fn list(&mut self, flags: (Option<String>, Option<String>)) -> Result<(), Box<dyn Error>> {
+    pub fn list(
+        &mut self,
+        repo: &impl TodoListRepository,
+        flags: (Option<String>, Option<String>),
+    ) -> Result<()> {
         let conn = util::connect_to_db(&self.db_path)?;
         let current_list = std::env::var("CURRENT")?;
-        let current_list_id = util::fetch_active_list_id(&self.db_path)?;
+        let current_list_id = repo.fetch_id(&current_list)?;
         log::debug!(
             "found current list '{}' with ID={}",
             &current_list,
@@ -62,7 +66,7 @@ impl TodoList {
                 (key.0.is_empty(), key)
             }),
             "due" => self.tasks.sort_by_key(|entry| {
-                let key = entry.due.clone();
+                let key = entry.due;
                 (key == epoch(), key)
             }),
             _ => self.tasks.sort_by_key(|entry| Reverse(entry.id)),

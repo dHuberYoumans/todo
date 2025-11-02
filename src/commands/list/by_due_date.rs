@@ -1,24 +1,21 @@
-use std::error::Error;
+use anyhow::{anyhow, Result};
 use tabled::settings::{object::Columns, Modify, Style, Width};
 
-use crate::domain::TodoList;
-use crate::persistence::table::Table;
+use crate::domain::{TodoItemRepository, TodoList};
 use crate::util;
 
 impl TodoList {
-    pub fn list_due_date(&mut self, date_str: String) -> Result<(), Box<dyn Error>> {
+    pub fn list_due_date(
+        &mut self,
+        repo: &impl TodoItemRepository,
+        date_str: String,
+    ) -> Result<()> {
         let epoch_seconds = if let Some(date) = date_str.strip_prefix("@") {
             util::parse_date(date)?.timestamp.timestamp()
         } else {
-            return Err("✘ Invalid date".into());
+            return Err(anyhow!("✘ Invalid date"));
         };
-        let conn = util::connect_to_db(&self.db_path)?;
-        let current_list = std::env::var("CURRENT")?;
-        let table = Table {
-            name: &current_list,
-            conn: &conn,
-        };
-        let entries = table.fetch_by_due_date(epoch_seconds)?;
+        let entries = repo.fetch_by_due_date(epoch_seconds)?;
         for entry in entries {
             let _ = &self.tasks.push(entry);
         }

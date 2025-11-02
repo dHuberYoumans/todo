@@ -1,25 +1,22 @@
-use std::error::Error;
+use anyhow::Result;
 
-use crate::domain::TodoList;
-use crate::persistence::collection::Collection;
-use crate::persistence::table::Table;
-use crate::util;
+use crate::domain::{TodoItemRepository, TodoList, TodoListRepository};
 
 impl TodoList {
-    pub fn new_list(&mut self, list: String, checkout: bool) -> Result<(), Box<dyn Error>> {
+    pub fn new_list(
+        &mut self,
+        todo_list_repo: &impl TodoListRepository,
+        todo_item_repo: &impl TodoItemRepository,
+        list: String,
+        checkout: bool,
+    ) -> Result<()> {
         println!("⧖ Creating new_list..");
-        let conn = util::connect_to_db(&self.db_path)?;
-        println!("✔ Created '{list}' in collection");
-        Collection::insert(&conn, &list)?;
-        let new_list = Table {
-            name: &list,
-            conn: &conn,
-        };
-        new_list.create_table()?;
+        todo_list_repo.add(&list)?;
+        todo_item_repo.create_table()?;
         println!("✔ Created new list '{list}'");
         if checkout {
             log::info!("checking out list '{list}'");
-            self.load(list.clone())?;
+            self.load(todo_list_repo, list.clone())?;
             println!("✔ Now using '{list}'");
         };
         Ok(())

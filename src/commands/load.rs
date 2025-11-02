@@ -1,19 +1,17 @@
-use std::error::Error;
+use anyhow::{anyhow, Result};
 use std::fs;
 use std::io::Write;
 
-use crate::domain::TodoList;
-use crate::persistence::collection::Collection;
+use crate::domain::{TodoList, TodoListRepository};
 use crate::util;
 
 impl TodoList {
-    pub fn load(&mut self, list: String) -> Result<(), Box<dyn Error>> {
-        let conn = util::connect_to_db(&self.db_path)?;
-        let collection = Collection::fetch_all(&conn)?;
+    pub fn load(&mut self, repo: &impl TodoListRepository, list: String) -> Result<()> {
+        let collection = repo.fetch_all()?;
         log::info!("checking if lists exists in collection");
         log::debug!("collection {:?}", &collection);
         if !collection.contains(&list) {
-            return Err(format!("✘ Can't find list '{list}'").into());
+            return Err(anyhow!("✘ Can't find list '{list}'"));
         }
         let dotenv = util::dotenv()?;
         let content = fs::read_to_string(&dotenv)?;

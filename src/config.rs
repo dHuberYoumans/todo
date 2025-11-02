@@ -1,5 +1,5 @@
+use anyhow::{anyhow, Result};
 use serde::Deserialize;
-use std::error::Error;
 use std::fs;
 use std::io::Write;
 use toml;
@@ -24,7 +24,7 @@ pub struct Style {
 }
 
 impl Config {
-    pub fn init() -> Result<(), Box<dyn Error>> {
+    pub fn init() -> Result<()> {
         let user_paths = UserPaths::new();
         let home = user_paths.home;
         log::info!("Creating default config file");
@@ -56,7 +56,7 @@ sort_by = "prio"  #prio | due | tag"#,
         Ok(())
     }
 
-    pub fn read() -> Result<Config, Box<dyn Error>> {
+    pub fn read() -> Result<Config> {
         let user_paths = UserPaths::new();
         if let Some(config_path) = user_paths.config {
             let config_file = fs::read_to_string(&config_path)?;
@@ -64,7 +64,7 @@ sort_by = "prio"  #prio | due | tag"#,
             let config: Config = toml::from_str(&config_file)?;
             Ok(config)
         } else {
-            Err("✘ Path to config not found".into())
+            Err(anyhow!("✘ Path to config not found"))
         }
     }
 }

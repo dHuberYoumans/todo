@@ -1,6 +1,3 @@
-pub mod collection;
-pub mod schema;
-pub mod table;
+pub mod sqlite;
 
-pub use collection::*;
-pub use table::*;
+pub use sqlite::*;

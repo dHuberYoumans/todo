@@ -1,11 +1,11 @@
-use std::error::Error;
+use anyhow::Result;
 use std::fs;
 
 use crate::domain::TodoList;
 use crate::util;
 
 impl TodoList {
-    pub fn config(self) -> Result<(), Box<dyn Error>> {
+    pub fn config(self) -> Result<()> {
         let path = std::env::var("CONFIG")?;
         log::info!("read config at {path}");
         let config = fs::read_to_string(&path).ok();

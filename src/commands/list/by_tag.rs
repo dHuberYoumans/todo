@@ -1,21 +1,14 @@
-use std::error::Error;
+use anyhow::Result;
 
 use tabled::settings::{object::Columns, Modify, Style, Width};
 
-use crate::domain::TodoList;
-use crate::persistence::table::Table;
-use crate::util;
+use crate::domain::Tag;
+use crate::domain::{TodoItemRepository, TodoList};
 
 impl TodoList {
-    pub fn list_tag(&mut self, tag: String) -> Result<(), Box<dyn Error>> {
-        let conn = util::connect_to_db(&self.db_path)?;
-        let current_list = std::env::var("CURRENT")?;
-        let table = Table {
-            name: &current_list,
-            conn: &conn,
-        };
+    pub fn list_tag(&mut self, repo: &impl TodoItemRepository, tag: String) -> Result<()> {
         let clean_tag = tag.strip_prefix('#').unwrap_or(&tag);
-        let entries = table.fetch_by_tag(clean_tag)?;
+        let entries = repo.fetch_by_tag(Tag(clean_tag.to_string()))?;
         for entry in entries {
             let _ = &self.tasks.push(entry);
         }
