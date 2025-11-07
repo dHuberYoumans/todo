@@ -4,9 +4,7 @@ use crate::domain::Status;
 use crate::domain::{TodoItemRepository, TodoList};
 
 impl TodoList {
-    pub fn open(&mut self, repo: &impl TodoItemRepository, id: i64) -> Result<()> {
-        let current = std::env::var("CURRENT")?;
-        log::info!("found current list '{}'", &current);
+    pub fn open(&self, repo: &impl TodoItemRepository, id: i64) -> Result<()> {
         repo.update_status(Status::Open, id)?;
         Ok(())
     }

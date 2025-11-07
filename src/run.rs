@@ -79,6 +79,8 @@ pub fn run(args: Args) -> Result<()> {
 fn set_up_repositories(conn: &Connection) -> Result<(SqlTodoListRepository<'_>, SqlTodoItemRepository<'_>)> {
     let current_list = std::env::var("CURRENT")?;
     log::info!("currently on list {current_list}");
-    Ok( (SqlTodoListRepository::new(&conn), SqlTodoItemRepository::new(&conn, current_list)) 
-    )
+    Ok((
+        SqlTodoListRepository::new(conn),
+        SqlTodoItemRepository::new(conn, current_list),
+    ))
 }

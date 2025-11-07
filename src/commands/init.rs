@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use crate::util;
 use crate::{config::Config, paths::UserPaths};
 
-const INIT_LIST: &'static str ="todo";
+const INIT_LIST: &str = "todo";
 
 impl TodoList {
     pub fn init(

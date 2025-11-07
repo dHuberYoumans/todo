@@ -29,7 +29,7 @@ impl TodoList {
         };
         log::info!("found task '{}'", msg);
         let item = TodoItem {
-            id: 1, // HASH!!
+            id: 1, // HASH!! TODO!
             task: msg,
             due: *due_date.as_ref().unwrap_or(&epoch()),
             status: Status::Open,
