@@ -28,14 +28,15 @@ impl TodoList {
             util::edit_in_editor(None)
         };
         log::info!("found task '{}'", msg);
-        let item = TodoItem {
-            id: 1, // HASH!! TODO!
+        let mut item = TodoItem {
+            id: String::new(),
             task: msg,
             due: *due_date.as_ref().unwrap_or(&epoch()),
             status: Status::Open,
             tag: tag.unwrap_or_default(),
             prio: prio.unwrap_or_default(),
         };
+        item.hash_id();
         repo.add(&item)?;
         Ok(())
     }

@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use rusqlite::{named_params, Connection, OptionalExtension};
 
 use crate::domain::{Datetime, Status, Tag, TodoItem};
@@ -25,7 +25,7 @@ impl TodoItemRepository for SqlTodoItemRepository<'_> {
     fn create_table(&self) -> Result<()> {
         let sql = format!(
             "CREATE TABLE IF NOT EXISTS {table} (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
+id TEXT PRIMARY KEY UNIQUE,
 list_id INTEGER NOT NULL 
     REFERENCES {collection}(id)
     ON DELETE CASCADE,
@@ -46,8 +46,8 @@ created_at INTEGER
 
     fn add(&self, item: &TodoItem) -> Result<()> {
         let sql = format!(
-            "INSERT INTO {} (task, list_id, status, prio, due, tag, created_at)
-VALUES (:task, :list_id, :status, :prio, :due, :tag, :created_at);",
+            "INSERT INTO {} (id, task, list_id, status, prio, due, tag, created_at)
+VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
             self.name
         );
         let list_id = self.collection.fetch_id(&self.name)?;
@@ -55,6 +55,7 @@ VALUES (:task, :list_id, :status, :prio, :due, :tag, :created_at);",
         let _ = self.conn.execute(
             &sql,
             named_params! {
+                ":id": item.id,
                 ":task": item.task,
                 ":list_id": list_id,
                 ":status": item.status,
@@ -114,18 +115,19 @@ VALUES (:task, :list_id, :status, :prio, :due, :tag, :created_at);",
         Ok(tags)
     }
 
-    fn fetch_all_ids(&self) -> Result<Vec<i64>> {
+    fn fetch_all_ids(&self) -> Result<Vec<String>> {
         let sql = format!("SELECT id FROM {};", self.name);
         log::debug!("executing query `{}`", &sql);
         let mut stmt = self.conn.prepare(&sql)?;
         let ids = stmt
-            .query_map([], |row| row.get::<_, i64>(0))?
+            .query_map([], |row| row.get::<_, String>(0))?
             .collect::<Result<Vec<_>, _>>()?;
         Ok(ids)
     }
 
-    fn fetch_task_by_id(&self, id: i64) -> Result<Option<String>> {
-        let sql = format!("SELECT task FROM {} WHERE id=(:id);", self.name);
+    fn fetch_task_by_id(&self, id: &str) -> Result<Option<String>> {
+        let id = self.resolve_id(id)?;
+        let sql = format!("SELECT task FROM {} WHERE id=:id;", self.name);
         let result = self
             .conn
             .query_row(&sql, named_params! {":id": id}, |row| {
@@ -135,8 +137,9 @@ VALUES (:task, :list_id, :status, :prio, :due, :tag, :created_at);",
         Ok(result)
     }
 
-    fn update_task(&self, task: &str, id: i64) -> Result<()> {
-        let sql = format!(" UPDATE {} SET task=(:task) WHERE id=(:id);", self.name);
+    fn update_task(&self, task: &str, id: &str) -> Result<()> {
+        let id = self.resolve_id(id)?;
+        let sql = format!(" UPDATE {} SET task=(:task) WHERE id=:id;", self.name);
         log::debug!("executing query `{}`", &sql);
         let _ = self
             .conn
@@ -144,8 +147,9 @@ VALUES (:task, :list_id, :status, :prio, :due, :tag, :created_at);",
         Ok(())
     }
 
-    fn update_status(&self, status: Status, id: i64) -> Result<()> {
-        let sql = format!("UPDATE {} SET status=(:status) WHERE id=(:id);", self.name);
+    fn update_status(&self, status: Status, id: &str) -> Result<()> {
+        let id = self.resolve_id(id)?;
+        let sql = format!("UPDATE {} SET status=(:status) WHERE id=:id;", self.name);
         log::debug!("executing query `{}`", &sql);
         let _ = self
             .conn
@@ -153,10 +157,27 @@ VALUES (:task, :list_id, :status, :prio, :due, :tag, :created_at);",
         Ok(())
     }
 
-    fn delete_task(&self, id: i64) -> Result<()> {
-        let sql = format!("DELETE FROM {} WHERE id=(:id);", self.name);
+    fn delete_task(&self, id: &str) -> Result<()> {
+        let id = self.resolve_id(id)?;
+        let sql = format!("DELETE FROM {} WHERE id=:id;", self.name);
         log::debug!("executing query `{}`", &sql);
         let _ = self.conn.execute(&sql, named_params! {":id": id})?;
         Ok(())
+    }
+
+    fn resolve_id(&self, id: &str) -> Result<String> {
+        let sql = format!("SELECT id FROM {} WHERE id LIKE :id || '%'", self.name);
+        let mut stmt = self.conn.prepare(&sql)?;
+        let ids = stmt
+            .query_map(named_params! {":id": id}, |row| row.get::<_, String>(0))?
+            .collect::<Result<Vec<_>, _>>()?;
+        match ids.len() {
+            0 => Err(anyhow!("test")),
+            1 => {
+                let id = ids[0].clone();
+                Ok(id)
+            }
+            _ => Err(anyhow!("✘ Ambiguous prefix")),
+        }
     }
 }

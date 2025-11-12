@@ -10,15 +10,15 @@ pub trait TodoItemRepository {
     // fn fetch_by_prio(&self, prio: Prio) -> Result<Vec<TodoItem>>;
     fn fetch_by_tag(&self, tag: Tag) -> Result<Vec<TodoItem>>;
     fn fetch_tags(&self) -> Result<Vec<Tag>>;
-    fn fetch_all_ids(&self) -> Result<Vec<i64>>;
-    fn fetch_task_by_id(&self, id: i64) -> Result<Option<String>>;
-    // TODO: write just 1 update function?
-    fn update_task(&self, task: &str, id: i64) -> Result<()>;
-    fn update_status(&self, status: Status, id: i64) -> Result<()>;
-    // fn update_tag(&self, id: i64) -> Result<()>;
-    // fn update_due(&self, id: i64) -> Result<()>;
-    // fn update_prio(&self, id: i64) -> Result<()>;
-    fn delete_task(&self, id: i64) -> Result<()>;
+    fn fetch_all_ids(&self) -> Result<Vec<String>>;
+    fn fetch_task_by_id(&self, id: &str) -> Result<Option<String>>;
+    fn update_task(&self, task: &str, id: &str) -> Result<()>;
+    fn update_status(&self, status: Status, id: &str) -> Result<()>;
+    // fn update_tag(&self, id: String) -> Result<()>;
+    // fn update_due(&self, id: String) -> Result<()>;
+    // fn update_prio(&self, id: String) -> Result<()>;
+    fn delete_task(&self, id: &str) -> Result<()>;
+    fn resolve_id(&self, prefix: &str) -> Result<String>;
 }
 
 pub trait TodoListRepository {

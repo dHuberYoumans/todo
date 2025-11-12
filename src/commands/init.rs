@@ -12,9 +12,7 @@ use crate::{config::Config, paths::UserPaths};
 const INIT_LIST: &str = "todo";
 
 impl TodoList {
-    pub fn init(
-        &mut self,
-    ) -> Result<()> {
+    pub fn init(&mut self) -> Result<()> {
         println!("⧖ Initializing..");
         let user_paths = UserPaths::new();
         let env_path = prepare_environment_path(&user_paths)?;
@@ -29,27 +27,31 @@ impl TodoList {
         log::info!("creating new collection");
         todo_list_repo.create_table()?;
         log::info!("creating new table");
-        self.new_list(&todo_list_repo, &todo_item_repo, String::from("todo"), false)?;
+        self.new_list(
+            &todo_list_repo,
+            &todo_item_repo,
+            String::from("todo"),
+            false,
+        )?;
         println!("✔ All done");
         Ok(())
     }
 }
 
-
 fn prepare_environment_path(user_paths: &UserPaths) -> Result<PathBuf> {
-        let home = if let Ok(path) = std::env::var("HOME") {
-            // hijack env for testing
-            PathBuf::from(path)
-        } else {
-            user_paths.home.clone()
-        };
-        log::debug!("$HOME={:?}", &home);
-        let mut env_path = home.to_path_buf();
-        env_path.push(".todo/.env");
-        if env_path.exists() {
-            println!("✔ Environmental setup found");
-            return Ok(env_path);
-        }
+    let home = if let Ok(path) = std::env::var("HOME") {
+        // hijack env for testing
+        PathBuf::from(path)
+    } else {
+        user_paths.home.clone()
+    };
+    log::debug!("$HOME={:?}", &home);
+    let mut env_path = home.to_path_buf();
+    env_path.push(".todo/.env");
+    if env_path.exists() {
+        println!("✔ Environmental setup found");
+        return Ok(env_path);
+    }
     Ok(env_path)
 }
 

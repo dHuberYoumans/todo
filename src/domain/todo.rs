@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use log;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::PathBuf;
 use tabled::Tabled;
 
@@ -63,16 +64,16 @@ pub enum Cmd {
         arg: Option<String>,
     },
     /// Mark a task as completed
-    Close { id: i64 },
+    Close { id: String },
     /// Open a task
-    Open { id: i64 },
+    Open { id: String },
     /// Delete a task
-    Delete { id: i64 },
+    Delete { id: String },
     /// Delete all tasks in the current todo list
     DeleteAll,
     /// Reword a task
     Reword {
-        id: i64,
+        id: String,
         #[arg(long, short = 'm', help = "Task description")]
         task: Option<String>,
     },
@@ -103,10 +104,30 @@ impl TodoList {
 
 #[derive(Debug, Tabled, PartialEq, PartialOrd)]
 pub struct TodoItem {
-    pub id: i64,
+    pub id: String,
     pub task: String,
     pub status: Status,
     pub prio: Prio,
     pub due: Datetime,
     pub tag: Tag,
+}
+
+impl Hash for TodoItem {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.task.hash(state);
+        self.status.hash(state);
+        self.prio.hash(state);
+        self.due.hash(state);
+        self.tag.hash(state);
+    }
+}
+
+impl TodoItem {
+    pub fn hash_id(&mut self) {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        let hashed_id = hasher.finish() as i64;
+        let hex_id = format!("{:x}", hashed_id);
+        self.id = hex_id;
+    }
 }

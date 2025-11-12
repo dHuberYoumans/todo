@@ -64,11 +64,11 @@ pub fn run(args: Args) -> Result<()> {
                     }
                 }
             },
-            Cmd::Close { id } => todo_list.close(&todo_item_repo, id)?,
-            Cmd::Open { id } => todo_list.open(&todo_item_repo, id)?,
-            Cmd::Delete { id } => todo_list.delete(&todo_item_repo, id)?,
+            Cmd::Close { id } => todo_list.close(&todo_item_repo, &id)?,
+            Cmd::Open { id } => todo_list.open(&todo_item_repo, &id)?,
+            Cmd::Delete { id } => todo_list.delete(&todo_item_repo, &id)?,
             Cmd::DeleteAll => todo_list.delete_all(&todo_item_repo)?,
-            Cmd::Reword { id, task } => todo_list.reword(&todo_item_repo, id, task)?,
+            Cmd::Reword { id, task } => todo_list.reword(&todo_item_repo, &id, task)?,
             Cmd::Config => todo_list.config()?,
         },
         None => todo_list.list(&todo_list_repo, (None, None))?,
@@ -76,7 +76,9 @@ pub fn run(args: Args) -> Result<()> {
     Ok(())
 }
 
-fn set_up_repositories(conn: &Connection) -> Result<(SqlTodoListRepository<'_>, SqlTodoItemRepository<'_>)> {
+fn set_up_repositories(
+    conn: &Connection,
+) -> Result<(SqlTodoListRepository<'_>, SqlTodoItemRepository<'_>)> {
     let current_list = std::env::var("CURRENT")?;
     log::info!("currently on list {current_list}");
     Ok((

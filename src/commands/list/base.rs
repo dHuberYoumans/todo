@@ -40,14 +40,16 @@ impl TodoList {
         );
         let mut stmt = conn.prepare(&query)?;
         let tasks_iter = stmt.query_map(params![current_list_id], |row| {
-            Ok(TodoItem {
-                id: row.get::<_, i64>("id")?,
+            let mut item = TodoItem {
+                id: row.get::<_, String>("id")?,
                 task: row.get::<_, String>("task")?,
                 status: row.get::<_, Status>("status")?,
                 prio: row.get::<_, Prio>("prio")?,
                 due: row.get::<_, Datetime>("due")?,
                 tag: row.get::<_, Tag>("tag")?,
-            })
+            };
+            item.id = item.id.chars().take(4).collect();
+            Ok(item)
         })?;
         for task in tasks_iter {
             self.tasks.push(task?);
@@ -59,7 +61,7 @@ impl TodoList {
         let sort_key = flags.1.as_deref().unwrap_or(&sort_key_default);
         log::debug!("using sort key {sort_key}");
         match sort_key {
-            "id" => self.tasks.sort_by_key(|entry| Reverse(entry.id)),
+            "id" => self.tasks.sort_by_key(|entry| Reverse(entry.id.clone())),
             "prio" => self.tasks.sort_by_key(|entry| entry.prio.clone()),
             "tag" => self.tasks.sort_by_key(|entry| {
                 let key = entry.tag.clone();
@@ -69,7 +71,7 @@ impl TodoList {
                 let key = entry.due;
                 (key == epoch(), key)
             }),
-            _ => self.tasks.sort_by_key(|entry| Reverse(entry.id)),
+            _ => self.tasks.sort_by_key(|entry| Reverse(entry.id.clone())),
         };
         let mut table = Table::new(&self.tasks);
         table

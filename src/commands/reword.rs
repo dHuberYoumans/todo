@@ -7,7 +7,7 @@ impl TodoList {
     pub fn reword(
         &mut self,
         repo: &impl TodoItemRepository,
-        id: i64,
+        id: &str,
         task: Option<String>,
     ) -> Result<()> {
         let msg = if let Some(task) = task {

@@ -19,7 +19,7 @@ impl MockSqlDb {
             );
 
             CREATE TABLE IF NOT EXISTS todos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT PRIMARY KEY UNIQUE,
             list_id INTEGER NOT NULL 
                 REFERENCES collection(id)
                 ON DELETE CASCADE,
@@ -59,7 +59,7 @@ pub struct MockTodoItem {
 
 impl MockTodoItem {
     pub fn new(
-        id: i64,
+        id: String,
         msg: impl Into<String>,
         prio: Option<Prio>,
         due: Option<Datetime>,
@@ -67,7 +67,7 @@ impl MockTodoItem {
     ) -> Self {
         Self {
             item: TodoItem {
-                id, // HASH!! TODO!
+                id,
                 task: msg.into(),
                 status: Status::Open,
                 due: due.unwrap_or_default(),
@@ -81,7 +81,7 @@ impl MockTodoItem {
 impl Default for MockTodoItem {
     fn default() -> Self {
         MockTodoItem::new(
-            1,
+            "2a".to_string(),
             "test",
             Some(Prio::P1),
             None,

@@ -30,10 +30,20 @@ fn add() -> Result<()> {
 #[test]
 fn fetch_by_tag() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
-    let mock_item_one =
-        MockTodoItem::new(1, "test-msg-1", None, None, Some(Tag("test-tag-1".into())));
-    let mock_item_two =
-        MockTodoItem::new(2, "test-msg-2", None, None, Some(Tag("test-tag-2".into())));
+    let mock_item_one = MockTodoItem::new(
+        "2a".to_string(),
+        "test-msg-1",
+        None,
+        None,
+        Some(Tag("test-tag-1".into())),
+    );
+    let mock_item_two = MockTodoItem::new(
+        "39".to_string(),
+        "test-msg-2",
+        None,
+        None,
+        Some(Tag("test-tag-2".into())),
+    );
     let repo = mock_env.repo("todos");
 
     repo.add(&mock_item_one.item)?;
@@ -48,15 +58,25 @@ fn fetch_by_tag() -> Result<()> {
 #[test]
 fn fetch_task_by_id() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
-    let mock_item_one =
-        MockTodoItem::new(1, "test-msg-1", None, None, Some(Tag("test-tag-1".into())));
-    let mock_item_two =
-        MockTodoItem::new(2, "test-msg-2", None, None, Some(Tag("test-tag-2".into())));
+    let mock_item_one = MockTodoItem::new(
+        "2a".to_string(),
+        "test-msg-1",
+        None,
+        None,
+        Some(Tag("test-tag-1".into())),
+    );
+    let mock_item_two = MockTodoItem::new(
+        "39".to_string(),
+        "test-msg-2",
+        None,
+        None,
+        Some(Tag("test-tag-2".into())),
+    );
     let repo = mock_env.repo("todos");
 
     repo.add(&mock_item_one.item)?;
     repo.add(&mock_item_two.item)?;
-    let response = repo.fetch_task_by_id(1)?;
+    let response = repo.fetch_task_by_id("2a")?;
 
     assert_eq!(response, Some("test-msg-1".to_string()));
 
@@ -70,8 +90,8 @@ fn update_task() -> Result<()> {
     let repo = mock_env.repo("todos");
     repo.add(&mock_item.item)?;
 
-    repo.update_task("updated", 1)?;
-    let count = count_entries_where("task = 'updated'", &mock_env.db.conn)?;
+    repo.update_task("updated", "2a")?;
+    let count = count_entries_where("id = '2a'", &mock_env.db.conn)?;
     assert_eq!(count, 1);
 
     Ok(())
@@ -86,7 +106,7 @@ fn update_status() -> Result<()> {
     let count_open = count_entries_where("status = 1", &mock_env.db.conn)?;
     assert_eq!(count_open, 1);
 
-    repo.update_status(Status::Closed, 1)?;
+    repo.update_status(Status::Closed, "2a")?;
     let count_open = count_entries_where("status = 1", &mock_env.db.conn)?;
     assert_eq!(count_open, 0);
 
@@ -100,7 +120,7 @@ fn delete_task() -> Result<()> {
     let repo = mock_env.repo("todos");
     repo.add(&mock_item.item)?;
 
-    repo.delete_task(1)?;
+    repo.delete_task("2a")?;
     let count = count_entries(&mock_env.db.conn, "todos")?;
     assert_eq!(count, 0);
 
@@ -110,10 +130,20 @@ fn delete_task() -> Result<()> {
 #[test]
 fn fetch_tags() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
-    let mock_item_one =
-        MockTodoItem::new(1, "test-msg-1", None, None, Some(Tag("test-tag-1".into())));
-    let mock_item_two =
-        MockTodoItem::new(2, "test-msg-2", None, None, Some(Tag("test-tag-2".into())));
+    let mock_item_one = MockTodoItem::new(
+        "2a".to_string(),
+        "test-msg-1",
+        None,
+        None,
+        Some(Tag("test-tag-1".into())),
+    );
+    let mock_item_two = MockTodoItem::new(
+        "39".to_string(),
+        "test-msg-2",
+        None,
+        None,
+        Some(Tag("test-tag-2".into())),
+    );
     let repo = mock_env.repo("todos");
     repo.add(&mock_item_one.item)?;
     repo.add(&mock_item_two.item)?;
@@ -128,17 +158,71 @@ fn fetch_tags() -> Result<()> {
 #[test]
 fn fetch_all_ids() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
-    let mock_item_one =
-        MockTodoItem::new(1, "test-msg-1", None, None, Some(Tag("test-tag-1".into())));
-    let mock_item_two =
-        MockTodoItem::new(2, "test-msg-2", None, None, Some(Tag("test-tag-2".into())));
+    let mock_item_one = MockTodoItem::new(
+        "2a".to_string(),
+        "test-msg-1",
+        None,
+        None,
+        Some(Tag("test-tag-1".into())),
+    );
+    let mock_item_two = MockTodoItem::new(
+        "39".to_string(),
+        "test-msg-2",
+        None,
+        None,
+        Some(Tag("test-tag-2".into())),
+    );
     let repo = mock_env.repo("todos");
     repo.add(&mock_item_one.item)?;
     repo.add(&mock_item_two.item)?;
 
     let tags = repo.fetch_all_ids()?;
-    assert_eq!(tags[0], 1);
-    assert_eq!(tags[1], 2);
+    assert_eq!(tags[0], "2a");
+    assert_eq!(tags[1], "39");
+
+    Ok(())
+}
+
+#[test]
+fn resolve_unique_id() -> Result<()> {
+    let mock_env = MockItemEnv::new()?;
+    let target_id = "1634f2b6747bafd9".to_string();
+    let mock_item_one = MockTodoItem::new(target_id.clone(), "test-msg-1", None, None, None);
+    let mock_item_two = MockTodoItem::new(
+        "5d60d6f6f2d88d12".to_string(),
+        "test-msg-1",
+        None,
+        None,
+        None,
+    );
+    let repo = mock_env.repo("todos");
+    repo.add(&mock_item_one.item)?;
+    repo.add(&mock_item_two.item)?;
+
+    let id = repo.resolve_id("1634")?;
+    assert_eq!(id, target_id);
+
+    Ok(())
+}
+
+#[test]
+fn resolve_ambiguous_id() -> Result<()> {
+    let mock_env = MockItemEnv::new()?;
+    let target_id = "1634f2b6747bafd9".to_string();
+    let mock_item_one = MockTodoItem::new(target_id.clone(), "test-msg-1", None, None, None);
+    let mock_item_two = MockTodoItem::new(
+        "1634f2a6747bafd9".to_string(),
+        "test-msg-1",
+        None,
+        None,
+        None,
+    );
+    let repo = mock_env.repo("todos");
+    repo.add(&mock_item_one.item)?;
+    repo.add(&mock_item_two.item)?;
+
+    let result = repo.resolve_id("1634");
+    assert!(result.is_err());
 
     Ok(())
 }
