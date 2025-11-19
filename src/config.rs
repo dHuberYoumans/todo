@@ -19,6 +19,7 @@ pub struct Database {
 
 #[derive(Debug, Deserialize)]
 pub struct Style {
+    pub prefix_id_length: usize,
     pub color_by: String,
     pub sort_by: String,
 }
@@ -46,6 +47,7 @@ impl Config {
 todo_db = "{}"
 
 [style]
+prefix_id_length = 6
 color_by = "prio" #prio | due
 sort_by = "prio"  #prio | due | tag"#,
                 db_path.to_string_lossy()
