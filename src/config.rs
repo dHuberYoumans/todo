@@ -53,7 +53,7 @@ sort_by = "prio"  #prio | due | tag"#,
                 db_path.to_string_lossy()
             )?;
         } else {
-            log::error!("CONFIG not found");
+            log::error!("Could not resolve XDG directories");
         }
         Ok(())
     }

@@ -6,11 +6,11 @@ use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
 use crate::util;
 
 pub fn run(args: Args) -> Result<()> {
-    let mut todo_list = TodoList::new();
     if matches!(args.command, Some(Cmd::Init)) {
-        todo_list.init()?;
+        TodoList::init()?;
         return Ok(());
     };
+    let mut todo_list = TodoList::new();
 
     util::load_env()?;
     let conn = util::connect_to_db(&todo_list.db_path)?;
@@ -18,9 +18,9 @@ pub fn run(args: Args) -> Result<()> {
 
     match args.command {
         Some(cmd) => match cmd {
-            Cmd::ShowPaths => todo_list.show_paths()?,
-            Cmd::CleanData => todo_list.clean_data()?,
-            Cmd::Init => todo_list.init()?,
+            Cmd::ShowPaths => TodoList::show_paths()?,
+            Cmd::CleanData => TodoList::clean_data()?,
+            Cmd::Init => TodoList::init()?,
             Cmd::NewList { name, checkout } => {
                 todo_list.new_list(&todo_list_repo, &todo_item_repo, name, checkout)?
             }

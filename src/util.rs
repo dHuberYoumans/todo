@@ -5,10 +5,13 @@ use dirs::home_dir;
 use glob;
 use log;
 use rusqlite::Connection;
-use std::str::FromStr;
-use std::{env, fs, io::Read, path::PathBuf, process};
+use std::{
+    env, fs,
+    io::Read,
+    path::{Path, PathBuf},
+    process,
+};
 
-use crate::config;
 use crate::domain::Datetime;
 use crate::paths::UserPaths;
 
@@ -79,15 +82,6 @@ pub fn parse_date(input: &str) -> Result<Datetime> {
     }
 }
 
-pub fn get_db_path() -> Option<PathBuf> {
-    if let Err(e) = std::env::var("CONFIG") {
-        log::debug!("CONFIG env var not set: {e:?}");
-    }
-    let config = config::Config::read().ok()?;
-    log::debug!("found config: {config:?}");
-    PathBuf::from_str(&config.database.todo_db).ok()
-}
-
 pub fn get_todo_dir() -> Option<PathBuf> {
     Some(home_dir()?.join(".todo"))
 }
@@ -123,15 +117,9 @@ fn cleanup_tmp_files() -> Result<()> {
     Ok(())
 }
 
-pub fn connect_to_db(db: &Option<PathBuf>) -> Result<Connection> {
+pub fn connect_to_db(db: &PathBuf) -> Result<Connection> {
     log::info!("connecting to database at {}", log_opt_path(db));
-    let conn = if let Some(path) = db {
-        Connection::open(path)?
-    } else {
-        return Err(anyhow!(
-            "No path to database found. Consider 'todo init' to initialize a data base"
-        ));
-    };
+    let conn = Connection::open(db)?;
     conn.execute("PRAGMA foreign_keys = ON;", [])?;
     Ok(conn)
 }
@@ -154,8 +142,6 @@ pub fn dotenv() -> Result<PathBuf> {
     }
 }
 
-pub fn log_opt_path(p: &Option<PathBuf>) -> String {
-    p.as_deref()
-        .map(|p| p.display().to_string())
-        .unwrap_or("<none>".into())
+pub fn log_opt_path(p: &Path) -> String {
+    p.to_string_lossy().into()
 }

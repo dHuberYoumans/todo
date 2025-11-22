@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use tabled::Tabled;
 
 use crate::domain::{Datetime, Prio, Status, Tag};
-use crate::util;
+use crate::paths::UserPaths;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -86,23 +86,26 @@ pub enum Cmd {
 #[derive(Debug, PartialEq, PartialOrd)]
 pub struct TodoList {
     pub tasks: Vec<TodoItem>,
-    pub db_path: Option<PathBuf>,
-}
-
-impl Default for TodoList {
-    fn default() -> Self {
-        Self::new()
-    }
+    pub db_path: PathBuf,
 }
 
 impl TodoList {
     pub fn new() -> Self {
         log::debug!("instantiating new 'todo' struct");
-        let db_path = util::get_db_path();
+        let user_paths = UserPaths::new();
+        let db_path = user_paths
+            .get_db()
+            .expect("✘ No path to database found. Consider 'todo init' to initialize a data base");
         Self {
             tasks: Vec::new(),
             db_path,
         }
+    }
+}
+
+impl Default for TodoList {
+    fn default() -> Self {
+        TodoList::new()
     }
 }
 
