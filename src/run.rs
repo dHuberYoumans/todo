@@ -18,6 +18,8 @@ pub fn run(args: Args) -> Result<()> {
 
     match args.command {
         Some(cmd) => match cmd {
+            Cmd::ShowPaths => todo_list.show_paths()?,
+            Cmd::CleanData => todo_list.clean_data()?,
             Cmd::Init => todo_list.init()?,
             Cmd::NewList { name, checkout } => {
                 todo_list.new_list(&todo_list_repo, &todo_item_repo, name, checkout)?

@@ -5,6 +5,7 @@ pub mod delete;
 pub mod init;
 pub mod list;
 pub mod load;
+pub mod maintenance;
 pub mod new_list;
 pub mod open;
 pub mod reword;

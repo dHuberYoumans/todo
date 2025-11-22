@@ -77,6 +77,10 @@ pub enum Cmd {
         #[arg(long, short = 'm', help = "Task description")]
         task: Option<String>,
     },
+    /// Show user paths
+    ShowPaths,
+    /// Clean data
+    CleanData,
 }
 
 #[derive(Debug, PartialEq, PartialOrd)]
