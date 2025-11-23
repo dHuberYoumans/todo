@@ -48,7 +48,6 @@ todo_db = "{}"
 
 [style]
 prefix_id_length = 6
-color_by = "prio" #prio | due
 sort_by = "prio"  #prio | due | tag"#,
                 db_path.to_string_lossy()
             )?;

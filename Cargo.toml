@@ -7,6 +7,7 @@ edition = "2021"
 anyhow = "1.0.100"
 chrono = "0.4"
 clap = { version = "4.5.47", features = ["derive"] }
+colored = "3.0.0"
 dirs = "6.0.0"
 dotenv = "0.15.0"
 env_logger = "0.11.8"
@@ -15,7 +16,7 @@ log = "0.4.28"
 microxdg = "0.2.0"
 rusqlite = { version = "0.37.0", features = ["bundled"] }
 serde = { version = "1.0.225", features = ["derive"] }
-tabled = "0.15"
+tabled = { version = "0.15", features = ["ansi"] }
 thiserror = "2.0.17"
 toml = "0.9.7"
 
