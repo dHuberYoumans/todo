@@ -37,7 +37,7 @@ pub fn parse_date(input: &str) -> Result<Datetime> {
         let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
         let local_dt = Local.from_local_datetime(&naive_dt).unwrap();
         Ok(Datetime {
-            timestamp: local_dt,
+            timestamp: local_dt.timestamp(),
         })
     } else {
         match input {
@@ -46,7 +46,7 @@ pub fn parse_date(input: &str) -> Result<Datetime> {
                 let naive_dt = today.and_hms_opt(0, 0, 0).unwrap();
                 let local_dt = Local.from_local_datetime(&naive_dt).unwrap();
                 Ok(Datetime {
-                    timestamp: local_dt,
+                    timestamp: local_dt.timestamp(),
                 })
             }
             "tomorrow" => {
@@ -56,7 +56,7 @@ pub fn parse_date(input: &str) -> Result<Datetime> {
                     .from_local_datetime(&tomorrow.and_time(NaiveTime::MIN))
                     .unwrap();
                 Ok(Datetime {
-                    timestamp: tomorrow_dt,
+                    timestamp: tomorrow_dt.timestamp(),
                 })
             }
             "yesterday" => {
@@ -66,7 +66,7 @@ pub fn parse_date(input: &str) -> Result<Datetime> {
                     .from_local_datetime(&yesteday.and_time(NaiveTime::MIN))
                     .unwrap();
                 Ok(Datetime {
-                    timestamp: yesterday_dt,
+                    timestamp: yesterday_dt.timestamp(),
                 })
             }
             _ => {
@@ -75,7 +75,7 @@ pub fn parse_date(input: &str) -> Result<Datetime> {
                 let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
                 let local_dt = Local.from_local_datetime(&naive_dt).single().unwrap();
                 Ok(Datetime {
-                    timestamp: local_dt,
+                    timestamp: local_dt.timestamp(),
                 })
             }
         }

@@ -11,7 +11,7 @@ impl TodoList {
         date_str: String,
     ) -> Result<()> {
         let epoch_seconds = if let Some(date) = date_str.strip_prefix("@") {
-            util::parse_date(date)?.timestamp.timestamp()
+            util::parse_date(date)?.timestamp
         } else {
             return Err(anyhow!("✘ Invalid date"));
         };
