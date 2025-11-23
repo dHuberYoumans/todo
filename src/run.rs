@@ -33,7 +33,7 @@ pub fn run(args: Args) -> Result<()> {
                     todo_list.load(&todo_list_repo, name)?
                 }
             }
-            Cmd::WhoIsThis => todo_list.whoisthis()?,
+            Cmd::Whoami => todo_list.whoisthis()?,
             Cmd::Add {
                 task,
                 due,

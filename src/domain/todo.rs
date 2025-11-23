@@ -37,7 +37,7 @@ pub enum Cmd {
     /// Load a todo list
     Load { name: String },
     /// Print the name of the todo list in use to stdout
-    WhoIsThis,
+    Whoami,
     /// Add a task
     Add {
         #[arg(long, short = 'm', help = "Task description")]
