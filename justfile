@@ -17,3 +17,7 @@ init:
 
 # reinstall with default settings
 reset: clean install init
+
+# bump version
+bump-version *ARGS:
+    ./.bump-to.sh {{ARGS}}
