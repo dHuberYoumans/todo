@@ -3,11 +3,13 @@ use tabled::{
     settings::{
         format::{Format, FormatContent},
         object::{Columns, Object, Rows},
-        Modify, Style, Width,
+        style::Style,
+        Modify, Width,
     },
     Table,
 };
 
+use crate::config::{Config, TableStyle};
 use crate::domain::TodoItem;
 
 pub struct TodoListTable {
@@ -26,15 +28,25 @@ impl TodoListTable {
             .with(Modify::new(Columns::single(2)).with(Width::increase(3))) // status
             .with(Modify::new(Columns::single(3)).with(Width::increase(3))) // prio
             .with(Modify::new(Columns::single(4)).with(Width::increase(3))) // due
-            .with(Modify::new(Columns::single(5)).with(Width::wrap(12))) // tag
-            .with(Style::modern_rounded());
-
+            .with(Modify::new(Columns::single(5)).with(Width::wrap(12))); // tag
+        apply_table_style(&mut table);
         Self { table }
     }
-
     pub fn print(&self) {
         println!("{}", self.table);
     }
+}
+
+fn apply_table_style(table: &mut Table) {
+    let config = Config::read().expect("✘ Couldn't parse the config.");
+    let style = config.style.table.into();
+    match style {
+        TableStyle::Ascii => table.with(Style::ascii()),
+        TableStyle::AsciiRounded => table.with(Style::ascii_rounded()),
+        TableStyle::Modern => table.with(Style::modern()),
+        TableStyle::ModernRounded => table.with(Style::modern_rounded()),
+        TableStyle::Markdown => table.with(Style::markdown()),
+    };
 }
 
 fn color_id() -> FormatContent<impl FnMut(&str) -> String + Clone> {

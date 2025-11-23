@@ -18,10 +18,32 @@ pub struct Database {
 }
 
 #[derive(Debug, Deserialize)]
+pub enum TableStyle {
+    Ascii,
+    AsciiRounded,
+    Modern,
+    ModernRounded,
+    Markdown,
+}
+
+impl From<String> for TableStyle {
+    fn from(s: String) -> Self {
+        match s.to_lowercase().as_str() {
+            "ascii" => TableStyle::Ascii,
+            "ascii_rounded" | "ascii-rounded" => TableStyle::AsciiRounded,
+            "modern" => TableStyle::Modern,
+            "modern_rounded" | "modern-rounded" => TableStyle::ModernRounded,
+            "markdown" => TableStyle::Markdown,
+            _ => TableStyle::ModernRounded,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Style {
     pub prefix_id_length: usize,
-    pub color_by: String,
     pub sort_by: String,
+    pub table: String,
 }
 
 impl Config {
@@ -48,7 +70,8 @@ todo_db = "{}"
 
 [style]
 prefix_id_length = 6
-sort_by = "prio"  #prio | due | tag"#,
+sort_by = "prio"  # prio | due | tag
+table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | markdown"#,
                 db_path.to_string_lossy()
             )?;
         } else {
