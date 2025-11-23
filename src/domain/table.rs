@@ -55,7 +55,7 @@ fn color_status() -> FormatContent<impl FnMut(&str) -> String + Clone> {
         if cell.contains('✔') {
             cell.green().to_string()
         } else {
-            cell.red().to_string()
+            cell.to_string()
         }
     })
 }
