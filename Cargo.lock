@@ -987,6 +987,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "tabled",
+ "thiserror",
  "toml",
 ]
 

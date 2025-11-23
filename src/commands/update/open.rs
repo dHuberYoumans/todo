@@ -5,7 +5,7 @@ use crate::domain::{TodoItemRepository, TodoList};
 
 impl TodoList {
     pub fn open(&self, repo: &impl TodoItemRepository, id: &str) -> Result<()> {
-        repo.update_status(Status::Open, id)?;
+        repo.update(None, None, Some(Status::Open), None, id)?;
         Ok(())
     }
 }

@@ -1,8 +1,7 @@
 use anyhow::{anyhow, Result};
 use tabled::settings::{object::Columns, Modify, Style, Width};
 
-use crate::domain::{TodoItemRepository, TodoList};
-use crate::util;
+use crate::domain::{Datetime, TodoItemRepository, TodoList};
 
 impl TodoList {
     pub fn list_due_date(
@@ -11,7 +10,7 @@ impl TodoList {
         date_str: String,
     ) -> Result<()> {
         let epoch_seconds = if let Some(date) = date_str.strip_prefix("@") {
-            util::parse_date(date)?.timestamp
+            Datetime::parse(date)?.timestamp
         } else {
             return Err(anyhow!("✘ Invalid date"));
         };

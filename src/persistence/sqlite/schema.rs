@@ -105,13 +105,7 @@ impl fmt::Display for Prio {
 impl FromSql for Datetime {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         match value {
-            ValueRef::Integer(timestamp) => {
-                let utc_time =
-                    DateTime::from_timestamp(timestamp, 0).ok_or(FromSqlError::InvalidType)?;
-                Ok(Datetime {
-                    timestamp: DateTime::with_timezone(&utc_time, &Local),
-                })
-            }
+            ValueRef::Integer(timestamp) => Ok(Datetime { timestamp }),
             _ => Err(FromSqlError::InvalidType),
         }
     }
@@ -119,7 +113,7 @@ impl FromSql for Datetime {
 
 impl ToSql for Datetime {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self.timestamp.timestamp()))
+        Ok(ToSqlOutput::from(self.timestamp))
     }
 }
 
@@ -128,13 +122,14 @@ impl fmt::Display for Datetime {
         let today = Local::now().date_naive();
         let yesterday = today.pred_opt().unwrap(); // safe since epoch
         let tomrrow = today.succ_opt().unwrap(); // safe until end of time
-        let this = self.timestamp.date_naive();
+        let date = DateTime::from_timestamp(self.timestamp, 0).unwrap();
+        let this = date.with_timezone(&Local).date_naive();
         match this {
             _ if *self == epoch() => write!(f, ""),
             dt if dt == yesterday => write!(f, "Yesterday"),
             dt if dt == today => write!(f, "Today"),
             dt if dt == tomrrow => write!(f, "Tomorrow"),
-            _ => write!(f, "{}", self.timestamp.format("%Y-%m-%d")),
+            _ => write!(f, "{}", date.naive_local().format("%Y-%m-%d")),
         }
     }
 }
@@ -142,6 +137,6 @@ impl fmt::Display for Datetime {
 pub fn epoch() -> Datetime {
     let epoch_local = DateTime::<Local>::from(DateTime::UNIX_EPOCH);
     Datetime {
-        timestamp: epoch_local,
+        timestamp: epoch_local.timestamp(),
     }
 }

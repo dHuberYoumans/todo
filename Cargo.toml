@@ -16,6 +16,7 @@ microxdg = "0.2.0"
 rusqlite = { version = "0.37.0", features = ["bundled"] }
 serde = { version = "1.0.225", features = ["derive"] }
 tabled = "0.15"
+thiserror = "2.0.17"
 toml = "0.9.7"
 
 [dev-dependencies]

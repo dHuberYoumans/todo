@@ -53,6 +53,7 @@ impl MockItemEnv {
     }
 }
 
+#[derive(Debug)]
 pub struct MockTodoItem {
     pub item: TodoItem,
 }
@@ -82,10 +83,10 @@ impl Default for MockTodoItem {
     fn default() -> Self {
         MockTodoItem::new(
             "2a".to_string(),
-            "test",
+            "msg-test",
             Some(Prio::P1),
             None,
-            Some(Tag("test".to_string())),
+            Some(Tag("tag-test".to_string())),
         )
     }
 }

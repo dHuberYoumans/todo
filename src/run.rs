@@ -36,10 +36,10 @@ pub fn run(args: Args) -> Result<()> {
             Cmd::WhoIsThis => todo_list.whoisthis()?,
             Cmd::Add {
                 task,
-                prio,
                 due,
+                prio,
                 tag,
-            } => todo_list.add(&todo_item_repo, (task, prio, due, tag))?,
+            } => todo_list.add(&todo_item_repo, (task, due, prio, tag))?,
             Cmd::List {
                 all,
                 done,
@@ -71,6 +71,13 @@ pub fn run(args: Args) -> Result<()> {
             Cmd::Delete { id } => todo_list.delete(&todo_item_repo, &id)?,
             Cmd::DeleteAll => todo_list.delete_all(&todo_item_repo)?,
             Cmd::Reword { id, task } => todo_list.reword(&todo_item_repo, &id, task)?,
+            Cmd::Update {
+                id,
+                due,
+                prio,
+                status,
+                tag,
+            } => todo_list.update_item(&todo_item_repo, due, prio, status, tag, &id)?,
             Cmd::Config => todo_list.config()?,
         },
         None => todo_list.list(&todo_list_repo, (None, None))?,

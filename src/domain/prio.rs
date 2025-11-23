@@ -1,6 +1,6 @@
 use clap::ValueEnum;
 
-#[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Default, ValueEnum)]
+#[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Default, ValueEnum)]
 pub enum Prio {
     P1,
     P2,

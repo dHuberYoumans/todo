@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::domain::{Status, Tag, TodoItem};
+use crate::domain::{Datetime, Prio, Status, Tag, TodoItem};
 
 pub trait TodoItemRepository {
     fn create_table(&self) -> Result<()>;
@@ -13,10 +13,14 @@ pub trait TodoItemRepository {
     fn fetch_all_ids(&self) -> Result<Vec<String>>;
     fn fetch_task_by_id(&self, id: &str) -> Result<Option<String>>;
     fn update_task(&self, task: &str, id: &str) -> Result<()>;
-    fn update_status(&self, status: Status, id: &str) -> Result<()>;
-    // fn update_tag(&self, id: String) -> Result<()>;
-    // fn update_due(&self, id: String) -> Result<()>;
-    // fn update_prio(&self, id: String) -> Result<()>;
+    fn update(
+        &self,
+        due: Option<Datetime>,
+        prio: Option<Prio>,
+        satus: Option<Status>,
+        tag: Option<Tag>,
+        id: &str,
+    ) -> Result<()>;
     fn delete_task(&self, id: &str) -> Result<()>;
     fn resolve_id(&self, prefix: &str) -> Result<String>;
 }

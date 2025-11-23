@@ -45,9 +45,9 @@ pub enum Cmd {
         #[arg(long, short = 'p', help = "Priority")]
         prio: Option<Prio>,
         #[arg(long, short = 'd', help = "Due date")]
-        due: Option<String>,
+        due: Option<Datetime>,
         #[arg(long, short = 't', help = "Tag")]
-        tag: Option<String>,
+        tag: Option<Tag>,
     },
     /// Print the current todo list
     List {
@@ -76,6 +76,18 @@ pub enum Cmd {
         id: String,
         #[arg(long, short = 'm', help = "Task description")]
         task: Option<String>,
+    },
+    /// Update the fields of an item
+    Update {
+        id: String,
+        #[arg(long, short = 'd', help = "Update the due date")]
+        due: Option<Datetime>,
+        #[arg(long, short = 'p', help = "Update the priority")]
+        prio: Option<Prio>,
+        #[arg(long, short = 's', help = "Update the status")]
+        status: Option<Status>,
+        #[arg(long, short = 't', help = "Update the tag")]
+        tag: Option<Tag>,
     },
     /// Show user paths
     ShowPaths,

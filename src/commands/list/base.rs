@@ -63,7 +63,7 @@ impl TodoList {
         log::debug!("using sort key {sort_key}");
         match sort_key {
             "id" => self.tasks.sort_by_key(|entry| Reverse(entry.id.clone())),
-            "prio" => self.tasks.sort_by_key(|entry| entry.prio.clone()),
+            "prio" => self.tasks.sort_by_key(|entry| entry.prio),
             "tag" => self.tasks.sort_by_key(|entry| {
                 let key = entry.tag.clone();
                 (key.0.is_empty(), key)

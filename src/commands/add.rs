@@ -9,16 +9,11 @@ impl TodoList {
     pub fn add(
         &self,
         repo: &impl TodoItemRepository,
-        flags: (Option<String>, Option<Prio>, Option<String>, Option<String>),
+        flags: (Option<String>, Option<Datetime>, Option<Prio>, Option<Tag>),
     ) -> Result<()> {
-        let (task, prio, due, raw_tag) = flags;
-        let tag: Option<Tag> = raw_tag.map(Tag);
-        let due_date: Option<Datetime> = match due {
-            Some(ref date) => Some(util::parse_date(date)?),
-            None => None,
-        };
+        let (task, due, prio, tag) = flags;
         // logging
-        match due_date.as_ref() {
+        match due.as_ref() {
             Some(date) => log::info!("found due date '{}'", date),
             None => log::info!("found due date 'None'"),
         };
@@ -31,7 +26,7 @@ impl TodoList {
         let mut item = TodoItem {
             id: String::new(),
             task: msg,
-            due: *due_date.as_ref().unwrap_or(&epoch()),
+            due: due.unwrap_or(epoch()),
             status: Status::Open,
             tag: tag.unwrap_or_default(),
             prio: prio.unwrap_or_default(),

@@ -1,15 +1,14 @@
+use std::str::FromStr;
+
 use anyhow::Result;
 
 use crate::mock::*;
 use todo::domain::TodoItemRepository;
-use todo::domain::{Status, Tag};
+use todo::domain::{Datetime, Prio, Status, Tag};
 
 // fn create_table() -> Result<()>{
 // // fn fetch_by_status(&self, status: Status) -> Result<Vec<TodoItem>>;
 // // fn fetch_by_prio(&self, prio: Prio) -> Result<Vec<TodoItem>>;
-// // fn update_tag(&self, id: i64) -> Result<()>;
-// // fn update_due(&self, id: i64) -> Result<()>;
-// // fn update_prio(&self, id: i64) -> Result<()>;
 
 /**************** TODO ITEM REPOSITORY *****************/
 
@@ -98,19 +97,76 @@ fn update_task() -> Result<()> {
 }
 
 #[test]
-fn update_status() -> Result<()> {
+fn update() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
     let mock_item = MockTodoItem::default();
     let repo = mock_env.repo("todos");
     repo.add(&mock_item.item)?;
-    let count_open = count_entries_where("status = 1", &mock_env.db.conn)?;
-    assert_eq!(count_open, 1);
+    let initial_conditions = update_conditions(None, None, None, None);
+    let count_initial: i64 = count_entries_where(&initial_conditions, &mock_env.db.conn)?;
+    assert_eq!(count_initial, 1);
 
-    repo.update_status(Status::Closed, "2a")?;
-    let count_open = count_entries_where("status = 1", &mock_env.db.conn)?;
-    assert_eq!(count_open, 0);
+    // update due
+    let new_due = Some(Datetime::from_str("01-09-2023")?);
+    repo.update(new_due, None, None, None, "2a")?;
+    let new_conditions = update_conditions(new_due, None, None, None);
+    let count = count_entries_where(&new_conditions, &mock_env.db.conn)?;
+    assert_eq!(count, 1);
+
+    // update prio
+    let new_prio = Some(Prio::P2);
+    repo.update(None, new_prio, None, None, "2a")?;
+    let new_conditions = update_conditions(new_due, new_prio, None, None);
+    let count = count_entries_where(&new_conditions, &mock_env.db.conn)?;
+    assert_eq!(count, 1);
+
+    // update status
+    let new_status = Some(Status::Closed);
+    repo.update(None, None, new_status, None, "2a")?;
+    let new_conditions = update_conditions(new_due, new_prio, new_status, None);
+    let count = count_entries_where(&new_conditions, &mock_env.db.conn)?;
+    assert_eq!(count, 1);
+
+    // update tag
+    let new_tag = Some(Tag("new tag".to_string()));
+    repo.update(None, None, None, new_tag.clone(), "2a")?;
+    let new_conditions = update_conditions(new_due, new_prio, new_status, new_tag.clone());
+    dbg!(&new_conditions);
+    let count = count_entries_where(&new_conditions, &mock_env.db.conn)?;
+    assert_eq!(count, 1);
 
     Ok(())
+}
+
+fn update_conditions(
+    due: Option<Datetime>,
+    prio: Option<Prio>,
+    status: Option<Status>,
+    tag: Option<Tag>,
+) -> String {
+    let mut conditions = Vec::new();
+    if due.is_some() {
+        conditions.push(format!("due = {}", due.unwrap().timestamp))
+    } else {
+        conditions.push(format!("due = {}", Datetime::default().timestamp))
+    };
+    match prio {
+        Some(Prio::P1) => conditions.push("prio = 1".to_string()),
+        Some(Prio::P2) => conditions.push("prio = 2".to_string()),
+        Some(Prio::P3) => conditions.push("prio = 3".to_string()),
+        _ => conditions.push("prio = 1".to_string()),
+    };
+    match status {
+        Some(Status::Open) => conditions.push("status = 1".to_string()),
+        Some(Status::Closed) => conditions.push("status = 0".to_string()),
+        _ => conditions.push("status = 1".to_string()),
+    };
+    if let Some(tag) = tag {
+        conditions.push(format!("tag = '{}'", tag.0));
+    } else {
+        conditions.push(format!("tag = {}", "'tag-test'".to_string()));
+    }
+    conditions.join(" AND ")
 }
 
 #[test]

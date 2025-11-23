@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
-use rusqlite::{named_params, Connection, OptionalExtension};
+use rusqlite::{named_params, Connection, OptionalExtension, ToSql};
 
-use crate::domain::{Datetime, Status, Tag, TodoItem};
+use crate::domain::{Datetime, Prio, Status, Tag, TodoItem};
 use crate::domain::{TodoItemRepository, TodoListRepository};
 use crate::persistence::SqlTodoListRepository;
 
@@ -147,13 +147,37 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
         Ok(())
     }
 
-    fn update_status(&self, status: Status, id: &str) -> Result<()> {
+    fn update(
+        &self,
+        due: Option<Datetime>,
+        prio: Option<Prio>,
+        status: Option<Status>,
+        tag: Option<Tag>,
+        id: &str,
+    ) -> Result<()> {
         let id = self.resolve_id(id)?;
-        let sql = format!("UPDATE {} SET status=(:status) WHERE id=:id;", self.name);
+        let mut sets = Vec::new();
+        let mut params: Vec<(&str, &dyn ToSql)> = Vec::new();
+        if due.is_some() {
+            sets.push("due=:due".to_string());
+            params.push((":due", &due as &dyn ToSql));
+        };
+        if prio.is_some() {
+            sets.push("prio=:prio".to_string());
+            params.push((":prio", &prio as &dyn ToSql));
+        };
+        if status.is_some() {
+            sets.push("status=:status".to_string());
+            params.push((":status", &status as &dyn ToSql));
+        };
+        if tag.is_some() {
+            sets.push("tag=:tag".to_string());
+            params.push((":tag", &tag as &dyn ToSql));
+        };
+        params.push((":id", &id as &dyn ToSql));
+        let sql = format!("UPDATE {} SET {} WHERE id=:id;", self.name, sets.join(", "));
         log::debug!("executing query `{}`", &sql);
-        let _ = self
-            .conn
-            .execute(&sql, named_params! {":status": status, ":id": id})?;
+        let _ = self.conn.execute(&sql, params.as_slice())?;
         Ok(())
     }
 

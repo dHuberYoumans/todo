@@ -1,6 +1,4 @@
 use anyhow::{anyhow, Result};
-use chrono::prelude::*;
-use chrono::{Datelike, Duration, Local, NaiveDate, Weekday};
 use dirs::home_dir;
 use glob;
 use log;
@@ -12,75 +10,9 @@ use std::{
     process,
 };
 
-use crate::domain::Datetime;
 use crate::paths::UserPaths;
 
 const TMP_FILE: &str = "./EDIT_TASK";
-
-pub fn parse_date(input: &str) -> Result<Datetime> {
-    let target = match input.to_lowercase().as_str() {
-        "mon" => Some(Weekday::Mon),
-        "tue" => Some(Weekday::Tue),
-        "wed" => Some(Weekday::Wed),
-        "thu" => Some(Weekday::Thu),
-        "fri" => Some(Weekday::Fri),
-        "sat" => Some(Weekday::Sat),
-        "sun" => Some(Weekday::Sun),
-        _ => None,
-    };
-    if let Some(target) = target {
-        let today = Local::now();
-        let mut date = today.date_naive();
-        while date.weekday() != target {
-            date += Duration::days(1);
-        }
-        let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
-        let local_dt = Local.from_local_datetime(&naive_dt).unwrap();
-        Ok(Datetime {
-            timestamp: local_dt.timestamp(),
-        })
-    } else {
-        match input {
-            "today" => {
-                let today = Local::now().date_naive();
-                let naive_dt = today.and_hms_opt(0, 0, 0).unwrap();
-                let local_dt = Local.from_local_datetime(&naive_dt).unwrap();
-                Ok(Datetime {
-                    timestamp: local_dt.timestamp(),
-                })
-            }
-            "tomorrow" => {
-                let today = Local::now().date_naive();
-                let tomorrow = today.succ_opt().unwrap(); // safe until end of time
-                let tomorrow_dt = Local
-                    .from_local_datetime(&tomorrow.and_time(NaiveTime::MIN))
-                    .unwrap();
-                Ok(Datetime {
-                    timestamp: tomorrow_dt.timestamp(),
-                })
-            }
-            "yesterday" => {
-                let today = Local::now().date_naive();
-                let yesteday = today.pred_opt().unwrap(); // safe until end of time
-                let yesterday_dt = Local
-                    .from_local_datetime(&yesteday.and_time(NaiveTime::MIN))
-                    .unwrap();
-                Ok(Datetime {
-                    timestamp: yesterday_dt.timestamp(),
-                })
-            }
-            _ => {
-                let date = NaiveDate::parse_from_str(input, "%d-%m-%Y")
-            .map_err(|_| anyhow!("✘ Invalid date format.\nUse either of the following:\n* today\n* tomorrow\n* 3 letter days for the next weekday\n* dd-mm-yyyy for a specific day"))?;
-                let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
-                let local_dt = Local.from_local_datetime(&naive_dt).single().unwrap();
-                Ok(Datetime {
-                    timestamp: local_dt.timestamp(),
-                })
-            }
-        }
-    }
-}
 
 pub fn get_todo_dir() -> Option<PathBuf> {
     Some(home_dir()?.join(".todo"))

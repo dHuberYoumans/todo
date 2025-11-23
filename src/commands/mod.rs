@@ -1,11 +1,10 @@
 pub mod add;
-pub mod close;
 pub mod config;
 pub mod delete;
 pub mod list;
 pub mod load;
 pub mod new_list;
-pub mod open;
 pub mod plumbing;
 pub mod reword;
+pub mod update;
 pub mod whoisthis;
