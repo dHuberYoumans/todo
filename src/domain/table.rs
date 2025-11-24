@@ -20,6 +20,7 @@ impl TodoListTable {
     pub fn new(entries: &Vec<TodoItem>) -> Self {
         let mut table = Table::new(entries);
         table
+            .with(Modify::new(Rows::new(1..).intersect(Columns::single(0))).with(format_id()))
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(0))).with(color_id()))
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(2))).with(color_status()))
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(3))).with(color_prio()))
@@ -69,5 +70,12 @@ fn color_status() -> FormatContent<impl FnMut(&str) -> String + Clone> {
         } else {
             cell.to_string()
         }
+    })
+}
+
+fn format_id() -> FormatContent<impl FnMut(&str) -> String + Clone> {
+    Format::content(|cell: &str| {
+        let id_length = Config::read().expect("✘ Couldn't read id").style.id_length;
+        cell.chars().take(id_length).collect()
     })
 }

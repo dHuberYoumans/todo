@@ -18,7 +18,6 @@ impl TodoList {
         let conn = util::connect_to_db(&self.db_path)?;
         let current_list = std::env::var("CURRENT")?;
         let current_list_id = repo.fetch_id(&current_list)?;
-        let id_prefix_length = Config::read()?.style.prefix_id_length;
         let mut sort_key_default = Config::read()?.style.sort_by;
         log::debug!(
             "found current list '{}' with ID={}",
@@ -39,7 +38,7 @@ impl TodoList {
         );
         let mut stmt = conn.prepare(&query)?;
         let tasks_iter = stmt.query_map(params![current_list_id], |row| {
-            let mut item = TodoItem {
+            let item = TodoItem {
                 id: row.get::<_, String>("id")?,
                 task: row.get::<_, String>("task")?,
                 status: row.get::<_, Status>("status")?,
@@ -47,7 +46,6 @@ impl TodoList {
                 due: row.get::<_, Datetime>("due")?,
                 tag: row.get::<_, Tag>("tag")?,
             };
-            item.id = item.id.chars().take(id_prefix_length).collect();
             Ok(item)
         })?;
         for task in tasks_iter {
