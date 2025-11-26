@@ -1,9 +1,10 @@
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use log;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::PathBuf;
 use tabled::Tabled;
 
+use crate::commands::Cmd;
 use crate::domain::{Datetime, Prio, Status, Tag};
 use crate::paths::UserPaths;
 
@@ -20,82 +21,7 @@ pub struct Args {
     pub verbose: bool,
 }
 
-#[derive(Subcommand, Debug)]
-pub enum Cmd {
-    /// Initialize the cli in CWD  
-    Init,
-    /// Open config
-    Config,
-    /// Create a new todo list
-    NewList {
-        name: String,
-        #[arg(long, short = 'c', help = "Directly load new list")]
-        checkout: bool,
-    },
-    /// Delete a todo list
-    DeleteList { name: String },
-    /// Load a todo list
-    Load { name: String },
-    /// Print the name of the todo list in use to stdout
-    Whoami,
-    /// Add a task
-    Add {
-        #[arg(long, short = 'm', help = "Task description")]
-        task: Option<String>,
-        #[arg(long, short = 'p', help = "Priority")]
-        prio: Option<Prio>,
-        #[arg(long, short = 'd', help = "Due date")]
-        due: Option<Datetime>,
-        #[arg(long, short = 't', help = "Tag")]
-        tag: Option<Tag>,
-    },
-    /// Print the current todo list
-    List {
-        #[arg(long, short = 'a', help = "Show all tasks")]
-        all: bool,
-        #[arg(long, help = "Show all completed tasks")]
-        done: bool,
-        #[arg(long, short = 's', help = "Sort tasks")]
-        sort: Option<String>,
-        #[arg(long, help = "Show collection")]
-        collection: bool,
-        #[arg(long, help = "Display available tags")]
-        tags: bool,
-        arg: Option<String>,
-    },
-    /// Mark a task as completed
-    Close { id: String },
-    /// Open a task
-    Open { id: String },
-    /// Delete a task
-    Delete { id: String },
-    /// Delete all tasks in the current todo list
-    DeleteAll,
-    /// Reword a task
-    Reword {
-        id: String,
-        #[arg(long, short = 'm', help = "Task description")]
-        task: Option<String>,
-    },
-    /// Update the fields of an item
-    Update {
-        id: String,
-        #[arg(long, short = 'd', help = "Update the due date")]
-        due: Option<Datetime>,
-        #[arg(long, short = 'p', help = "Update the priority")]
-        prio: Option<Prio>,
-        #[arg(long, short = 's', help = "Update the status")]
-        status: Option<Status>,
-        #[arg(long, short = 't', help = "Update the tag")]
-        tag: Option<Tag>,
-    },
-    /// Show user paths
-    ShowPaths,
-    /// Clean data
-    CleanData,
-}
-
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct TodoList {
     pub tasks: Vec<TodoItem>,
     pub db_path: PathBuf,
@@ -121,7 +47,7 @@ impl Default for TodoList {
     }
 }
 
-#[derive(Debug, Tabled, PartialEq, PartialOrd)]
+#[derive(Debug, Tabled, PartialEq, PartialOrd, Clone)]
 pub struct TodoItem {
     pub id: String,
     pub task: String,

@@ -1,0 +1,111 @@
+use clap::Subcommand;
+
+use crate::domain::{Datetime, Prio, Status, Tag};
+
+#[derive(Subcommand, Debug, Clone)]
+pub enum Cmd {
+    /// Initialize the cli in CWD  
+    Init,
+    /// Open config
+    Config,
+    /// Create a new todo list
+    NewList {
+        name: String,
+        #[arg(long, short = 'c', help = "Directly load new list")]
+        checkout: bool,
+    },
+    /// Delete a todo list
+    DeleteList { name: String },
+    /// Load a todo list
+    Load { name: String },
+    /// Print the name of the todo list in use to stdout
+    Whoami,
+    /// Add a task
+    Add {
+        #[arg(long, short = 'm', help = "Task description")]
+        task: Option<String>,
+        #[arg(long, short = 'p', help = "Priority")]
+        prio: Option<Prio>,
+        #[arg(long, short = 'd', help = "Due date")]
+        due: Option<Datetime>,
+        #[arg(long, short = 't', help = "Tag")]
+        tag: Option<Tag>,
+    },
+    /// Print the current todo list
+    List {
+        #[arg(long, short = 'a', help = "Show all tasks")]
+        all: bool,
+        #[arg(long, help = "Show all completed tasks")]
+        done: bool,
+        #[arg(long, short = 's', help = "Sort tasks")]
+        sort: Option<String>,
+        #[arg(long, help = "Show collection")]
+        collection: bool,
+        #[arg(long, help = "Display available tags")]
+        tags: bool,
+        arg: Option<String>,
+    },
+    /// Mark a task as completed
+    Close { id: String },
+    /// Open a task
+    Open { id: String },
+    /// Delete a task
+    Delete { id: String },
+    /// Delete all tasks in the current todo list
+    DeleteAll,
+    /// Reword a task
+    Reword {
+        id: String,
+        #[arg(long, short = 'm', help = "Task description")]
+        task: Option<String>,
+    },
+    /// Update the fields of an item
+    Update {
+        id: String,
+        #[arg(long, short = 'd', help = "Update the due date")]
+        due: Option<Datetime>,
+        #[arg(long, short = 'p', help = "Update the priority")]
+        prio: Option<Prio>,
+        #[arg(long, short = 's', help = "Update the status")]
+        status: Option<Status>,
+        #[arg(long, short = 't', help = "Update the tag")]
+        tag: Option<Tag>,
+    },
+    /// Show user paths
+    ShowPaths,
+    /// Clean data
+    CleanData,
+}
+
+impl Default for Cmd {
+    fn default() -> Self {
+        Cmd::List {
+            all: false,
+            done: false,
+            sort: None,
+            collection: false,
+            tags: false,
+            arg: None,
+        }
+    }
+}
+
+#[derive(Subcommand, Debug)]
+pub enum Plumbing {
+    ShowPaths,
+    CleanData,
+    Init,
+}
+
+impl TryFrom<&Cmd> for Plumbing {
+    type Error = ();
+
+    fn try_from(cmd: &Cmd) -> Result<Self, Self::Error> {
+        match cmd {
+            Cmd::Init => Ok(Plumbing::Init),
+            Cmd::CleanData => Ok(Plumbing::CleanData),
+            Cmd::ShowPaths => Ok(Plumbing::ShowPaths),
+            _ => Err(()),
+        }
+    }
+}
