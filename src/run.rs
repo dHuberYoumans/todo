@@ -66,7 +66,10 @@ fn execute(cmd: Cmd) -> Result<()> {
             due,
             prio,
             tag,
-        } => todo_list.add(&todo_item_repo, (task, due, prio, tag))?,
+        } => {
+            todo_list.add(&todo_item_repo, (task, due, prio, tag))?;
+            todo_list.list(&todo_list_repo, (None, None))?
+        }
         Cmd::List {
             all,
             done,
@@ -91,18 +94,30 @@ fn execute(cmd: Cmd) -> Result<()> {
                 }
             }
         },
-        Cmd::Close { ids } => todo_list.close(&todo_item_repo, ids)?,
-        Cmd::Open { ids } => todo_list.open(&todo_item_repo, ids)?,
+        Cmd::Close { ids } => {
+            todo_list.close(&todo_item_repo, ids)?;
+            todo_list.list(&todo_list_repo, (None, None))?
+        }
+        Cmd::Open { ids } => {
+            todo_list.open(&todo_item_repo, ids)?;
+            todo_list.list(&todo_list_repo, (None, None))?
+        }
         Cmd::Delete { id } => todo_list.delete(&todo_item_repo, &id)?,
         Cmd::DeleteAll => todo_list.delete_all(&todo_item_repo)?,
-        Cmd::Reword { id, task } => todo_list.reword(&todo_item_repo, &id, task)?,
+        Cmd::Reword { id, task } => {
+            todo_list.reword(&todo_item_repo, &id, task)?;
+            todo_list.list(&todo_list_repo, (None, None))?
+        }
         Cmd::Update {
             ids,
             due,
             prio,
             status,
             tag,
-        } => todo_list.update_item(&todo_item_repo, due, prio, status, tag, ids)?,
+        } => {
+            todo_list.update_item(&todo_item_repo, due, prio, status, tag, ids)?;
+            todo_list.list(&todo_list_repo, (None, None))?
+        }
         Cmd::Config => todo_list.clone().config()?,
     }
     Ok(())
