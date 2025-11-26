@@ -97,7 +97,7 @@ fn update_task() -> Result<()> {
 }
 
 #[test]
-fn update() -> Result<()> {
+fn update_single() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
     let mock_item = MockTodoItem::default();
     let repo = mock_env.repo("todos");
@@ -108,31 +108,85 @@ fn update() -> Result<()> {
 
     // update due
     let new_due = Some(Datetime::from_str("01-09-2023")?);
-    repo.update(new_due, None, None, None, "2a")?;
+    repo.update(new_due, None, None, None, vec!["2a".to_string()])?;
     let new_conditions = update_conditions(new_due, None, None, None);
     let count = count_entries_where(&new_conditions, &mock_env.db.conn)?;
     assert_eq!(count, 1);
 
     // update prio
     let new_prio = Some(Prio::P2);
-    repo.update(None, new_prio, None, None, "2a")?;
+    repo.update(None, new_prio, None, None, vec!["2a".to_string()])?;
     let new_conditions = update_conditions(new_due, new_prio, None, None);
     let count = count_entries_where(&new_conditions, &mock_env.db.conn)?;
     assert_eq!(count, 1);
 
     // update status
     let new_status = Some(Status::Closed);
-    repo.update(None, None, new_status, None, "2a")?;
+    repo.update(None, None, new_status, None, vec!["2a".to_string()])?;
     let new_conditions = update_conditions(new_due, new_prio, new_status, None);
     let count = count_entries_where(&new_conditions, &mock_env.db.conn)?;
     assert_eq!(count, 1);
 
     // update tag
     let new_tag = Some(Tag("new tag".to_string()));
-    repo.update(None, None, None, new_tag.clone(), "2a")?;
+    repo.update(None, None, None, new_tag.clone(), vec!["2a".to_string()])?;
     let new_conditions = update_conditions(new_due, new_prio, new_status, new_tag.clone());
     dbg!(&new_conditions);
     let count = count_entries_where(&new_conditions, &mock_env.db.conn)?;
+    assert_eq!(count, 1);
+
+    Ok(())
+}
+
+#[test]
+fn update_batch() -> Result<()> {
+    let mock_env = MockItemEnv::new()?;
+    let mock_item_one = MockTodoItem::new(
+        "2a".to_string(),
+        "test-msg-1",
+        None,
+        None,
+        Some(Tag("test-tag-1".into())),
+    );
+    let mock_item_two = MockTodoItem::new(
+        "39".to_string(),
+        "test-msg-2",
+        None,
+        None,
+        Some(Tag("test-tag-2".into())),
+    );
+    let repo = mock_env.repo("todos");
+    repo.add(&mock_item_one.item)?;
+    repo.add(&mock_item_two.item)?;
+    let count_initial = count_entries_where("status = 1", &mock_env.db.conn)?;
+    assert_eq!(count_initial, 2);
+
+    repo.update(
+        None,
+        None,
+        Some(Status::Closed),
+        None,
+        vec!["2a".to_string(), "39".to_string()],
+    )?;
+    let count = count_entries_where("status = 1", &mock_env.db.conn)?;
+    assert_eq!(count, 0);
+
+    repo.update(None, None, Some(Status::Open), None, vec!["2a".to_string()])?;
+    let count = count_entries_where("status = 1", &mock_env.db.conn)?;
+    assert_eq!(count, 1);
+
+    repo.update(
+        None,
+        None,
+        None,
+        Some(Tag("newtag".to_string())),
+        vec!["2a".to_string(), "39".to_string()],
+    )?;
+    let count = count_entries_where("tag = 'newtag'", &mock_env.db.conn)?;
+    assert_eq!(count, 2);
+
+    repo.update(None, Some(Prio::P3), None, None, vec!["39".to_string()])?;
+    let count = count_entries_where("prio = 3", &mock_env.db.conn)?;
     assert_eq!(count, 1);
 
     Ok(())

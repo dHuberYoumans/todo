@@ -19,7 +19,7 @@ pub trait TodoItemRepository {
         prio: Option<Prio>,
         satus: Option<Status>,
         tag: Option<Tag>,
-        id: &str,
+        ids: Vec<String>,
     ) -> Result<()>;
     fn delete_task(&self, id: &str) -> Result<()>;
     fn resolve_id(&self, prefix: &str) -> Result<String>;

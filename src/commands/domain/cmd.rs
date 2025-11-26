@@ -46,9 +46,9 @@ pub enum Cmd {
         arg: Option<String>,
     },
     /// Mark a task as completed
-    Close { id: String },
+    Close { ids: Vec<String> },
     /// Open a task
-    Open { id: String },
+    Open { ids: Vec<String> },
     /// Delete a task
     Delete { id: String },
     /// Delete all tasks in the current todo list
@@ -61,7 +61,7 @@ pub enum Cmd {
     },
     /// Update the fields of an item
     Update {
-        id: String,
+        ids: Vec<String>,
         #[arg(long, short = 'd', help = "Update the due date")]
         due: Option<Datetime>,
         #[arg(long, short = 'p', help = "Update the priority")]

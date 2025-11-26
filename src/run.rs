@@ -91,18 +91,18 @@ fn execute(cmd: Cmd) -> Result<()> {
                 }
             }
         },
-        Cmd::Close { id } => todo_list.close(&todo_item_repo, &id)?,
-        Cmd::Open { id } => todo_list.open(&todo_item_repo, &id)?,
+        Cmd::Close { ids } => todo_list.close(&todo_item_repo, ids)?,
+        Cmd::Open { ids } => todo_list.open(&todo_item_repo, ids)?,
         Cmd::Delete { id } => todo_list.delete(&todo_item_repo, &id)?,
         Cmd::DeleteAll => todo_list.delete_all(&todo_item_repo)?,
         Cmd::Reword { id, task } => todo_list.reword(&todo_item_repo, &id, task)?,
         Cmd::Update {
-            id,
+            ids,
             due,
             prio,
             status,
             tag,
-        } => todo_list.update_item(&todo_item_repo, due, prio, status, tag, &id)?,
+        } => todo_list.update_item(&todo_item_repo, due, prio, status, tag, ids)?,
         Cmd::Config => todo_list.clone().config()?,
     }
     Ok(())

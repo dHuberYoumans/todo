@@ -10,9 +10,9 @@ impl TodoList {
         prio: Option<Prio>,
         status: Option<Status>,
         tag: Option<Tag>,
-        id: &str,
+        ids: Vec<String>,
     ) -> Result<()> {
-        repo.update(due, prio, status, tag, id)?;
+        repo.update(due, prio, status, tag, ids)?;
         Ok(())
     }
 }

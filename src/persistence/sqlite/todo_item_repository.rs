@@ -153,11 +153,16 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
         prio: Option<Prio>,
         status: Option<Status>,
         tag: Option<Tag>,
-        id: &str,
+        ids: Vec<String>,
     ) -> Result<()> {
-        let id = self.resolve_id(id)?;
+        let ids: Vec<String> = ids
+            .iter()
+            .map(|id| self.resolve_id(id))
+            .collect::<Result<Vec<String>>>()?;
         let mut sets = Vec::new();
+        let mut id_placeholders: Vec<String> = Vec::new();
         let mut params: Vec<(&str, &dyn ToSql)> = Vec::new();
+        let mut id_keys: Vec<String> = Vec::with_capacity(ids.len());
         if due.is_some() {
             sets.push("due=:due".to_string());
             params.push((":due", &due as &dyn ToSql));
@@ -174,8 +179,21 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
             sets.push("tag=:tag".to_string());
             params.push((":tag", &tag as &dyn ToSql));
         };
-        params.push((":id", &id as &dyn ToSql));
-        let sql = format!("UPDATE {} SET {} WHERE id=:id;", self.name, sets.join(", "));
+        for i in 0..ids.len() {
+            let key = format!(":id{}", i);
+            id_placeholders.push(key.clone());
+            id_keys.push(key);
+            //params.push((key.as_str(), id as &dyn ToSql));
+        }
+        for (i, id) in ids.iter().enumerate() {
+            params.push((id_keys[i].as_str(), id as &dyn ToSql));
+        }
+        let sql = format!(
+            "UPDATE {} SET {} WHERE id IN ({});",
+            self.name,
+            sets.join(", "),
+            id_placeholders.join(", ")
+        );
         log::debug!("executing query `{}`", &sql);
         let _ = self.conn.execute(&sql, params.as_slice())?;
         Ok(())
