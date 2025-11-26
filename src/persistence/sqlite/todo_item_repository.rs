@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use rusqlite::{named_params, Connection, OptionalExtension, ToSql};
+use thiserror::Error;
 
 use crate::domain::{Datetime, Prio, Status, Tag, TodoItem};
 use crate::domain::{TodoItemRepository, TodoListRepository};
@@ -19,6 +20,12 @@ impl<'conn> SqlTodoItemRepository<'conn> {
             collection: SqlTodoListRepository::new(conn),
         }
     }
+}
+
+#[derive(Error, Debug)]
+pub enum ItemNotFoundError {
+    #[error("✘ No item with id='{0}' found")]
+    InvalidId(String),
 }
 
 impl TodoItemRepository for SqlTodoItemRepository<'_> {
@@ -183,7 +190,6 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
             let key = format!(":id{}", i);
             id_placeholders.push(key.clone());
             id_keys.push(key);
-            //params.push((key.as_str(), id as &dyn ToSql));
         }
         for (i, id) in ids.iter().enumerate() {
             params.push((id_keys[i].as_str(), id as &dyn ToSql));
@@ -214,7 +220,11 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
             .query_map(named_params! {":id": id}, |row| row.get::<_, String>(0))?
             .collect::<Result<Vec<_>, _>>()?;
         match ids.len() {
-            0 => Err(anyhow!("test")),
+            0 => {
+                let err = Err(ItemNotFoundError::InvalidId(id.into()).into());
+                log::debug!("{:#?}", err);
+                err
+            }
             1 => {
                 let id = ids[0].clone();
                 Ok(id)
