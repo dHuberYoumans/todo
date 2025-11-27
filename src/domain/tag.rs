@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use thiserror::Error;
 
-#[derive(Hash, Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Tag(pub String);
 
 #[derive(Error, Debug)]

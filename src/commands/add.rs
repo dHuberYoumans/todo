@@ -1,4 +1,5 @@
 use anyhow::Result;
+use uuid::Uuid;
 
 use crate::domain::{Datetime, Prio, Status, Tag};
 use crate::domain::{TodoItem, TodoItemRepository, TodoList};
@@ -23,15 +24,14 @@ impl TodoList {
             util::edit_in_editor(None)
         };
         log::info!("found task '{}'", msg);
-        let mut item = TodoItem {
-            id: String::new(),
+        let item = TodoItem {
+            id: Uuid::new_v4().to_string(),
             task: msg,
             due: due.unwrap_or(epoch()),
             status: Status::Open,
             tag: tag.unwrap_or_default(),
             prio: prio.unwrap_or_default(),
         };
-        item.hash_id();
         repo.add(&item)?;
         Ok(())
     }

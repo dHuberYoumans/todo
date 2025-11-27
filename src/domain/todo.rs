@@ -1,6 +1,5 @@
 use clap::Parser;
 use log;
-use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::PathBuf;
 use tabled::Tabled;
 
@@ -55,24 +54,4 @@ pub struct TodoItem {
     pub prio: Prio,
     pub due: Datetime,
     pub tag: Tag,
-}
-
-impl Hash for TodoItem {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.task.hash(state);
-        self.status.hash(state);
-        self.prio.hash(state);
-        self.due.hash(state);
-        self.tag.hash(state);
-    }
-}
-
-impl TodoItem {
-    pub fn hash_id(&mut self) {
-        let mut hasher = DefaultHasher::new();
-        self.hash(&mut hasher);
-        let hashed_id = hasher.finish() as i64;
-        let hex_id = format!("{:x}", hashed_id);
-        self.id = hex_id;
-    }
 }

@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use chrono::prelude::*;
 
-#[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub struct Datetime {
     pub timestamp: i64,
 }

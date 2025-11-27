@@ -19,6 +19,7 @@ serde = { version = "1.0.225", features = ["derive"] }
 tabled = { version = "0.15", features = ["ansi"] }
 thiserror = "2.0.17"
 toml = "0.9.7"
+uuid = { version = "1.18.1", features = ["v4"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.17"
