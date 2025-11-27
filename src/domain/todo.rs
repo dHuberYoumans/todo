@@ -16,8 +16,6 @@ use crate::paths::UserPaths;
 pub struct Args {
     #[command(subcommand)]
     pub command: Option<Cmd>,
-    #[arg(long, short = 'v', help = "verbose")]
-    pub verbose: bool,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
