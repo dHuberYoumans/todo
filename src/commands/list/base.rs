@@ -2,8 +2,7 @@ use anyhow::Result;
 use std::cmp::Reverse;
 
 use crate::config::Config;
-use crate::domain::{TodoItem, TodoItemRepository, TodoList, TodoListTable};
-use crate::persistence::schema::epoch;
+use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
 
 impl TodoList {
     pub fn list(
@@ -38,7 +37,7 @@ fn sort_tasks(tasks: &mut [TodoItem], sort_key: Option<String>) -> Result<()> {
         }),
         "due" => tasks.sort_by_key(|entry| {
             let key = entry.due;
-            (key == epoch(), key)
+            (key == Datetime::epoch(), key)
         }),
         _ => tasks.sort_by_key(|entry| Reverse(entry.id.clone())),
     };

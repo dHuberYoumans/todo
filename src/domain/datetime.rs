@@ -43,6 +43,13 @@ impl Datetime {
         Self::new(None)
     }
 
+    pub fn epoch() -> Datetime {
+        let epoch_local = DateTime::<Local>::from(DateTime::UNIX_EPOCH);
+        Datetime {
+            timestamp: epoch_local.timestamp(),
+        }
+    }
+
     pub fn parse(input: &str) -> Result<Datetime, DatetimeParseError> {
         let target = match input.to_lowercase().as_str() {
             "mon" => Some(Weekday::Mon),

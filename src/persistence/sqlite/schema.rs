@@ -114,18 +114,11 @@ impl fmt::Display for Datetime {
         let date = DateTime::from_timestamp(self.timestamp, 0).unwrap();
         let this = date.with_timezone(&Local).date_naive();
         match this {
-            _ if *self == epoch() => write!(f, ""),
+            _ if *self == Datetime::epoch() => write!(f, ""),
             dt if dt == yesterday => write!(f, "Yesterday"),
             dt if dt == today => write!(f, "Today"),
             dt if dt == tomrrow => write!(f, "Tomorrow"),
             _ => write!(f, "{}", date.naive_local().format("%Y-%m-%d")),
         }
-    }
-}
-
-pub fn epoch() -> Datetime {
-    let epoch_local = DateTime::<Local>::from(DateTime::UNIX_EPOCH);
-    Datetime {
-        timestamp: epoch_local.timestamp(),
     }
 }

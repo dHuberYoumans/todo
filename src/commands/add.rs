@@ -3,7 +3,6 @@ use uuid::Uuid;
 
 use crate::domain::{Datetime, Prio, Status, Tag};
 use crate::domain::{TodoItem, TodoItemRepository, TodoList};
-use crate::persistence::schema::epoch;
 use crate::util;
 
 impl TodoList {
@@ -27,7 +26,7 @@ impl TodoList {
         let item = TodoItem {
             id: Uuid::new_v4().to_string(),
             task: msg,
-            due: due.unwrap_or(epoch()),
+            due: due.unwrap_or(Datetime::epoch()),
             status: Status::Open,
             tag: tag.unwrap_or_default(),
             prio: prio.unwrap_or_default(),
