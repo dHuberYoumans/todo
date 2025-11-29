@@ -37,6 +37,8 @@ pub enum Cmd {
         all: bool,
         #[arg(long, help = "Show all completed tasks")]
         done: bool,
+        #[arg(long, help = "Show all open tasks")]
+        open: bool,
         #[arg(long, short = 's', help = "Sort tasks")]
         sort: Option<String>,
         #[arg(long, help = "Show collection")]
@@ -82,6 +84,7 @@ impl Default for Cmd {
         Cmd::List {
             all: false,
             done: false,
+            open: true,
             sort: None,
             collection: false,
             tags: false,

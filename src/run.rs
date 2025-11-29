@@ -68,11 +68,12 @@ fn execute(cmd: Cmd) -> Result<()> {
             tag,
         } => {
             todo_list.add(&todo_item_repo, (task, due, prio, tag))?;
-            todo_list.list(&todo_list_repo, (None, None))?
+            todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::List {
             all,
             done,
+            open,
             sort,
             collection,
             tags,
@@ -82,31 +83,33 @@ fn execute(cmd: Cmd) -> Result<()> {
             Some(arg) if arg.starts_with('#') => todo_list.list_tag(&todo_item_repo, arg)?,
             _ => {
                 if all {
-                    todo_list.list(&todo_list_repo, (Some("--all".into()), sort))?;
+                    todo_list.list(&todo_item_repo, Some("all".to_string()), sort)?;
                 } else if done {
-                    todo_list.list(&todo_list_repo, (Some("--done".into()), sort))?;
+                    todo_list.list(&todo_item_repo, Some("done".to_string()), sort)?;
+                } else if open {
+                    todo_list.list(&todo_item_repo, Some("open".to_string()), sort)?;
                 } else if collection {
                     todo_list.list_collection(&todo_list_repo)?;
                 } else if tags {
                     todo_list.list_tags(&todo_item_repo)?;
                 } else {
-                    todo_list.list(&todo_list_repo, (None, sort))?;
+                    todo_list.list(&todo_item_repo, None, sort)?;
                 }
             }
         },
         Cmd::Close { ids } => {
             todo_list.close(&todo_item_repo, ids)?;
-            todo_list.list(&todo_list_repo, (None, None))?
+            todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Open { ids } => {
             todo_list.open(&todo_item_repo, ids)?;
-            todo_list.list(&todo_list_repo, (None, None))?
+            todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Delete { id } => todo_list.delete(&todo_item_repo, &id)?,
         Cmd::DeleteAll => todo_list.delete_all(&todo_item_repo)?,
         Cmd::Reword { id, task } => {
             todo_list.reword(&todo_item_repo, &id, task)?;
-            todo_list.list(&todo_list_repo, (None, None))?
+            todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Update {
             ids,
@@ -116,7 +119,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             tag,
         } => {
             todo_list.update_item(&todo_item_repo, due, prio, status, tag, ids)?;
-            todo_list.list(&todo_list_repo, (None, None))?
+            todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Config => todo_list.clone().config()?,
     }

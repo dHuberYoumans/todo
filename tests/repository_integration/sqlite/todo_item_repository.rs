@@ -27,6 +27,66 @@ fn add() -> Result<()> {
 }
 
 #[test]
+fn fetch_item() -> Result<()> {
+    let mock_env = MockItemEnv::new()?;
+    let mock_item = MockTodoItem::default();
+    let repo = mock_env.repo("todos");
+
+    repo.add(&mock_item.item)?;
+    let item = repo.fetch_item("2a")?;
+
+    assert_eq!(item, mock_item.item);
+    Ok(())
+}
+
+#[test]
+fn fetch_list() -> Result<()> {
+    let mock_env = MockItemEnv::new()?;
+    let mut mock_item_one = MockTodoItem::new(
+        "2a".to_string(),
+        "test-msg-1",
+        None,
+        None,
+        Some(Tag("test-tag-1".into())),
+    );
+    let mock_item_two = MockTodoItem::new(
+        "39".to_string(),
+        "test-msg-2",
+        None,
+        None,
+        Some(Tag("test-tag-2".into())),
+    );
+    let repo = mock_env.repo("todos");
+
+    repo.add(&mock_item_one.item)?;
+    repo.add(&mock_item_two.item)?;
+
+    // close task 1
+    mock_item_one.item.status = Status::Closed;
+    repo.update(
+        None,
+        None,
+        Some(Status::Closed),
+        None,
+        vec!["2a".to_string()],
+    )?;
+    let items = repo.fetch_list(Some("all".to_string()))?;
+    assert_eq!(items.len(), 2);
+    assert_eq!(items[0], mock_item_one.item);
+    assert_eq!(items[1], mock_item_two.item);
+
+    let items = repo.fetch_list(Some("done".to_string()))?;
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0], mock_item_one.item);
+
+    let items = repo.fetch_list(Some("open".to_string()))?;
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0], mock_item_two.item);
+
+    Ok(())
+}
+
+#[test]
 fn fetch_by_tag() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
     let mock_item_one = MockTodoItem::new(

@@ -205,6 +205,50 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
         Ok(())
     }
 
+    fn fetch_item(&self, id: &str) -> Result<TodoItem> {
+        let id = self.resolve_id(id)?;
+        let sql = format!("SELECT * FROM {} WHERE id=:id;", self.name);
+        log::debug!("executing query `{}`", &sql);
+        let mut stmt = self.conn.prepare(&sql)?;
+        let item = stmt.query_row(named_params! {":id": id}, |row| {
+            let item = TodoItem {
+                id: row.get::<_, String>("id")?,
+                task: row.get::<_, String>("task")?,
+                status: row.get::<_, Status>("status")?,
+                prio: row.get::<_, Prio>("prio")?,
+                due: row.get::<_, Datetime>("due")?,
+                tag: row.get::<_, Tag>("tag")?,
+            };
+            Ok(item)
+        });
+        Ok(item?)
+    }
+
+    fn fetch_list(&self, option: Option<String>) -> Result<Vec<TodoItem>> {
+        let mut sql: Vec<String> = vec![format!("SELECT * FROM {}", self.name)];
+        match option.as_deref().unwrap_or("None") {
+            "all" => sql.push("WHERE status=0 OR status=1".to_string()),
+            "done" => sql.push("WHERE status=0".to_string()),
+            "open" => sql.push("WHERE status=1".to_string()),
+            _ => sql.push(" WHERE status=1".to_string()),
+        };
+        let mut stmt = self.conn.prepare(&sql.join(" "))?;
+        let tasks = stmt
+            .query_map([], |row| {
+                let item = TodoItem {
+                    id: row.get::<_, String>("id")?,
+                    task: row.get::<_, String>("task")?,
+                    status: row.get::<_, Status>("status")?,
+                    prio: row.get::<_, Prio>("prio")?,
+                    due: row.get::<_, Datetime>("due")?,
+                    tag: row.get::<_, Tag>("tag")?,
+                };
+                Ok(item)
+            })?
+            .collect::<rusqlite::Result<Vec<TodoItem>>>()?;
+        Ok(tasks)
+    }
+
     fn delete_task(&self, id: &str) -> Result<()> {
         let id = self.resolve_id(id)?;
         let sql = format!("DELETE FROM {} WHERE id=:id;", self.name);

@@ -12,6 +12,8 @@ pub trait TodoItemRepository {
     fn fetch_tags(&self) -> Result<Vec<Tag>>;
     fn fetch_all_ids(&self) -> Result<Vec<String>>;
     fn fetch_task_by_id(&self, id: &str) -> Result<Option<String>>;
+    fn fetch_item(&self, id: &str) -> Result<TodoItem>;
+    fn fetch_list(&self, options: Option<String>) -> Result<Vec<TodoItem>>;
     fn update_task(&self, task: &str, id: &str) -> Result<()>;
     fn update(
         &self,
