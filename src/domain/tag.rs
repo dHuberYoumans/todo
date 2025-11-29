@@ -20,3 +20,9 @@ impl FromStr for Tag {
         Ok(Tag(tag.to_string()))
     }
 }
+
+impl Tag {
+    pub fn empty() -> Tag {
+        Tag(String::new())
+    }
+}

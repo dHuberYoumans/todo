@@ -121,6 +121,15 @@ fn execute(cmd: Cmd) -> Result<()> {
             todo_list.update_item(&todo_item_repo, due, prio, status, tag, ids)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
+        Cmd::Clear {
+            ids,
+            due,
+            prio,
+            tag,
+        } => {
+            todo_list.clear(&todo_item_repo, ids, due, prio, tag)?;
+            todo_list.list(&todo_item_repo, None, None)?
+        }
         Cmd::Config => todo_list.clone().config()?,
     }
     Ok(())

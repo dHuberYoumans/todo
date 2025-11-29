@@ -73,6 +73,16 @@ pub enum Cmd {
         #[arg(long, short = 't', help = "Update the tag")]
         tag: Option<Tag>,
     },
+    // Clear due, prio or the tag column
+    Clear {
+        ids: Vec<String>,
+        #[arg(long, help = "Clear the due column")]
+        due: bool,
+        #[arg(long, help = "Clear the prio column")]
+        prio: bool,
+        #[arg(long, help = "Clear the tag column")]
+        tag: bool,
+    },
     /// Show user paths
     ShowPaths,
     /// Clean data
