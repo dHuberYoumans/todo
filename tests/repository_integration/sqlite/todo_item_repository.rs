@@ -20,7 +20,7 @@ fn add() -> Result<()> {
 
     repo.add(&mock_item.item)?;
 
-    let count: i64 = count_entries(&mock_env.db.conn, "todos")?;
+    let count = count_entries(&mock_env.db.conn, "todos")?;
     assert_eq!(count, 1);
 
     Ok(())
@@ -193,6 +193,25 @@ fn update_single() -> Result<()> {
     let new_conditions = update_conditions(new_due, new_prio, new_status, new_tag.clone());
     dbg!(&new_conditions);
     let count = count_entries_where(&new_conditions, &mock_env.db.conn)?;
+    assert_eq!(count, 1);
+
+    Ok(())
+}
+
+#[test]
+fn last_updated() -> Result<()> {
+    let mock_env = MockItemEnv::new()?;
+    let mock_item = MockTodoItem::default();
+    let repo = mock_env.repo("todos");
+    repo.add(&mock_item.item)?;
+    let (_item, metadata) = repo.fetch_item_and_metadata("2a")?;
+    dbg!("{}", metadata.created_at);
+    dbg!("{}", metadata.last_updated);
+
+    let count = count_entries_where(
+        &format!("last_updated = {}", metadata.last_updated.timestamp),
+        &mock_env.db.conn,
+    )?;
     assert_eq!(count, 1);
 
     Ok(())

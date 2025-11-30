@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::domain::{Datetime, Prio, Status, Tag, TodoItem};
+use crate::domain::{Datetime, Metadata, Prio, Status, Tag, TodoItem};
 
 pub trait TodoItemRepository {
     fn create_table(&self) -> Result<()>;
@@ -13,6 +13,7 @@ pub trait TodoItemRepository {
     fn fetch_all_ids(&self) -> Result<Vec<String>>;
     fn fetch_task_by_id(&self, id: &str) -> Result<Option<String>>;
     fn fetch_item(&self, id: &str) -> Result<TodoItem>;
+    fn fetch_item_and_metadata(&self, id: &str) -> Result<(TodoItem, Metadata)>;
     fn fetch_list(&self, options: Option<String>) -> Result<Vec<TodoItem>>;
     fn update_task(&self, task: &str, id: &str) -> Result<()>;
     fn update(

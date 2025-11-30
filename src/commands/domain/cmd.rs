@@ -47,6 +47,8 @@ pub enum Cmd {
         tags: bool,
         arg: Option<String>,
     },
+    /// Show metadata of a task
+    Show { id: String },
     /// Mark a task as completed
     Close { ids: Vec<String> },
     /// Open a task

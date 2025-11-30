@@ -28,7 +28,8 @@ impl MockSqlDb {
             prio INTEGER,
             due INTEGER,
             tag TEXT,
-            created_at INTEGER
+            created_at INTEGER,
+            last_updated INTEGER
             );
 
             INSERT INTO collection (name) VALUES ('todos');

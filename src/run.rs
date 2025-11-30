@@ -131,6 +131,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Config => todo_list.clone().config()?,
+        Cmd::Show { id } => todo_list.show(&todo_item_repo, &id)?,
     }
     Ok(())
 }

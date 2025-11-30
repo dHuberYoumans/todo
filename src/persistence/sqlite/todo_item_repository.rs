@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use rusqlite::{named_params, Connection, OptionalExtension, ToSql};
 use thiserror::Error;
 
-use crate::domain::{Datetime, Prio, Status, Tag, TodoItem};
+use crate::domain::{Datetime, Metadata, Prio, Status, Tag, TodoItem};
 use crate::domain::{TodoItemRepository, TodoListRepository};
 use crate::persistence::SqlTodoListRepository;
 
@@ -41,7 +41,8 @@ status INTEGER DEFAULT 0,
 prio INTEGER,
 due INTEGER,
 tag TEXT,
-created_at INTEGER
+created_at INTEGER,
+last_updated INTEGER
 );",
             table = self.name,
             collection = SqlTodoListRepository::TABLE
@@ -53,8 +54,8 @@ created_at INTEGER
 
     fn add(&self, item: &TodoItem) -> Result<()> {
         let sql = format!(
-            "INSERT INTO {} (id, task, list_id, status, prio, due, tag, created_at)
-VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
+            "INSERT INTO {} (id, task, list_id, status, prio, due, tag, created_at, last_updated)
+VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at, :last_updated);",
             self.name
         );
         let list_id = self.collection.fetch_id(&self.name)?;
@@ -70,6 +71,7 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
                 ":due": item.due,
                 ":tag": item.tag,
                 ":created_at": Datetime::now(),
+                ":last_updated": Datetime::now(),
             },
         )?;
         Ok(())
@@ -146,12 +148,82 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
 
     fn update_task(&self, task: &str, id: &str) -> Result<()> {
         let id = self.resolve_id(id)?;
-        let sql = format!(" UPDATE {} SET task=(:task) WHERE id=:id;", self.name);
+        let sql = format!(
+            " UPDATE {} SET task=:task, last_updated=:last_updated WHERE id=:id;",
+            self.name
+        );
         log::debug!("executing query `{}`", &sql);
-        let _ = self
-            .conn
-            .execute(&sql, named_params! { ":task": task, ":id": id})?;
+        let _ = self.conn.execute(
+            &sql,
+            named_params! { ":task": task, ":last_updated": Datetime::now(), ":id": id},
+        )?;
         Ok(())
+    }
+
+    fn fetch_item(&self, id: &str) -> Result<TodoItem> {
+        let id = self.resolve_id(id)?;
+        let sql = format!("SELECT * FROM {} WHERE id=:id;", self.name);
+        log::debug!("executing query `{}`", &sql);
+        let mut stmt = self.conn.prepare(&sql)?;
+        let item = stmt.query_row(named_params! {":id": id}, |row| {
+            let item = TodoItem {
+                id: row.get::<_, String>("id")?,
+                task: row.get::<_, String>("task")?,
+                status: row.get::<_, Status>("status")?,
+                prio: row.get::<_, Prio>("prio")?,
+                due: row.get::<_, Datetime>("due")?,
+                tag: row.get::<_, Tag>("tag")?,
+            };
+            Ok(item)
+        })?;
+        Ok(item)
+    }
+
+    fn fetch_item_and_metadata(&self, id: &str) -> Result<(TodoItem, Metadata)> {
+        let id = self.resolve_id(id)?;
+        let sql = format!("SELECT * FROM {} WHERE id=:id;", self.name);
+        let mut stmt = self.conn.prepare(&sql)?;
+        let (item, metadata) = stmt.query_row(named_params! {":id": id}, |row| {
+            let item = TodoItem {
+                id: row.get::<_, String>("id")?,
+                task: row.get::<_, String>("task")?,
+                status: row.get::<_, Status>("status")?,
+                prio: row.get::<_, Prio>("prio")?,
+                due: row.get::<_, Datetime>("due")?,
+                tag: row.get::<_, Tag>("tag")?,
+            };
+            let metadata = Metadata {
+                created_at: row.get::<_, Datetime>("created_at")?,
+                last_updated: row.get::<_, Datetime>("last_updated")?,
+            };
+            Ok((item, metadata))
+        })?;
+        Ok((item, metadata))
+    }
+
+    fn fetch_list(&self, option: Option<String>) -> Result<Vec<TodoItem>> {
+        let mut sql: Vec<String> = vec![format!("SELECT * FROM {}", self.name)];
+        match option.as_deref().unwrap_or("None") {
+            "all" => sql.push("WHERE status=0 OR status=1".to_string()),
+            "done" => sql.push("WHERE status=0".to_string()),
+            "open" => sql.push("WHERE status=1".to_string()),
+            _ => sql.push(" WHERE status=1".to_string()),
+        };
+        let mut stmt = self.conn.prepare(&sql.join(" "))?;
+        let tasks = stmt
+            .query_map([], |row| {
+                let item = TodoItem {
+                    id: row.get::<_, String>("id")?,
+                    task: row.get::<_, String>("task")?,
+                    status: row.get::<_, Status>("status")?,
+                    prio: row.get::<_, Prio>("prio")?,
+                    due: row.get::<_, Datetime>("due")?,
+                    tag: row.get::<_, Tag>("tag")?,
+                };
+                Ok(item)
+            })?
+            .collect::<rusqlite::Result<Vec<TodoItem>>>()?;
+        Ok(tasks)
     }
 
     fn update(
@@ -170,6 +242,9 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
         let mut id_placeholders: Vec<String> = Vec::new();
         let mut params: Vec<(&str, &dyn ToSql)> = Vec::new();
         let mut id_keys: Vec<String> = Vec::with_capacity(ids.len());
+        let now = Datetime::now();
+        sets.push("last_updated=:last_updated".to_string());
+        params.push((":last_updated", &now as &dyn ToSql));
         if due.is_some() {
             sets.push("due=:due".to_string());
             params.push((":due", &due as &dyn ToSql));
@@ -203,50 +278,6 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at);",
         log::debug!("executing query `{}`", &sql);
         let _ = self.conn.execute(&sql, params.as_slice())?;
         Ok(())
-    }
-
-    fn fetch_item(&self, id: &str) -> Result<TodoItem> {
-        let id = self.resolve_id(id)?;
-        let sql = format!("SELECT * FROM {} WHERE id=:id;", self.name);
-        log::debug!("executing query `{}`", &sql);
-        let mut stmt = self.conn.prepare(&sql)?;
-        let item = stmt.query_row(named_params! {":id": id}, |row| {
-            let item = TodoItem {
-                id: row.get::<_, String>("id")?,
-                task: row.get::<_, String>("task")?,
-                status: row.get::<_, Status>("status")?,
-                prio: row.get::<_, Prio>("prio")?,
-                due: row.get::<_, Datetime>("due")?,
-                tag: row.get::<_, Tag>("tag")?,
-            };
-            Ok(item)
-        });
-        Ok(item?)
-    }
-
-    fn fetch_list(&self, option: Option<String>) -> Result<Vec<TodoItem>> {
-        let mut sql: Vec<String> = vec![format!("SELECT * FROM {}", self.name)];
-        match option.as_deref().unwrap_or("None") {
-            "all" => sql.push("WHERE status=0 OR status=1".to_string()),
-            "done" => sql.push("WHERE status=0".to_string()),
-            "open" => sql.push("WHERE status=1".to_string()),
-            _ => sql.push(" WHERE status=1".to_string()),
-        };
-        let mut stmt = self.conn.prepare(&sql.join(" "))?;
-        let tasks = stmt
-            .query_map([], |row| {
-                let item = TodoItem {
-                    id: row.get::<_, String>("id")?,
-                    task: row.get::<_, String>("task")?,
-                    status: row.get::<_, Status>("status")?,
-                    prio: row.get::<_, Prio>("prio")?,
-                    due: row.get::<_, Datetime>("due")?,
-                    tag: row.get::<_, Tag>("tag")?,
-                };
-                Ok(item)
-            })?
-            .collect::<rusqlite::Result<Vec<TodoItem>>>()?;
-        Ok(tasks)
     }
 
     fn delete_task(&self, id: &str) -> Result<()> {
