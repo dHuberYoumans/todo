@@ -79,8 +79,10 @@ fn execute(cmd: Cmd) -> Result<()> {
             tags,
             arg,
         } => match arg {
-            Some(arg) if arg.starts_with('@') => todo_list.list_due_date(&todo_item_repo, arg)?,
-            Some(arg) if arg.starts_with('#') => todo_list.list_tag(&todo_item_repo, arg)?,
+            Some(arg) if arg.starts_with('@') => {
+                todo_list.list_due_date(&todo_item_repo, arg, sort)?
+            }
+            Some(arg) if arg.starts_with('#') => todo_list.list_tag(&todo_item_repo, arg, sort)?,
             _ => {
                 if all {
                     todo_list.list(&todo_item_repo, Some("all".to_string()), sort)?;

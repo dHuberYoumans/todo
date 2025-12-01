@@ -21,7 +21,7 @@ impl TodoList {
     }
 }
 
-fn sort_tasks(tasks: &mut [TodoItem], sort_key: Option<String>) -> Result<()> {
+pub fn sort_tasks(tasks: &mut [TodoItem], sort_key: Option<String>) -> Result<()> {
     let mut sort_key_default = Config::read()?.style.sort_by;
     if sort_key_default.is_empty() {
         sort_key_default = "id".to_string()

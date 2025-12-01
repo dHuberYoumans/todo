@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 
+use crate::commands::list::base::sort_tasks;
 use crate::domain::{Datetime, TodoItemRepository, TodoList, TodoListTable};
 
 impl TodoList {
@@ -7,6 +8,7 @@ impl TodoList {
         &mut self,
         repo: &impl TodoItemRepository,
         date_str: String,
+        sort: Option<String>,
     ) -> Result<()> {
         let epoch_seconds = if let Some(date) = date_str.strip_prefix("@") {
             Datetime::parse(date)?.timestamp
@@ -17,6 +19,7 @@ impl TodoList {
         for entry in entries {
             let _ = &self.tasks.push(entry);
         }
+        sort_tasks(&mut self.tasks, sort)?;
         let table = TodoListTable::new(&self.tasks);
         table.print();
         Ok(())
