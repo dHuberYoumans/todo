@@ -10,15 +10,16 @@ use tabled::{
 };
 
 use crate::config::{Config, TableStyle};
-use crate::domain::TodoItem;
+use crate::domain::{TodoItem, TodoItemRow};
 
 pub struct TodoListTable {
     pub table: Table,
 }
 
 impl TodoListTable {
-    pub fn new(entries: &Vec<TodoItem>) -> Self {
-        let mut table = Table::new(entries);
+    pub fn new(entries: &[TodoItem]) -> Self {
+        let rows: Vec<TodoItemRow> = entries.iter().map(TodoItemRow::from).collect();
+        let mut table = Table::new(rows);
         table
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(0))).with(format_id()))
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(0))).with(color_id()))

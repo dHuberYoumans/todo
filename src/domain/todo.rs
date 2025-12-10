@@ -6,6 +6,7 @@ use tabled::Tabled;
 use crate::commands::Cmd;
 use crate::domain::{Datetime, Prio, Status, Tag};
 use crate::paths::UserPaths;
+use crate::util::parse_task;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -44,7 +45,7 @@ impl Default for TodoList {
     }
 }
 
-#[derive(Debug, Tabled, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct TodoItem {
     pub id: String,
     pub task: String,
@@ -52,4 +53,28 @@ pub struct TodoItem {
     pub prio: Prio,
     pub due: Datetime,
     pub tag: Tag,
+}
+
+#[derive(Tabled)]
+pub struct TodoItemRow {
+    pub id: String,
+    pub title: String,
+    pub status: Status,
+    pub prio: Prio,
+    pub due: Datetime,
+    pub tag: Tag,
+}
+
+impl From<&TodoItem> for TodoItemRow {
+    fn from(item: &TodoItem) -> Self {
+        let (title, _message) = parse_task(&item.task);
+        Self {
+            id: item.id.clone(),
+            title,
+            status: item.status,
+            prio: item.prio,
+            due: item.due,
+            tag: item.tag.clone(),
+        }
+    }
 }
