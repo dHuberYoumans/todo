@@ -25,7 +25,7 @@ fn pretty_print(item: TodoItem, metadata: Metadata) {
     println!("Priority: {}", item.prio);
     println!("Status: {}", status);
     println!("Tag: {}", item.tag);
-    println!("\n{}", title.blue().bold());
+    println!("\n{}", title.magenta().bold());
     println!();
     println!("{}", message);
 }
