@@ -2,11 +2,11 @@ use anyhow::Result;
 use rusqlite::Connection;
 
 use crate::commands::{Cmd, Plumbing};
-use crate::domain::todo::{Args, TodoList};
+use crate::domain::todo::{Cli, TodoList};
 use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
 use crate::util;
 
-pub fn run(args: Args) -> Result<()> {
+pub fn run(args: Cli) -> Result<()> {
     if let Some(cmd) = args.command {
         match Plumbing::try_from(&cmd) {
             Ok(plumbing_cmd) => execute_plumbing_cmd(plumbing_cmd)?,

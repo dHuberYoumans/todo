@@ -1,11 +1,11 @@
 use clap::Parser;
 use std::process;
 
-use todo::domain::todo::Args;
-use todo::run::run;
+use todo_core::domain::todo::Cli;
+use todo_core::run::run;
 
 fn main() {
-    let args = Args::parse();
+    let args = Cli::parse();
     env_logger::init();
     if let Err(err) = run(args) {
         eprintln!("{}", err);
