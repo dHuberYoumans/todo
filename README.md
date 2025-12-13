@@ -46,9 +46,23 @@ Todo - A simple todo cli so you don't have to leave the terminal
  reword [id] [new task]    Replace the description of the task with the given ID
 ```
 
-## Todos
-- [ ] implement reset? (delte-all deteles everything but keeps id running)
-- [ ] implement option to open editor in add + reword (git style -m "msg" for quick reword)
-- [x] implement new -> initiate new todo list (sqldb) -> WRITE .env file to read db
-- [x] implement help -> print help
+## Shell auto-completion
+### Zsh
+
+```bash
+todo auto-completions zsh > ~/.zsh/completions/_todo
+```
+
+### Bash
+```bash
+todo auto-completions bash > ~/.local/share/bash-completion/completions/todo
+```
+
+### Fish
+```bash
+todo auto-completions fish > ~/.config/fish/completions/todo.fish
+```
+
+Restart your terminal to activate completions.
+
 
