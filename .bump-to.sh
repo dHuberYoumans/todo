@@ -82,7 +82,7 @@ fi
 cargo check --quiet
 git add Cargo.toml Cargo.lock
 git commit -m "chore(version): bump version to ${new_version}"
-git tag $new_version
+git tag v$new_version
 git push
 git push origin $new_version
 
