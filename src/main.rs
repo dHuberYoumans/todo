@@ -1,13 +1,13 @@
 use clap::Parser;
 use std::process;
 
-use todo::domain::todo::Args;
+use todo::app::App;
 use todo::run::run;
 
 fn main() {
-    let args = Args::parse();
+    let app = App::parse();
     env_logger::init();
-    if let Err(err) = run(args) {
+    if let Err(err) = run(app) {
         eprintln!("{}", err);
         process::exit(1);
     }

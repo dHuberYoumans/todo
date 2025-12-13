@@ -89,6 +89,11 @@ pub enum Cmd {
     ShowPaths,
     /// Clean data
     CleanData,
+    /// Generates auto-completions
+    AutoCompletions {
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
 }
 
 impl Default for Cmd {
@@ -110,6 +115,7 @@ pub enum Plumbing {
     ShowPaths,
     CleanData,
     Init,
+    AutoCompletions { shell: clap_complete::Shell },
 }
 
 impl TryFrom<&Cmd> for Plumbing {

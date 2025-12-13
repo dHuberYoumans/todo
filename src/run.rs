@@ -1,13 +1,14 @@
 use anyhow::Result;
 use rusqlite::Connection;
 
+use crate::app::App;
 use crate::commands::{Cmd, Plumbing};
-use crate::domain::todo::{Args, TodoList};
+use crate::domain::todo::TodoList;
 use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
 use crate::util;
 
-pub fn run(args: Args) -> Result<()> {
-    if let Some(cmd) = args.command {
+pub fn run(app: App) -> Result<()> {
+    if let Some(cmd) = app.command {
         match Plumbing::try_from(&cmd) {
             Ok(plumbing_cmd) => execute_plumbing_cmd(plumbing_cmd)?,
             Err(_) => execute(cmd)?,
@@ -35,6 +36,7 @@ fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
         Plumbing::Init => TodoList::init()?,
         Plumbing::ShowPaths => TodoList::show_paths()?,
         Plumbing::CleanData => TodoList::clean_data()?,
+        Plumbing::AutoCompletions { shell } => TodoList::auto_completions(shell),
     }
     Ok(())
 }
@@ -48,6 +50,7 @@ fn execute(cmd: Cmd) -> Result<()> {
         Cmd::ShowPaths => TodoList::show_paths()?,
         Cmd::CleanData => TodoList::clean_data()?,
         Cmd::Init => TodoList::init()?,
+        Cmd::AutoCompletions { shell } => TodoList::auto_completions(shell),
         Cmd::NewList { name, checkout } => {
             todo_list.new_list(&todo_list_repo, &todo_item_repo, name, checkout)?
         }
