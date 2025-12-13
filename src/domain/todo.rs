@@ -1,5 +1,4 @@
-use clap::{Command, CommandFactory, Parser};
-
+use clap::Parser;
 use log;
 use std::path::PathBuf;
 use tabled::Tabled;
@@ -15,13 +14,9 @@ use crate::util::parse_task;
     version,
     about = "A simple todo cli to help you get things done from the comfort of your terminal"
 )]
-pub struct Cli {
+pub struct Args {
     #[command(subcommand)]
     pub command: Option<Cmd>,
-}
-
-pub fn build_cli() -> Command {
-    Cli::command()
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
