@@ -1,22 +1,34 @@
+# Install 
+install: build-release install-completions
+
 # Build & install the CLI into ~/.cargo/bin
-install: 
+build-release: 
 	cargo build --release
 	cp target/release/todo ~/.cargo/bin
 
-# Query CLI for paths to local database and config file
-paths:
-	todo show-paths
+# Install auto-completions
+install-completions:
+    shell=${SHELL##*/} && \
+    case "$shell" in \
+      bash|zsh|fish) ;; \
+      *) echo "Unsupported shell: $shell" >&2; exit 1 ;; \
+    esac && \
+    todo completions install "$shell"
+
+# reinstall with default settings
+reset: clean install init
 
 # Clean old install
 clean:
 	todo clean-data
 
-# Initialize new list
+# Initialize
 init:
     todo init
 
-# reinstall with default settings
-reset: clean install init
+# Query CLI for paths to local database and config file
+paths:
+	todo show-paths
 
 # bump version
 bump-version *ARGS:
