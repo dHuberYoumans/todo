@@ -31,7 +31,7 @@ impl UserPaths {
 
     pub fn print_paths(&self) -> Result<()> {
         let db_path = self.get_db()?;
-        let config = self.get_config()?;
+        let config = self.get_todo_config()?;
         println!("{:<16} {}", "home:", self.home.to_string_lossy());
         println!(
             "{:<16} {}",
@@ -56,6 +56,14 @@ impl UserPaths {
     }
 
     pub fn get_config(&self) -> Result<PathBuf> {
+        if let Some(ref path) = self.config {
+            Ok(path.clone())
+        } else {
+            Err(anyhow!("✘ No default path for configuration files found"))
+        }
+    }
+
+    pub fn get_todo_config(&self) -> Result<PathBuf> {
         if let Some(ref path) = self.todo_config {
             Ok(path.clone())
         } else {
