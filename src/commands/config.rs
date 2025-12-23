@@ -8,7 +8,7 @@ use crate::util;
 impl TodoList {
     pub fn config(self) -> Result<()> {
         let user_paths = UserPaths::new();
-        if let Some(ref path) = user_paths.config {
+        if let Some(ref path) = user_paths.todo_config {
             log::info!("read config at {}", path.to_string_lossy());
             let config = fs::read_to_string(path).ok();
             let new_config = util::edit_in_editor(config);

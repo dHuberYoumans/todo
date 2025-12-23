@@ -7,6 +7,7 @@ use std::{path::PathBuf, str::FromStr};
 pub struct UserPaths {
     pub home: PathBuf,
     pub config: Option<PathBuf>,
+    pub todo_config: Option<PathBuf>,
 }
 
 impl Default for UserPaths {
@@ -19,16 +20,31 @@ impl UserPaths {
     pub fn new() -> Self {
         let xdg = Xdg::new().expect("✘ Could not reslove XDG directories");
         let home = xdg.home().to_path_buf();
-        let config = xdg.config().map(|conf| conf.join("todo/todo.config")).ok();
-        Self { home, config }
+        let config = xdg.config().ok();
+        let todo_config = xdg.config().map(|conf| conf.join("todo/todo.config")).ok();
+        Self {
+            home,
+            config,
+            todo_config,
+        }
     }
 
     pub fn print_paths(&self) -> Result<()> {
         let db_path = self.get_db()?;
         let config = self.get_config()?;
-        println!("home: {}", self.home.to_string_lossy());
-        println!("config at: {}", config.to_string_lossy());
-        println!("database at: {}", db_path.to_string_lossy());
+        println!("{:<16} {}", "home:", self.home.to_string_lossy());
+        println!(
+            "{:<16} {}",
+            "config:",
+            self.config
+                .clone()
+                .ok_or(anyhow!(
+                    "✘ No standard location for configuration files found"
+                ))?
+                .to_string_lossy()
+        );
+        println!("{:<16} {}", "todo.config at:", config.to_string_lossy());
+        println!("{:<16} {}", "database at:", db_path.to_string_lossy());
         Ok(())
     }
 
@@ -40,7 +56,7 @@ impl UserPaths {
     }
 
     pub fn get_config(&self) -> Result<PathBuf> {
-        if let Some(ref path) = self.config {
+        if let Some(ref path) = self.todo_config {
             Ok(path.clone())
         } else {
             Err(anyhow!("✘ No configuration file found"))

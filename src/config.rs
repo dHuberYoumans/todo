@@ -51,7 +51,7 @@ impl Config {
         let user_paths = UserPaths::new();
         let home = user_paths.home;
         log::info!("Creating default config file");
-        if let Some(config) = user_paths.config {
+        if let Some(config) = user_paths.todo_config {
             if let Some(parent) = config.parent() {
                 fs::create_dir_all(parent)?;
             }
@@ -82,7 +82,7 @@ table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | ma
 
     pub fn read() -> Result<Config> {
         let user_paths = UserPaths::new();
-        if let Some(config_path) = user_paths.config {
+        if let Some(config_path) = user_paths.todo_config {
             let config_file = fs::read_to_string(&config_path)?;
             log::debug!("reading config at {config_path:?}");
             let config: Config = toml::from_str(&config_file)?;
