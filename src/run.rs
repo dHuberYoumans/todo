@@ -2,7 +2,7 @@ use anyhow::Result;
 use rusqlite::Connection;
 
 use crate::app::App;
-use crate::commands::{Cmd, Plumbing};
+use crate::commands::{Cmd, CompletionsCmd, Plumbing};
 use crate::domain::todo::TodoList;
 use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
 use crate::util;
@@ -36,7 +36,10 @@ fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
         Plumbing::Init => TodoList::init()?,
         Plumbing::ShowPaths => TodoList::show_paths()?,
         Plumbing::CleanData => TodoList::clean_data()?,
-        Plumbing::AutoCompletions { shell } => TodoList::auto_completions(shell),
+        Plumbing::Completions(cmd) => match cmd {
+            CompletionsCmd::Generate { shell } => TodoList::generate_completions(shell)?,
+            CompletionsCmd::Install { shell } => TodoList::install_completions(shell)?,
+        },
     }
     Ok(())
 }
@@ -47,10 +50,10 @@ fn execute(cmd: Cmd) -> Result<()> {
     let conn = util::connect_to_db(&todo_list.db_path)?;
     let (todo_list_repo, todo_item_repo) = set_up_repositories(&conn)?;
     match cmd {
-        Cmd::ShowPaths => TodoList::show_paths()?,
-        Cmd::CleanData => TodoList::clean_data()?,
-        Cmd::Init => TodoList::init()?,
-        Cmd::AutoCompletions { shell } => TodoList::auto_completions(shell),
+        //Cmd::ShowPaths => TodoList::show_paths()?,
+        //Cmd::CleanData => TodoList::clean_data()?,
+        //Cmd::Init => TodoList::init()?,
+        //Cmd::Completions { cmd } => TodoList::auto_completions(shell),
         Cmd::NewList { name, checkout } => {
             todo_list.new_list(&todo_list_repo, &todo_item_repo, name, checkout)?
         }
@@ -137,6 +140,7 @@ fn execute(cmd: Cmd) -> Result<()> {
         }
         Cmd::Config => todo_list.clone().config()?,
         Cmd::Show { id } => todo_list.show(&todo_item_repo, &id)?,
+        _ => eprintln!("✘ invalid command"),
     }
     Ok(())
 }

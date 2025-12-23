@@ -90,7 +90,21 @@ pub enum Cmd {
     /// Clean data
     CleanData,
     /// Generates auto-completions
-    AutoCompletions {
+    Completions {
+        #[command(subcommand)]
+        cmd: CompletionsCmd,
+    },
+}
+
+#[derive(Subcommand, Debug, Clone)]
+pub enum CompletionsCmd {
+    /// Print completions to stdout
+    Generate {
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
+    /// Install completions for the given shell
+    Install {
         #[arg(value_enum)]
         shell: clap_complete::Shell,
     },
@@ -110,12 +124,12 @@ impl Default for Cmd {
     }
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Debug)]
 pub enum Plumbing {
     ShowPaths,
     CleanData,
     Init,
-    AutoCompletions { shell: clap_complete::Shell },
+    Completions(CompletionsCmd),
 }
 
 impl TryFrom<&Cmd> for Plumbing {
@@ -126,6 +140,7 @@ impl TryFrom<&Cmd> for Plumbing {
             Cmd::Init => Ok(Plumbing::Init),
             Cmd::CleanData => Ok(Plumbing::CleanData),
             Cmd::ShowPaths => Ok(Plumbing::ShowPaths),
+            Cmd::Completions { cmd } => Ok(Plumbing::Completions(cmd.clone())),
             _ => Err(()),
         }
     }
