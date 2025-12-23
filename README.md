@@ -28,7 +28,7 @@ The loading is done by setting the dotenv variable `TODO_DB=name.db`.
 ## todo help
 To see an exhaustive list of all commands, please consult the help menu:
 ```console
-$ todo help
+$ todo --help
 
 A simple todo cli to help you get things done from the comfort of your terminal
 
@@ -62,7 +62,7 @@ Options:
 
 ```
 In addition, each command has its own help flag
-```
+```console
 $ todo init --help
 
 Initialize the cli in CWD
@@ -120,7 +120,7 @@ Options:
 
 ```
 Since it is used so often, it is the default command that is the following two are equivalent
-```
+```console
 $ todo 
 $ todo list
 ```
@@ -152,6 +152,7 @@ The `close` and `open` commands might be self-explanatory: they open or close th
 If you need to update the state - usually either one or more of priority, due date or tag - of a todo, you can use the `update` command.
 ```console
 $ todo update --help
+
 Update the fields of an item
 
 Usage: todo update [OPTIONS] [IDS]...
