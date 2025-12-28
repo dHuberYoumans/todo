@@ -4,6 +4,13 @@ _todo_ is a simple todo list cli written in rust.
 
 ## Installations
 
+### Using curl | sh
+The easiest way to install _todo_ is to use the `install.sh` script:
+```console
+$ curl -fsSL https://raw.githubusercontent.com/dHuberYoumans/todo/main/install.sh | sh
+```
+It will install the _todo_ CLI (into `$HOME/.local/bin/`) alongside with its auto-completions. You may have to restart your terminal or open a new session afterwards. 
+
 ### From source code
 Prerequisites: `rustrc`, `cargo` and (optionally) `just` installed.
 
