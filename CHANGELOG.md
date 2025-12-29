@@ -1,6 +1,31 @@
 ## What's Changed
 
 
+### Chores
+
+- add crate metadata required for releases
+
+- integrate git-cliff with cargo-release
+
+- update gitignore
+
+- add install script
+
+
+### Documentation
+
+- update README
+
+
+### ci
+
+- add automated release workflow for macOS and Linux
+
+
+
+## What's Changed
+
+
 ### Bug Fixes
 
 - fixup! refactor(UserPaths): expose user's default config path
@@ -8,7 +33,18 @@
 
 ### Chores
 
+- update justfile
+
 - fix bump-version script
+
+
+### Documentation
+
+- update README
+
+- update README
+
+- add changelog
 
 
 ### Features
@@ -22,7 +58,7 @@
 
 
 
-## What's Changed
+**Full Changelog**: v0.5.1 → v0.6.0## What's Changed
 
 
 ### Chores
