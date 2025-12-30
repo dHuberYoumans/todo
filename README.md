@@ -16,6 +16,12 @@ In order to install a specific version, say `x.y.z` of the CLI, use
 $ curl -fsSL https://raw.githubusercontent.com/dHuberYoumans/todo/main/install.sh | VERSION=x.y.z sh
 ```
 
+Use 
+```console
+$ todo -V|--version 
+```
+to see the current installed version.
+
 ### From source code
 Prerequisites: `rustrc`, `cargo` and `just` installed.
 
