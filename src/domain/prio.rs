@@ -3,11 +3,11 @@ use std::fmt;
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Default, ValueEnum)]
 pub enum Prio {
-    #[value(alias = "P1")]
+    #[value(aliases = ["P1","p1","1","high"])]
     P1,
-    #[value(alias = "P2")]
+    #[value(aliases = ["P2","p2","2","mid"])]
     P2,
-    #[value(alias = "P3")]
+    #[value(aliases = ["P3","p3","3","low"])]
     P3,
     #[default]
     Empty,
