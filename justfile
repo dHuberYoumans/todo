@@ -4,7 +4,7 @@ install: build-release install-completions
 # Build & install the CLI into ~/.cargo/bin
 build-release: 
 	cargo build --release
-	cp target/release/todo ~/.cargo/bin
+	cp target/release/todo ~/.local/bin
 
 # Install auto-completions
 install-completions:
