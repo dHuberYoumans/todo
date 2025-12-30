@@ -6,6 +6,7 @@ use rusqlite::{
 };
 use std::fmt;
 
+use crate::config::Config;
 use crate::domain::{Datetime, Prio, Status, Tag};
 
 impl FromSql for Status {
@@ -108,6 +109,11 @@ impl ToSql for Datetime {
 
 impl fmt::Display for Datetime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let config = Config::read();
+        let due_date_format: &str = config
+            .as_ref()
+            .map(|c| c.style.due_date_format.as_str())
+            .unwrap_or("%x");
         let today = Local::now().date_naive();
         let next_mon = Datetime::next_weekday(Local::now(), Weekday::Mon);
         let next_tue = Datetime::next_weekday(Local::now(), Weekday::Tue);
@@ -128,7 +134,7 @@ impl fmt::Display for Datetime {
             dt if dt == next_wed => write!(f, "Wed"),
             dt if dt == next_thu => write!(f, "Thu"),
             dt if dt == next_fri => write!(f, "EOW"),
-            _ => write!(f, "{}", date.naive_local().format("%Y-%m-%d")),
+            _ => write!(f, "{}", date.naive_local().format(due_date_format)),
         }
     }
 }
