@@ -11,18 +11,23 @@ $ curl -fsSL https://raw.githubusercontent.com/dHuberYoumans/todo/main/install.s
 ```
 It will install the _todo_ CLI (into `$HOME/.local/bin/`) alongside with its auto-completions. You may have to restart your terminal or open a new session afterwards. 
 
+In order to install a specific version, say `x.y.z` of the CLI, use
+```console
+$ curl -fsSL https://raw.githubusercontent.com/dHuberYoumans/todo/main/install.sh | VERSION=x.y.z sh
+```
+
 ### From source code
-Prerequisites: `rustrc`, `cargo` and (optionally) `just` installed.
+Prerequisites: `rustrc`, `cargo` and `just` installed.
 
 After having cloned the repo you can simply run
 ```console
 just install
 ```
-This will build the release version from the source code using `cargo build --release`, copy the binary into `~/.cargo/bin` and install the auto-completions.
+This will build the release version from the source code using `cargo build --release`, copy the binary into `~/.local/bin` and install the auto-completions.
 
 ## First steps
 When running _todo_ for the first time, it is recommended to run `todo init`.
-It will create the folder `~/.todo/` and creates two files
+It will create the folder `~/.todo/` and two files
 
 1. `~/.todo/.env`  
 2. `~/.todo/todo.db`
