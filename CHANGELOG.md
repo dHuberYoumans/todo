@@ -3,6 +3,40 @@
 
 ### Chores
 
+- update justfile
+
+- remove script to bump version
+
+
+### Documentation
+
+- update README
+
+- update README
+
+
+### Features
+
+- feat!(due date): add due date format option to config
+
+- display weekdays instead of date within 1 week
+
+- add aliases for priority
+
+
+### ci
+
+- fix release ci
+
+
+
+## What's Changed
+
+
+### Chores
+
+- Release todo version 0.6.1
+
 - add crate metadata required for releases
 
 - integrate git-cliff with cargo-release
@@ -23,7 +57,7 @@
 
 
 
-## What's Changed
+**Full Changelog**: v0.6.0 → v0.6.1## What's Changed
 
 
 ### Bug Fixes
