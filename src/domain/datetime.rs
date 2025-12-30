@@ -52,13 +52,14 @@ impl Datetime {
 
     pub fn parse(input: &str) -> Result<Datetime, DatetimeParseError> {
         let target = match input.to_lowercase().as_str() {
-            "mon" => Some(Weekday::Mon),
-            "tue" => Some(Weekday::Tue),
-            "wed" => Some(Weekday::Wed),
-            "thu" => Some(Weekday::Thu),
-            "fri" => Some(Weekday::Fri),
-            "sat" => Some(Weekday::Sat),
-            "sun" => Some(Weekday::Sun),
+            day if day.starts_with("mon") => Some(Weekday::Mon),
+            day if day.starts_with("tue") => Some(Weekday::Tue),
+            day if day.starts_with("wed") => Some(Weekday::Wed),
+            day if day.starts_with("thu") => Some(Weekday::Thu),
+            day if day.starts_with("fri") => Some(Weekday::Fri),
+            day if day.starts_with("sat") => Some(Weekday::Sat),
+            day if day.starts_with("sun") => Some(Weekday::Sun),
+            "eow" => Some(Weekday::Fri),
             _ => None,
         };
         if let Some(target) = target {
@@ -74,7 +75,7 @@ impl Datetime {
             })
         } else {
             match input {
-                "today" => {
+                day if ["eod", "today"].contains(&day) => {
                     let today = Local::now().date_naive();
                     let naive_dt = today.and_hms_opt(0, 0, 0).unwrap();
                     let local_dt = naive_dt.and_local_timezone(Local).unwrap();
@@ -113,5 +114,15 @@ impl Datetime {
                 }
             }
         }
+    }
+
+    pub fn next_weekday(date: DateTime<Local>, next_weekday: Weekday) -> NaiveDate {
+        let today = date.date_naive();
+        let weekday = today.weekday();
+        let days_until_friday = (next_weekday.num_days_from_monday() as i64
+            - weekday.num_days_from_monday() as i64
+            + 7)
+            % 7;
+        (date + Duration::days(days_until_friday)).date_naive()
     }
 }

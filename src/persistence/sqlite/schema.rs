@@ -109,15 +109,25 @@ impl ToSql for Datetime {
 impl fmt::Display for Datetime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let today = Local::now().date_naive();
+        let next_mon = Datetime::next_weekday(Local::now(), Weekday::Mon);
+        let next_tue = Datetime::next_weekday(Local::now(), Weekday::Tue);
+        let next_wed = Datetime::next_weekday(Local::now(), Weekday::Wed);
+        let next_thu = Datetime::next_weekday(Local::now(), Weekday::Thu);
+        let next_fri = Datetime::next_weekday(Local::now(), Weekday::Fri);
         let yesterday = today.pred_opt().unwrap(); // safe since epoch
-        let tomrrow = today.succ_opt().unwrap(); // safe until end of time
+        let tomorrow = today.succ_opt().unwrap(); // safe until end of time
         let date = DateTime::from_timestamp(self.timestamp, 0).unwrap();
         let this = date.with_timezone(&Local).date_naive();
         match this {
             _ if *self == Datetime::epoch() => write!(f, ""),
             dt if dt == yesterday => write!(f, "Yesterday"),
             dt if dt == today => write!(f, "Today"),
-            dt if dt == tomrrow => write!(f, "Tomorrow"),
+            dt if dt == tomorrow => write!(f, "Tomorrow"),
+            dt if dt == next_mon => write!(f, "Mon"),
+            dt if dt == next_tue => write!(f, "Tue"),
+            dt if dt == next_wed => write!(f, "Wed"),
+            dt if dt == next_thu => write!(f, "Thu"),
+            dt if dt == next_fri => write!(f, "EOW"),
             _ => write!(f, "{}", date.naive_local().format("%Y-%m-%d")),
         }
     }
