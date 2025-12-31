@@ -43,6 +43,8 @@ impl From<String> for TableStyle {
 pub struct Style {
     pub id_length: usize,
     pub due_date_format: String,
+    pub show_due: bool,
+    pub show_tag: bool,
     pub sort_by: String,
     pub table: String,
 }
@@ -72,6 +74,8 @@ todo_db = "{}"
 [style]
 id_length = 6
 due_date_format = "%x" # chrono strftime-style
+show_due = true
+show_tag = true
 sort_by = "prio"  # prio | due | tag
 table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | markdown"#,
                 db_path.to_string_lossy()

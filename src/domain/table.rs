@@ -1,5 +1,6 @@
 use colored::Colorize;
 use tabled::{
+    builder::Builder,
     settings::{
         format::{Format, FormatContent},
         object::{Columns, Object, Rows},
@@ -18,8 +19,7 @@ pub struct TodoListTable {
 
 impl TodoListTable {
     pub fn new(entries: &[TodoItem]) -> Self {
-        let rows: Vec<TodoItemRow> = entries.iter().map(TodoItemRow::from).collect();
-        let mut table = Table::new(rows);
+        let mut table = build_table(entries);
         table
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(0))).with(format_id()))
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(0))).with(color_id()))
@@ -37,6 +37,37 @@ impl TodoListTable {
     pub fn print(&self) {
         println!("{}", self.table);
     }
+}
+
+fn build_table(entries: &[TodoItem]) -> Table {
+    let show_due = Config::read().map(|c| c.style.show_due).unwrap_or(true);
+    let show_tag = Config::read().map(|c| c.style.show_tag).unwrap_or(true);
+    let mut builder = Builder::default();
+    let mut headers = vec!["id", "title", "status", "prio"];
+    if show_due {
+        headers.push("due")
+    };
+    if show_tag {
+        headers.push("tag")
+    };
+    builder.push_record(headers);
+    let items: Vec<TodoItemRow> = entries.iter().map(TodoItemRow::from).collect();
+    for item in items {
+        let mut row = vec![
+            item.id,
+            item.title,
+            item.status.to_string(),
+            item.prio.to_string(),
+        ];
+        if show_due {
+            row.push(item.due.to_string());
+        };
+        if show_tag {
+            row.push(item.tag.to_string());
+        };
+        builder.push_record(row);
+    }
+    builder.build()
 }
 
 fn apply_table_style(table: &mut Table) {
