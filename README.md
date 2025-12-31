@@ -203,3 +203,27 @@ Once upon a time...
 
 There was a message to the world: hello!
 ```
+
+## Configuration
+The CLI allows a configuration file which is automatically generated in `~/.config/todo/todo.config` when running `todo init`. 
+The default configuration file is of the following form
+```toml
+[database]
+todo_db = "/Users/donny/.todo/todo.db"
+
+[style]
+id_length = 6
+due_date_format = "%x" # strftime-style
+show_due = true
+show_tag = true
+sort_by = "prio"  # prio | due | tag
+table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | markdown
+```
+The `database` section contains the field `todo_db` which is the path to the sqlite database.
+The `style` section cintains several fields concerning the style of the todo list (or the table) when printed to stdout:
+- `id_length` is a number and controlls the lenght of the id-prefix displayed in the id column
+- `due_date_format` is a string and controlls the format of the due date. It follows the strftime-style. See [chrono::format::strftime](https://docs.rs/chrono/latest/chrono/format/strftime/index.html) for more details
+- `show_due` is a boolean value that controlls the visibility of the `due` column
+- `show_tag` is a boolean value that controlls the visibility of the `tag` column
+- `sort_by` is one of the following strings: "prio", "due" or "tag". It controlls the default sorting of the table (by prio, due or tag)
+- `table` is a string (either of  "ascii", "ascii_rounded", "modern", "modern_rounded" or "markdown") and controlls the overall style of the table. See [tabled::settings::style](https://docs.rs/tabled/latest/tabled/settings/style/struct.Style.html) for more information.
