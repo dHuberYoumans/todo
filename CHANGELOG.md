@@ -1,7 +1,23 @@
 ## What's Changed
 
 
+### Documentation
+
+- update README
+
+
+### Features
+
+- feat!(config): let todo.config handle the display of due and tag column
+
+
+
+## What's Changed
+
+
 ### Chores
+
+- Release todo version 0.7.0
 
 - update justfile
 
@@ -30,7 +46,7 @@
 
 
 
-## What's Changed
+**Full Changelog**: v0.6.1 → v0.7.0## What's Changed
 
 
 ### Chores
