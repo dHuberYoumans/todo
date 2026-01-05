@@ -11,7 +11,7 @@ $ curl -fsSL https://raw.githubusercontent.com/dHuberYoumans/todo/main/install.s
 ```
 It will install the _todo_ CLI (into `$HOME/.local/bin/`) alongside with its auto-completions. You may have to restart your terminal or open a new session afterwards. 
 
-**Remark:** if you are using zsh, make sure to add `fpath=(~/.zsh/completions $fpath)` to your zshrc.
+**Remark:** see [Shell auto-completion](#shell-auto-completion) for how to setup autocompletions correctly.
 
 In order to install a specific version, say `x.y.z` of the CLI, use
 ```console
@@ -110,6 +110,24 @@ $ todo completions generate <shell> > <completion search path>
 The command `todo completions generate` generates the completions function file and prints it to stdout.
 
 Finally, restart your terminal to activate the completions.
+
+**Remark:** The auto-completions files are installed into custom folders which might have to be added to the corresponding shell configuration files (e.g. .zshrc, .bashrc). 
+
+- zsh: add `fpath=(~/.zsh/completions $fpath)` to your .zshrc before calling `compinit`
+- bash: if not done already, install `bash-completion` and add the following to your .bashrc:
+  on Linux
+  ```bash
+  # Load bash-completion
+  source usr/share/bash-completion/bash_completion.sh
+  export BASH_COMPLETION_USER_DIR="$HOME/.local/share/bash-completion"
+  ```
+  on macOS (assuming `bash-completion` was installed via homebrew: `brew install bash-completion@2`)
+  ```bash
+  # Load bash-completion
+  source "$(brew --prefix)/etc/profile.d/bash_completion.sh"
+  export BASH_COMPLETION_USER_DIR="$HOME/.local/share/bash-completion"
+  ```
+- fish: works on the nose ><>
 
 ## Basic Usage
 The usage is fairly standard
