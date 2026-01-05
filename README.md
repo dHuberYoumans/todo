@@ -11,6 +11,8 @@ $ curl -fsSL https://raw.githubusercontent.com/dHuberYoumans/todo/main/install.s
 ```
 It will install the _todo_ CLI (into `$HOME/.local/bin/`) alongside with its auto-completions. You may have to restart your terminal or open a new session afterwards. 
 
+**Remark:** if you are using zsh, make sure to add `fpath=(~/.zsh/completions $fpath)` to your zshrc.
+
 In order to install a specific version, say `x.y.z` of the CLI, use
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/dHuberYoumans/todo/main/install.sh | VERSION=x.y.z sh
