@@ -145,16 +145,14 @@ Print the current todo list
 Usage: todo list [OPTIONS] [ARG]
 
 Arguments:
-  [ARG]  
+  [ARG]
 
 Options:
-  -a, --all          Show all tasks
-      --done         Show all completed tasks
-      --open         Show all open tasks
-  -s, --sort <SORT>  Sort tasks
-      --collection   Show collection
-      --tags         Display available tags
-  -h, --help         Print help
+      --filter <FILTER>  Filter tasks [possible values: none, do, done]
+  -s, --sort <SORT>      Sort tasks
+      --collection       Show collection
+      --tags             Display available tags
+  -h, --help             Print help
 
 ```
 Since it is used so often, it is the default command that is the following two are equivalent
@@ -162,6 +160,15 @@ Since it is used so often, it is the default command that is the following two a
 $ todo 
 $ todo list
 ```
+In addition, 
+```
+$ todo list #tag <--filter FILTER>
+```
+lists only those todos with the corresponding tag, while 
+```console
+$ todo list @due <--filter FILTER>
+```
+lists only those todos with the corresponding due date.   
 
 ### Add a todo
 The next most common command is `add`. It adds a new todo to the current list.
