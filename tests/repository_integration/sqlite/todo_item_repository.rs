@@ -3,6 +3,7 @@ use std::str::FromStr;
 use anyhow::Result;
 
 use crate::mock::*;
+use todo::commands::ListFilter;
 use todo::domain::TodoItemRepository;
 use todo::domain::{Datetime, Prio, Status, Tag};
 
@@ -70,16 +71,16 @@ fn fetch_list() -> Result<()> {
         None,
         vec!["2a".to_string()],
     )?;
-    let items = repo.fetch_list(Some("all".to_string()))?;
+    let items = repo.fetch_list(Some(ListFilter::None))?;
     assert_eq!(items.len(), 2);
     assert_eq!(items[0], mock_item_one.item);
     assert_eq!(items[1], mock_item_two.item);
 
-    let items = repo.fetch_list(Some("done".to_string()))?;
+    let items = repo.fetch_list(Some(ListFilter::Done))?;
     assert_eq!(items.len(), 1);
     assert_eq!(items[0], mock_item_one.item);
 
-    let items = repo.fetch_list(Some("open".to_string()))?;
+    let items = repo.fetch_list(Some(ListFilter::Do))?;
     assert_eq!(items.len(), 1);
     assert_eq!(items[0], mock_item_two.item);
 
@@ -107,7 +108,7 @@ fn fetch_by_tag() -> Result<()> {
 
     repo.add(&mock_item_one.item)?;
     repo.add(&mock_item_two.item)?;
-    let response = repo.fetch_by_tag(Tag("test-tag-2".into()))?;
+    let response = repo.fetch_by_tag(Tag("test-tag-2".into()), None)?;
 
     assert_eq!(response.len(), 1);
 

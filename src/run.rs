@@ -76,32 +76,20 @@ fn execute(cmd: Cmd) -> Result<()> {
             todo_list.add(&todo_item_repo, (task, due, prio, tag))?;
             todo_list.list(&todo_item_repo, None, None)?
         }
-        Cmd::List {
-            all,
-            done,
-            open,
-            sort,
-            collection,
-            tags,
-            arg,
-        } => match arg {
+        Cmd::List(args) => match args.arg.as_deref() {
             Some(arg) if arg.starts_with('@') => {
-                todo_list.list_due_date(&todo_item_repo, arg, sort)?
+                todo_list.list_due_date(&todo_item_repo, arg.to_string(), args.sort, args.filter)?
             }
-            Some(arg) if arg.starts_with('#') => todo_list.list_tag(&todo_item_repo, arg, sort)?,
+            Some(arg) if arg.starts_with('#') => {
+                todo_list.list_tag(&todo_item_repo, arg.to_string(), args.sort, args.filter)?
+            }
             _ => {
-                if all {
-                    todo_list.list(&todo_item_repo, Some("all".to_string()), sort)?;
-                } else if done {
-                    todo_list.list(&todo_item_repo, Some("done".to_string()), sort)?;
-                } else if open {
-                    todo_list.list(&todo_item_repo, Some("open".to_string()), sort)?;
-                } else if collection {
+                if args.collection {
                     todo_list.list_collection(&todo_list_repo)?;
-                } else if tags {
+                } else if args.tags {
                     todo_list.list_tags(&todo_item_repo)?;
                 } else {
-                    todo_list.list(&todo_item_repo, None, sort)?;
+                    todo_list.list(&todo_item_repo, args.sort, args.filter)?;
                 }
             }
         },

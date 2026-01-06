@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use rusqlite::{named_params, Connection, OptionalExtension, ToSql};
 use thiserror::Error;
 
+use crate::commands::ListFilter;
 use crate::domain::{Datetime, Metadata, Prio, Status, Tag, TodoItem};
 use crate::domain::{TodoItemRepository, TodoListRepository};
 use crate::persistence::SqlTodoListRepository;
@@ -77,10 +78,19 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at, :last_upd
         Ok(())
     }
 
-    fn fetch_by_due_date(&self, epoch_seconds: i64) -> Result<Vec<TodoItem>> {
-        let sql = format!("SELECT * FROM {} WHERE due = :date;", self.name);
-        log::debug!("executing query `{}`", &sql);
-        let mut stmt = self.conn.prepare(&sql)?;
+    fn fetch_by_due_date(
+        &self,
+        epoch_seconds: i64,
+        filter: Option<ListFilter>,
+    ) -> Result<Vec<TodoItem>> {
+        let mut sql: Vec<String> = vec![format!("SELECT * FROM {} WHERE due=:date", self.name)];
+        match filter.unwrap_or(ListFilter::Do) {
+            ListFilter::None => {}
+            ListFilter::Done => sql.push("AND status=0".to_string()),
+            ListFilter::Do => sql.push("AND status=1".to_string()),
+        };
+
+        let mut stmt = self.conn.prepare(&sql.join(" "))?;
         let entries = stmt.query_map(named_params! {":date": epoch_seconds}, |row| {
             Ok(TodoItem {
                 id: row.get("id")?,
@@ -94,10 +104,14 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at, :last_upd
         entries.map(|res| res.map_err(Into::into)).collect()
     }
 
-    fn fetch_by_tag(&self, tag: Tag) -> Result<Vec<TodoItem>> {
-        let sql = format!("SELECT * FROM {} WHERE tag=:tag;", self.name);
-        log::debug!("executing query `{}`", &sql);
-        let mut stmt = self.conn.prepare(&sql)?;
+    fn fetch_by_tag(&self, tag: Tag, filter: Option<ListFilter>) -> Result<Vec<TodoItem>> {
+        let mut sql: Vec<String> = vec![format!("SELECT * FROM {} WHERE tag=:tag", self.name)];
+        match filter.unwrap_or(ListFilter::Do) {
+            ListFilter::None => {}
+            ListFilter::Done => sql.push("AND status=0".to_string()),
+            ListFilter::Do => sql.push("AND status=1".to_string()),
+        };
+        let mut stmt = self.conn.prepare(&sql.join(" "))?;
         let entries = stmt.query_map(named_params! { ":tag": tag}, |row| {
             Ok(TodoItem {
                 id: row.get("id")?,
@@ -201,13 +215,12 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at, :last_upd
         Ok((item, metadata))
     }
 
-    fn fetch_list(&self, option: Option<String>) -> Result<Vec<TodoItem>> {
+    fn fetch_list(&self, filter: Option<ListFilter>) -> Result<Vec<TodoItem>> {
         let mut sql: Vec<String> = vec![format!("SELECT * FROM {}", self.name)];
-        match option.as_deref().unwrap_or("None") {
-            "all" => sql.push("WHERE status=0 OR status=1".to_string()),
-            "done" => sql.push("WHERE status=0".to_string()),
-            "open" => sql.push("WHERE status=1".to_string()),
-            _ => sql.push(" WHERE status=1".to_string()),
+        match filter.unwrap_or(ListFilter::Do) {
+            ListFilter::None => sql.push("WHERE status=0 OR status=1".to_string()),
+            ListFilter::Done => sql.push("WHERE status=0".to_string()),
+            ListFilter::Do => sql.push("WHERE status=1".to_string()),
         };
         let mut stmt = self.conn.prepare(&sql.join(" "))?;
         let tasks = stmt

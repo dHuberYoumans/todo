@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::cmp::Reverse;
 
+use crate::commands::ListFilter;
 use crate::config::Config;
 use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
 
@@ -8,12 +9,12 @@ impl TodoList {
     pub fn list(
         &mut self,
         repo: &impl TodoItemRepository,
-        opt: Option<String>,
         sort: Option<String>,
+        filter: Option<ListFilter>,
     ) -> Result<()> {
         let current_list = std::env::var("CURRENT")?;
         log::debug!("found current list '{}'", &current_list,);
-        self.tasks = repo.fetch_list(opt)?;
+        self.tasks = repo.fetch_list(filter)?;
         sort_tasks(&mut self.tasks, sort)?;
         let table = TodoListTable::new(&self.tasks);
         table.print();

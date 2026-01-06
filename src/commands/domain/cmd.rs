@@ -32,21 +32,7 @@ pub enum Cmd {
         tag: Option<Tag>,
     },
     /// Print the current todo list
-    List {
-        #[arg(long, short = 'a', help = "Show all tasks")]
-        all: bool,
-        #[arg(long, help = "Show all completed tasks")]
-        done: bool,
-        #[arg(long, help = "Show all open tasks")]
-        open: bool,
-        #[arg(long, short = 's', help = "Sort tasks")]
-        sort: Option<String>,
-        #[arg(long, help = "Show collection")]
-        collection: bool,
-        #[arg(long, help = "Display available tags")]
-        tags: bool,
-        arg: Option<String>,
-    },
+    List(ListArgs),
     /// Show metadata of a task
     Show { id: String },
     /// Mark a task as completed
@@ -96,6 +82,26 @@ pub enum Cmd {
     },
 }
 
+#[derive(clap::ValueEnum, Clone, Debug)]
+pub enum ListFilter {
+    None,
+    Do,
+    Done,
+}
+
+#[derive(clap::Args, Clone, Debug)]
+pub struct ListArgs {
+    #[arg(long, value_enum, help = "Filter tasks")]
+    pub filter: Option<ListFilter>,
+    #[arg(long, short = 's', help = "Sort tasks")]
+    pub sort: Option<String>,
+    #[arg(long, help = "Show collection")]
+    pub collection: bool,
+    #[arg(long, help = "Display available tags")]
+    pub tags: bool,
+    pub arg: Option<String>,
+}
+
 #[derive(Subcommand, Debug, Clone)]
 pub enum CompletionsCmd {
     /// Print completions to stdout
@@ -112,15 +118,13 @@ pub enum CompletionsCmd {
 
 impl Default for Cmd {
     fn default() -> Self {
-        Cmd::List {
-            all: false,
-            done: false,
-            open: true,
+        Cmd::List(ListArgs {
+            filter: Some(ListFilter::Do),
             sort: None,
             collection: false,
             tags: false,
             arg: None,
-        }
+        })
     }
 }
 

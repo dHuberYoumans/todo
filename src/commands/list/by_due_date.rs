@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 
-use crate::commands::list::base::sort_tasks;
+use crate::commands::{list::base::sort_tasks, ListFilter};
 use crate::domain::{Datetime, TodoItemRepository, TodoList, TodoListTable};
 
 impl TodoList {
@@ -9,13 +9,14 @@ impl TodoList {
         repo: &impl TodoItemRepository,
         date_str: String,
         sort: Option<String>,
+        filter: Option<ListFilter>,
     ) -> Result<()> {
         let epoch_seconds = if let Some(date) = date_str.strip_prefix("@") {
             Datetime::parse(date)?.timestamp
         } else {
             return Err(anyhow!("✘ Invalid date"));
         };
-        let entries = repo.fetch_by_due_date(epoch_seconds)?;
+        let entries = repo.fetch_by_due_date(epoch_seconds, filter)?;
         for entry in entries {
             let _ = &self.tasks.push(entry);
         }
