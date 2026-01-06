@@ -112,7 +112,7 @@ impl fmt::Display for Datetime {
         let config = Config::read();
         let due_date_format: &str = config
             .as_ref()
-            .map(|c| c.style.due_date_format.as_str())
+            .map(|c| c.style.due_date_display_format.as_str())
             .unwrap_or("%x");
         let today = Local::now().date_naive();
         let next_mon = Datetime::next_weekday(Local::now(), Weekday::Mon);

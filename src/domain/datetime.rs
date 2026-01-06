@@ -1,8 +1,9 @@
-use chrono::Duration;
+use chrono::prelude::*;
+use chrono::{Duration, ParseError};
 use std::str::FromStr;
 use thiserror::Error;
 
-use chrono::prelude::*;
+use crate::config::Config;
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub struct Datetime {
@@ -11,8 +12,13 @@ pub struct Datetime {
 
 #[derive(Error, Debug)]
 pub enum DatetimeParseError {
-    #[error("✘ Invalid date format.\nUse either of the following:\n* today\n* tomorrow\n* 3 letter days for the next weekday\n* dd-mm-yyyy for a specific day")]
-    InvalidFormat,
+    #[error("invalid date '{input}', expected format: {format}")]
+    InvalidFormat {
+        input: String,
+        format: String,
+        #[source]
+        source: ParseError,
+    },
 }
 
 impl Default for Datetime {
@@ -51,6 +57,9 @@ impl Datetime {
     }
 
     pub fn parse(input: &str) -> Result<Datetime, DatetimeParseError> {
+        let date_input_format: String = Config::read()
+            .map(|c| c.style.due_date_input_format)
+            .unwrap_or("%d-%m-%Y".to_string());
         let target = match input.to_lowercase().as_str() {
             day if day.starts_with("mon") => Some(Weekday::Mon),
             day if day.starts_with("tue") => Some(Weekday::Tue),
@@ -104,8 +113,14 @@ impl Datetime {
                     })
                 }
                 _ => {
-                    let date = NaiveDate::parse_from_str(input, "%d-%m-%Y")
-                        .map_err(|_| DatetimeParseError::InvalidFormat)?;
+                    let date =
+                        NaiveDate::parse_from_str(input, &date_input_format).map_err(|e| {
+                            DatetimeParseError::InvalidFormat {
+                                input: input.to_string(),
+                                format: date_input_format.clone(),
+                                source: e,
+                            }
+                        })?;
                     let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
                     let local_dt = naive_dt.and_local_timezone(Local).unwrap();
                     Ok(Datetime {

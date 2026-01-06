@@ -42,7 +42,8 @@ impl From<String> for TableStyle {
 #[derive(Debug, Deserialize)]
 pub struct Style {
     pub id_length: usize,
-    pub due_date_format: String,
+    pub due_date_display_format: String,
+    pub due_date_input_format: String,
     pub show_due: bool,
     pub show_tag: bool,
     pub sort_by: String,
@@ -74,6 +75,7 @@ todo_db = "{}"
 [style]
 id_length = 6
 due_date_format = "%x" # chrono strftime-style
+due_date_format = "%d-%m-%Y" # chrono strftime-style
 show_due = true
 show_tag = true
 sort_by = "prio"  # prio | due | tag
