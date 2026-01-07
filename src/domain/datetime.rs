@@ -1,5 +1,5 @@
 use chrono::prelude::*;
-use chrono::{Duration, ParseError};
+use chrono::Duration;
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -13,12 +13,7 @@ pub struct Datetime {
 #[derive(Error, Debug)]
 pub enum DatetimeParseError {
     #[error("invalid date '{input}', expected format: {format}")]
-    InvalidFormat {
-        input: String,
-        format: String,
-        #[source]
-        source: ParseError,
-    },
+    InvalidFormat { input: String, format: String },
 }
 
 impl Default for Datetime {
@@ -59,7 +54,7 @@ impl Datetime {
     pub fn parse(input: &str) -> Result<Datetime, DatetimeParseError> {
         let date_input_format: String = Config::read()
             .map(|c| c.style.due_date_input_format)
-            .unwrap_or("%d-%m-%Y".to_string());
+            .unwrap_or("DMY".to_string());
         let target = match input.to_lowercase().as_str() {
             day if day.starts_with("mon") => Some(Weekday::Mon),
             day if day.starts_with("tue") => Some(Weekday::Tue),
@@ -112,21 +107,7 @@ impl Datetime {
                         timestamp: yesterday_dt.timestamp(),
                     })
                 }
-                _ => {
-                    let date =
-                        NaiveDate::parse_from_str(input, &date_input_format).map_err(|e| {
-                            DatetimeParseError::InvalidFormat {
-                                input: input.to_string(),
-                                format: date_input_format.clone(),
-                                source: e,
-                            }
-                        })?;
-                    let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
-                    let local_dt = naive_dt.and_local_timezone(Local).unwrap();
-                    Ok(Datetime {
-                        timestamp: local_dt.timestamp(),
-                    })
-                }
+                _ => parse_date(input, &date_input_format),
             }
         }
     }
@@ -140,4 +121,30 @@ impl Datetime {
             % 7;
         (date + Duration::days(days_until_friday)).date_naive()
     }
+}
+
+fn parse_date(input: &str, primary_fmt: &str) -> Result<Datetime, DatetimeParseError> {
+    let fallback_formats: &[&str] = if primary_fmt == "MYD" {
+        &["%m-%d-%Y", "%m.%d.%Y", "%m/%d/%Y", "%Y-%m-%d"]
+    } else if primary_fmt == "ISO" {
+        &["%Y-%m-%d"]
+    } else {
+        &["%d-%m-%Y", "%d.%m.%Y", "%d/%m/%Y"]
+    };
+    let formats = std::iter::once(primary_fmt)
+        .chain(fallback_formats.iter().copied())
+        .collect::<Vec<_>>();
+    for fmt in formats {
+        if let Ok(date) = NaiveDate::parse_from_str(input, fmt) {
+            let naive_dt = date.and_hms_opt(0, 0, 0).unwrap();
+            let local_dt = naive_dt.and_local_timezone(Local).unwrap();
+            return Ok(Datetime {
+                timestamp: local_dt.timestamp(),
+            });
+        }
+    }
+    Err(DatetimeParseError::InvalidFormat {
+        input: input.to_string(),
+        format: primary_fmt.to_string(),
+    })
 }
