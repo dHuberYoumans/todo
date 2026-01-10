@@ -71,6 +71,11 @@ pub enum Cmd {
         #[arg(long, help = "Clear the tag column")]
         tag: bool,
     },
+    /// Upgrade the CLI
+    Upgrade {
+        #[arg(long, short = 'v', help = "Version")]
+        version: Option<String>,
+    },
     /// Show user paths
     ShowPaths,
     /// Clean data

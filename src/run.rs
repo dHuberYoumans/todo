@@ -50,10 +50,6 @@ fn execute(cmd: Cmd) -> Result<()> {
     let conn = util::connect_to_db(&todo_list.db_path)?;
     let (todo_list_repo, todo_item_repo) = set_up_repositories(&conn)?;
     match cmd {
-        //Cmd::ShowPaths => TodoList::show_paths()?,
-        //Cmd::CleanData => TodoList::clean_data()?,
-        //Cmd::Init => TodoList::init()?,
-        //Cmd::Completions { cmd } => TodoList::auto_completions(shell),
         Cmd::NewList { name, checkout } => {
             todo_list.new_list(&todo_list_repo, &todo_item_repo, name, checkout)?
         }
@@ -126,6 +122,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             todo_list.clear(&todo_item_repo, ids, due, prio, tag)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
+        Cmd::Upgrade { version } => todo_list.upgrade(version)?,
         Cmd::Config => todo_list.clone().config()?,
         Cmd::Show { id } => todo_list.show(&todo_item_repo, &id)?,
         _ => eprintln!("✘ invalid command"),
