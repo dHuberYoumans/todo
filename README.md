@@ -70,7 +70,8 @@ Commands:
   delete-all   Delete all tasks in the current todo list
   reword       Reword a task
   update       Update the fields of an item
-  clear        
+  clear        Clear due, prio or the tag column
+  upgrade      Upgrade the CLI
   show-paths   Show user paths
   clean-data   Clean data
   completions  Generates auto-completions
@@ -128,6 +129,13 @@ Finally, restart your terminal to activate the completions.
   export BASH_COMPLETION_USER_DIR="$HOME/.local/share/bash-completion"
   ```
 - fish: works on the nose ><>
+
+## Up- and downgrading
+_todo_ offers a command to upgrade (or downgrade) to a specific release version. 
+```
+$ todo upgrade [--version vX.Y.Z]
+```
+If no version is provided, it will upgrade to the latest available release version on GitHub.
 
 ## Basic Usage
 The usage is fairly standard
