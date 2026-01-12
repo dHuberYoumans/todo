@@ -1,6 +1,47 @@
 ## What's Changed
 
 
+### Bug Fixes
+
+- display help text for clear command
+
+
+### Documentation
+
+- update README
+
+- update README
+
+- update README
+
+- update README
+
+
+### Features
+
+- add close-all command
+
+- add upgrade command
+
+- allow multiple due date input formats
+
+- feat!(due date): let config handle due date input and display format
+
+
+### Refactoring
+
+- use filter option instead of boolean arguments
+
+
+
+## What's Changed
+
+
+### Chores
+
+- Release todo version 0.8.0
+
+
 ### Documentation
 
 - update README
@@ -12,7 +53,7 @@
 
 
 
-## What's Changed
+**Full Changelog**: v0.7.0 → v0.8.0## What's Changed
 
 
 ### Chores
