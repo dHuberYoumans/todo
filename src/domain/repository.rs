@@ -12,7 +12,7 @@ pub trait TodoItemRepository {
         epoch_seconds: i64,
         filter: Option<ListFilter>,
     ) -> Result<Vec<TodoItem>>;
-    // fn fetch_by_prio(&self, prio: Prio) -> Result<Vec<TodoItem>>;
+    fn fetch_by_prio(&self, prio: Prio) -> Result<Vec<TodoItem>>;
     fn fetch_by_tag(&self, tag: Tag, filter: Option<ListFilter>) -> Result<Vec<TodoItem>>;
     fn fetch_tags(&self) -> Result<Vec<Tag>>;
     fn fetch_all_ids(&self) -> Result<Vec<String>>;
@@ -30,6 +30,7 @@ pub trait TodoItemRepository {
         ids: Vec<String>,
     ) -> Result<()>;
     fn delete_task(&self, id: &str) -> Result<()>;
+    fn close_all(&self, prio: Option<Prio>) -> Result<()>;
     fn resolve_id(&self, prefix: &str) -> Result<String>;
 }
 

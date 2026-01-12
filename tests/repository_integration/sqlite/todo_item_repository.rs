@@ -88,6 +88,24 @@ fn fetch_list() -> Result<()> {
 }
 
 #[test]
+fn fetch_by_prio() -> Result<()> {
+    let mock_env = MockItemEnv::new()?;
+    let mock_item_one =
+        MockTodoItem::new("2a".to_string(), "test-msg-1", Some(Prio::P1), None, None);
+    let mock_item_two =
+        MockTodoItem::new("39".to_string(), "test-msg-2", Some(Prio::P2), None, None);
+    let repo = mock_env.repo("todos");
+
+    repo.add(&mock_item_one.item)?;
+    repo.add(&mock_item_two.item)?;
+    let response = repo.fetch_by_prio(Prio::P1)?;
+
+    assert_eq!(response.len(), 1);
+
+    Ok(())
+}
+
+#[test]
 fn fetch_by_tag() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
     let mock_item_one = MockTodoItem::new(
@@ -213,6 +231,38 @@ fn last_updated() -> Result<()> {
         &format!("last_updated = {}", metadata.last_updated.timestamp),
         &mock_env.db.conn,
     )?;
+    assert_eq!(count, 1);
+
+    Ok(())
+}
+
+#[test]
+fn close_all() -> Result<()> {
+    let mock_env = MockItemEnv::new()?;
+    let mock_item_one =
+        MockTodoItem::new("2a".to_string(), "test-msg-1", Some(Prio::P1), None, None);
+    let mock_item_two =
+        MockTodoItem::new("39".to_string(), "test-msg-2", Some(Prio::P2), None, None);
+    let repo = mock_env.repo("todos");
+    repo.add(&mock_item_one.item)?;
+    repo.add(&mock_item_two.item)?;
+    let count_initial = count_entries_where("status = 1", &mock_env.db.conn)?;
+    assert_eq!(count_initial, 2);
+
+    repo.close_all(None)?;
+    let count = count_entries_where("status = 1", &mock_env.db.conn)?;
+    assert_eq!(count, 0);
+
+    repo.update(
+        None,
+        None,
+        Some(Status::Open),
+        None,
+        vec!["2a".to_string(), "39".to_string()],
+    )?;
+
+    repo.close_all(Some(Prio::P1))?;
+    let count = count_entries_where("status = 1", &mock_env.db.conn)?;
     assert_eq!(count, 1);
 
     Ok(())

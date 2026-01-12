@@ -1,7 +1,6 @@
 use anyhow::Result;
 
-use crate::domain::Status;
-use crate::domain::{TodoItemRepository, TodoList};
+use crate::domain::{Status, TodoItemRepository, TodoList};
 
 impl TodoList {
     pub fn close(&self, repo: &impl TodoItemRepository, ids: Vec<String>) -> Result<()> {

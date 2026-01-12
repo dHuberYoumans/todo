@@ -93,6 +93,10 @@ fn execute(cmd: Cmd) -> Result<()> {
             todo_list.close(&todo_item_repo, ids)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
+        Cmd::CloseAll { prio } => {
+            todo_list.close_all(&todo_item_repo, prio)?;
+            todo_list.list(&todo_item_repo, None, None)?
+        }
         Cmd::Open { ids } => {
             todo_list.open(&todo_item_repo, ids)?;
             todo_list.list(&todo_item_repo, None, None)?

@@ -78,6 +78,22 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at, :last_upd
         Ok(())
     }
 
+    fn fetch_by_prio(&self, prio: Prio) -> Result<Vec<TodoItem>> {
+        let sql: String = format!("SELECT * FROM {} WHERE prio=:prio;", self.name);
+        let mut stmt = self.conn.prepare(&sql)?;
+        let entries = stmt.query_map(named_params! {":prio": prio}, |row| {
+            Ok(TodoItem {
+                id: row.get("id")?,
+                task: row.get("task")?,
+                status: row.get("status")?,
+                prio: row.get("prio")?,
+                due: row.get("due")?,
+                tag: row.get("tag")?,
+            })
+        })?;
+        entries.map(|res| res.map_err(Into::into)).collect()
+    }
+
     fn fetch_by_due_date(
         &self,
         epoch_seconds: i64,
@@ -89,7 +105,6 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at, :last_upd
             ListFilter::Done => sql.push("AND status=0".to_string()),
             ListFilter::Do => sql.push("AND status=1".to_string()),
         };
-
         let mut stmt = self.conn.prepare(&sql.join(" "))?;
         let entries = stmt.query_map(named_params! {":date": epoch_seconds}, |row| {
             Ok(TodoItem {
@@ -298,6 +313,40 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at, :last_upd
         let sql = format!("DELETE FROM {} WHERE id=:id;", self.name);
         log::debug!("executing query `{}`", &sql);
         let _ = self.conn.execute(&sql, named_params! {":id": id})?;
+        Ok(())
+    }
+
+    fn close_all(&self, prio: Option<Prio>) -> Result<()> {
+        let tasks = if let Some(prio) = prio {
+            self.fetch_by_prio(prio)?
+        } else {
+            self.fetch_list(None)?
+        };
+        let ids: Vec<String> = tasks.iter().map(|item| item.id.clone()).collect();
+        let sets = "last_updated=:last_updated, status=:status".to_string();
+        let mut id_placeholders: Vec<String> = Vec::new();
+        let mut params: Vec<(&str, &dyn ToSql)> = Vec::new();
+        let mut id_keys: Vec<String> = Vec::with_capacity(ids.len());
+        let now = Datetime::now();
+        params.push((":last_updated", &now));
+        params.push((":status", &Status::Closed));
+        for i in 0..ids.len() {
+            let key = format!(":id{}", i);
+            id_placeholders.push(key.clone());
+            id_keys.push(key);
+        }
+        for (i, id) in ids.iter().enumerate() {
+            params.push((id_keys[i].as_str(), id as &dyn ToSql));
+        }
+
+        let sql = format!(
+            "UPDATE {} SET {} WHERE id IN ({});",
+            self.name,
+            sets,
+            id_placeholders.join(", ")
+        );
+        log::debug!("executing query `{}`", &sql);
+        let _ = self.conn.execute(&sql, params.as_slice())?;
         Ok(())
     }
 

@@ -37,6 +37,11 @@ pub enum Cmd {
     Show { id: String },
     /// Mark a task as completed
     Close { ids: Vec<String> },
+    /// Mark all tasks as completed
+    CloseAll {
+        #[arg(long, short = 'p', help = "Close all PX tasks")]
+        prio: Option<Prio>,
+    },
     /// Open a task
     Open { ids: Vec<String> },
     /// Delete a task
