@@ -17,7 +17,7 @@ struct ApiResponse {
 impl TodoList {
     pub fn upgrade(&self, version: Option<String>) -> Result<()> {
         let version = version.unwrap_or(latest_version()?);
-        log::info!("Upgrading to version {}", &version);
+        println!("→ Upgrading to version {}...", &version);
         let asset = asset(&version)?;
         log::debug!("Resolved asset {}", &asset);
         let old_bin = env::current_exe()?;
@@ -25,7 +25,7 @@ impl TodoList {
         let tmp_dir = temp_dir();
         let archive_path = tmp_dir.join(format!("{asset}.tar.gz"));
         let url = format!("https://github.com/{REPO}/releases/download/{version}/{asset}.tar.gz");
-        log::info!("Downloading release asset...");
+        println!("→ Downloading release asset...");
         log::debug!("Download URL: {}", &url);
         let download = reqwest::blocking::get(&url)
             .context("failed to download release asset")?
@@ -34,13 +34,13 @@ impl TodoList {
             .bytes()
             .context("failed to read downloaded archive")?;
         fs::write(&archive_path, &download)?;
-        log::info!("Extracting archive...");
+        println!("→ Extracting archive...");
         extract_tar_gz(&archive_path, tmp_dir.as_path())?;
-        log::info!("Replacing executable...");
+        println!("→ Replacing executable...");
         let new_bin = tmp_dir.join("todo");
         fs::set_permissions(&new_bin, fs::Permissions::from_mode(0o755))?;
         fs::rename(&new_bin, &old_bin)?;
-        log::info!("Upgrade complete");
+        println!("✔ Upgrade complete");
         Ok(())
     }
 }
