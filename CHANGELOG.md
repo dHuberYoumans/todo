@@ -3,7 +3,21 @@
 
 ### Bug Fixes
 
+- replace duplicate field in default config string
+
+
+
+## What's Changed
+
+
+### Bug Fixes
+
 - display help text for clear command
+
+
+### Chores
+
+- Release todo version 0.9.0
 
 
 ### Documentation
@@ -34,7 +48,7 @@
 
 
 
-## What's Changed
+**Full Changelog**: v0.8.0 → v0.9.0## What's Changed
 
 
 ### Chores
