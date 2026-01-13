@@ -74,8 +74,8 @@ todo_db = "{}"
 
 [style]
 id_length = 6
-due_date_format = "%x" # chrono strftime-style
-due_date_format = "DMY" # MDY | ISO
+due_date_display_format = "%x" # chrono strftime-style
+due_date_input_format = "DMY" # MDY | ISO
 show_due = true
 show_tag = true
 sort_by = "prio"  # prio | due | tag
