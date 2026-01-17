@@ -105,7 +105,7 @@ fn execute(cmd: Cmd) -> Result<()> {
         Cmd::DeleteAll => todo_list.delete_all(&todo_item_repo)?,
         Cmd::Reword { id, task } => {
             todo_list.reword(&todo_item_repo, &id, task)?;
-            todo_list.list(&todo_item_repo, None, None)?
+            todo_list.show(&todo_item_repo, &id)?
         }
         Cmd::Update {
             ids,
