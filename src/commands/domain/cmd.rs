@@ -80,6 +80,8 @@ pub enum Cmd {
     Upgrade {
         #[arg(long, short = 'v', help = "Version")]
         version: Option<String>,
+        #[arg(long, help = "Check latest version")]
+        check: bool,
     },
     /// Show user paths
     ShowPaths,

@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use serde::Deserialize;
+use std::cmp::Ordering;
 use std::env::temp_dir;
 use std::os::unix::fs::PermissionsExt;
 use std::{env, fs, path::Path};
@@ -16,7 +17,7 @@ struct ApiResponse {
 
 impl TodoList {
     pub fn upgrade(&self, version: Option<String>) -> Result<()> {
-        let version = version.unwrap_or(latest_version()?);
+        let version = version.unwrap_or(get_latest_version()?);
         println!("→ Upgrading to version {}...", &version);
         let asset = asset(&version)?;
         log::debug!("Resolved asset {}", &asset);
@@ -62,7 +63,35 @@ pub fn target() -> Result<&'static str> {
     }
 }
 
-fn latest_version() -> Result<String> {
+pub fn check_latest_version() -> Result<()> {
+    let latest_version_bind = get_latest_version()?;
+    let latest_version = latest_version_bind
+        .strip_prefix('v')
+        .ok_or(anyhow!("✘ Couldn't strip prefix from latest version"))?;
+    let current_version = env!("CARGO_PKG_VERSION");
+    let current = deconstruct_version(current_version)
+        .ok_or_else(|| anyhow!("✘ Couldn't parse current version into major.minor.patch"))?;
+    let latest = deconstruct_version(latest_version)
+        .ok_or_else(|| anyhow!("✘ Couldn't parse latest version into major.minor.patch"))?;
+    match latest.cmp(&current) {
+        Ordering::Greater => println!("ℹ Upgrade available: {current_version} → {latest_version}"),
+        Ordering::Equal => println!("✔ todo is up-to-date"),
+        Ordering::Less => println!("» todo is ahead"),
+    }
+    Ok(())
+}
+
+fn deconstruct_version(version: &str) -> Option<(i8, i8, i8)> {
+    let mut iter = version.split('.');
+    let sem_ver = (
+        iter.next()?.parse().ok()?,
+        iter.next()?.parse().ok()?,
+        iter.next()?.parse().ok()?,
+    );
+    Some(sem_ver)
+}
+
+fn get_latest_version() -> Result<String> {
     let client = reqwest::blocking::Client::new();
     let url = format!("https://api.github.com/repos/{REPO}/releases/latest");
     let resp = client.get(url).header("User-Agent", "todo-cli").send()?;

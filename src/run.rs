@@ -2,7 +2,7 @@ use anyhow::Result;
 use rusqlite::Connection;
 
 use crate::app::App;
-use crate::commands::{Cmd, CompletionsCmd, Plumbing};
+use crate::commands::{upgrade::check_latest_version, Cmd, CompletionsCmd, Plumbing};
 use crate::domain::todo::TodoList;
 use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
 use crate::util;
@@ -126,7 +126,13 @@ fn execute(cmd: Cmd) -> Result<()> {
             todo_list.clear(&todo_item_repo, ids, due, prio, tag)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
-        Cmd::Upgrade { version } => todo_list.upgrade(version)?,
+        Cmd::Upgrade { version, check } => {
+            if check {
+                check_latest_version()?
+            } else {
+                todo_list.upgrade(version)?
+            }
+        }
         Cmd::Config => todo_list.clone().config()?,
         Cmd::Show { id } => todo_list.show(&todo_item_repo, &id)?,
         _ => eprintln!("✘ invalid command"),
