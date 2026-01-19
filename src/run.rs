@@ -86,7 +86,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             }
         },
         Cmd::Close { ids } => {
-            todo_list.close(&todo_item_repo, ids)?;
+            cli::close(&todo_item_repo, &todo_list, ids)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::CloseAll { prio } => {
@@ -94,7 +94,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Open { ids } => {
-            todo_list.open(&todo_item_repo, ids)?;
+            cli::open(&todo_item_repo, &todo_list, ids)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Delete { id } => cli::delete(&todo_item_repo, &mut todo_list, &id)?,
@@ -110,7 +110,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             status,
             tag,
         } => {
-            todo_list.update_item(&todo_item_repo, due, prio, status, tag, ids)?;
+            cli::update_item(&todo_item_repo, &todo_list, due, prio, status, tag, ids)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Clear {
@@ -119,7 +119,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             prio,
             tag,
         } => {
-            todo_list.clear(&todo_item_repo, ids, due, prio, tag)?;
+            cli::clear(&todo_item_repo, &todo_list, ids, due, prio, tag)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Upgrade { version, check } => {

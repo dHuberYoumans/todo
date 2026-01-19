@@ -6,7 +6,6 @@ pub mod load;
 pub mod new_list;
 pub mod plumbing;
 pub mod reword;
-pub mod update;
 pub mod upgrade;
 pub mod whoisthis;
 
