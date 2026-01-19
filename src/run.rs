@@ -1,6 +1,7 @@
 use anyhow::Result;
 use rusqlite::Connection;
 
+use crate::adapters::cli;
 use crate::app::App;
 use crate::commands::{upgrade::check_latest_version, Cmd, CompletionsCmd, Plumbing};
 use crate::domain::todo::TodoList;
@@ -63,13 +64,8 @@ fn execute(cmd: Cmd) -> Result<()> {
             }
         }
         Cmd::Whoami => todo_list.whoisthis()?,
-        Cmd::Add {
-            task,
-            due,
-            prio,
-            tag,
-        } => {
-            todo_list.add(&todo_item_repo, (task, due, prio, tag))?;
+        Cmd::Add(args) => {
+            cli::add(&todo_list, &todo_item_repo, args)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::List(args) => match args.arg.as_deref() {
@@ -101,7 +97,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             todo_list.open(&todo_item_repo, ids)?;
             todo_list.list(&todo_item_repo, None, None)?
         }
-        Cmd::Delete { id } => todo_list.delete(&todo_item_repo, &id)?,
+        Cmd::Delete { id } => cli::delete(&todo_item_repo, &mut todo_list, &id)?,
         Cmd::DeleteAll => todo_list.delete_all(&todo_item_repo)?,
         Cmd::Reword { id, task } => {
             todo_list.reword(&todo_item_repo, &id, task)?;

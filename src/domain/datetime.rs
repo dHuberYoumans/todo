@@ -3,7 +3,7 @@ use chrono::Duration;
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::config::Config;
+use crate::adapters::cli::config;
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub struct Datetime {
@@ -52,7 +52,7 @@ impl Datetime {
     }
 
     pub fn parse(input: &str) -> Result<Datetime, DatetimeParseError> {
-        let date_input_format: String = Config::read()
+        let date_input_format: String = config::fs::read()
             .map(|c| c.style.due_date_input_format)
             .unwrap_or("DMY".to_string());
         let target = match input.to_lowercase().as_str() {

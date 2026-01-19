@@ -6,7 +6,7 @@ use rusqlite::{
 };
 use std::fmt;
 
-use crate::config::Config;
+use crate::adapters::cli;
 use crate::domain::{Datetime, Prio, Status, Tag};
 
 impl FromSql for Status {
@@ -109,7 +109,7 @@ impl ToSql for Datetime {
 
 impl fmt::Display for Datetime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let config = Config::read();
+        let config = cli::config::fs::read();
         let due_date_format: &str = config
             .as_ref()
             .map(|c| c.style.due_date_display_format.as_str())

@@ -6,8 +6,9 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
+use crate::adapters::config;
+use crate::paths::UserPaths;
 use crate::util;
-use crate::{config::Config, paths::UserPaths};
 
 const INIT_LIST: &str = "todo";
 
@@ -17,7 +18,7 @@ impl TodoList {
         let user_paths = UserPaths::new();
         let env_path = prepare_environment_path(&user_paths)?;
         println!("⧖ Setting up database..");
-        Config::init()?;
+        config::fs::init()?;
         set_up_environment(&env_path)?;
         let db_path = user_paths.get_db()?;
         log::info!("creating database at {}", util::log_opt_path(&db_path));

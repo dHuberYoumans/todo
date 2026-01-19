@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::adapters::cli::config;
 use anyhow::{anyhow, Result};
 use microxdg::Xdg;
 use std::{path::PathBuf, str::FromStr};
@@ -49,7 +49,7 @@ impl UserPaths {
     }
 
     pub fn get_db(&self) -> Result<PathBuf> {
-        let config = Config::read()?;
+        let config = config::fs::read()?;
         log::debug!("found config: {config:?}");
         let db_path = PathBuf::from_str(&config.database.todo_db)?;
         Ok(db_path)

@@ -1,8 +1,8 @@
 use anyhow::Result;
 use std::cmp::Reverse;
 
+use crate::adapters::cli::config;
 use crate::commands::ListFilter;
-use crate::config::Config;
 use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
 
 impl TodoList {
@@ -23,7 +23,7 @@ impl TodoList {
 }
 
 pub fn sort_tasks(tasks: &mut [TodoItem], sort_key: Option<String>) -> Result<()> {
-    let mut sort_key_default = Config::read()?.style.sort_by;
+    let mut sort_key_default = config::fs::read()?.style.sort_by;
     if sort_key_default.is_empty() {
         sort_key_default = "id".to_string()
     };

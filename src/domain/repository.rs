@@ -29,7 +29,7 @@ pub trait TodoItemRepository {
         tag: Option<Tag>,
         ids: Vec<String>,
     ) -> Result<()>;
-    fn delete_task(&self, id: &str) -> Result<()>;
+    fn delete_item(&self, id: &str) -> Result<()>;
     fn close_all(&self, prio: Option<Prio>) -> Result<()>;
     fn resolve_id(&self, prefix: &str) -> Result<String>;
 }

@@ -308,7 +308,7 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at, :last_upd
         Ok(())
     }
 
-    fn delete_task(&self, id: &str) -> Result<()> {
+    fn delete_item(&self, id: &str) -> Result<()> {
         let id = self.resolve_id(id)?;
         let sql = format!("DELETE FROM {} WHERE id=:id;", self.name);
         log::debug!("executing query `{}`", &sql);

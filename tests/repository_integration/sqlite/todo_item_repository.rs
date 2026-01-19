@@ -354,13 +354,13 @@ fn update_conditions(
 }
 
 #[test]
-fn delete_task() -> Result<()> {
+fn delete_item() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
     let mock_item = MockTodoItem::default();
     let repo = mock_env.repo("todos");
     repo.add(&mock_item.item)?;
 
-    repo.delete_task("2a")?;
+    repo.delete_item("2a")?;
     let count = count_entries(&mock_env.db.conn, "todos")?;
     assert_eq!(count, 0);
 

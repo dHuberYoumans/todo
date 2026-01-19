@@ -21,16 +21,7 @@ pub enum Cmd {
     /// Print the name of the todo list in use to stdout
     Whoami,
     /// Add a task
-    Add {
-        #[arg(long, short = 'm', help = "Task description")]
-        task: Option<String>,
-        #[arg(long, short = 'p', help = "Priority")]
-        prio: Option<Prio>,
-        #[arg(long, short = 'd', help = "Due date")]
-        due: Option<Datetime>,
-        #[arg(long, short = 't', help = "Tag")]
-        tag: Option<Tag>,
-    },
+    Add(AddArgs),
     /// Print the current todo list
     List(ListArgs),
     /// Show metadata of a task
@@ -92,6 +83,18 @@ pub enum Cmd {
         #[command(subcommand)]
         cmd: CompletionsCmd,
     },
+}
+
+#[derive(clap::Args, Clone, Debug)]
+pub struct AddArgs {
+    #[arg(long, short = 'm', help = "Task description")]
+    pub task: Option<String>,
+    #[arg(long, short = 'p', help = "Priority")]
+    pub prio: Option<Prio>,
+    #[arg(long, short = 'd', help = "Due date")]
+    pub due: Option<Datetime>,
+    #[arg(long, short = 't', help = "Tag")]
+    pub tag: Option<Tag>,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]

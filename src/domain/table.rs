@@ -10,7 +10,7 @@ use tabled::{
     Table,
 };
 
-use crate::config::{Config, TableStyle};
+use crate::adapters::config::{self, entities::TableStyle};
 use crate::domain::{TodoItem, TodoItemRow};
 
 pub struct TodoListTable {
@@ -40,8 +40,8 @@ impl TodoListTable {
 }
 
 fn build_table(entries: &[TodoItem]) -> Table {
-    let show_due = Config::read().map(|c| c.style.show_due).unwrap_or(true);
-    let show_tag = Config::read().map(|c| c.style.show_tag).unwrap_or(true);
+    let show_due = config::fs::read().map(|c| c.style.show_due).unwrap_or(true);
+    let show_tag = config::fs::read().map(|c| c.style.show_tag).unwrap_or(true);
     let mut builder = Builder::default();
     let mut headers = vec!["id", "title", "status", "prio"];
     if show_due {
@@ -71,7 +71,7 @@ fn build_table(entries: &[TodoItem]) -> Table {
 }
 
 fn apply_table_style(table: &mut Table) {
-    let config = Config::read().expect("✘ Couldn't parse the config.");
+    let config = config::fs::read().expect("✘ Couldn't parse the config.");
     let style = config.style.table.into();
     match style {
         TableStyle::Ascii => table.with(Style::ascii()),
@@ -107,7 +107,10 @@ fn color_status() -> FormatContent<impl FnMut(&str) -> String + Clone> {
 
 fn format_id() -> FormatContent<impl FnMut(&str) -> String + Clone> {
     Format::content(|cell: &str| {
-        let id_length = Config::read().expect("✘ Couldn't read id").style.id_length;
+        let id_length = config::fs::read()
+            .expect("✘ Couldn't read id")
+            .style
+            .id_length;
         cell.chars().take(id_length).collect()
     })
 }
