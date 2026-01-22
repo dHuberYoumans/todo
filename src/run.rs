@@ -129,7 +129,7 @@ fn execute(cmd: Cmd) -> Result<()> {
                 todo_list.upgrade(version)?
             }
         }
-        Cmd::Config => todo_list.clone().config()?,
+        Cmd::Config => cli::config::edit()?,
         Cmd::Show { id } => todo_list.show(&todo_item_repo, &id)?,
         _ => eprintln!("✘ invalid command"),
     }
