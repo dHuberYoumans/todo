@@ -63,7 +63,7 @@ fn execute(cmd: Cmd) -> Result<()> {
                 todo_list.load(&todo_list_repo, name)?
             }
         }
-        Cmd::Whoami => todo_list.whoisthis()?,
+        Cmd::Whoami => cli::whoami()?,
         Cmd::Add(args) => {
             cli::add(&todo_list, &todo_item_repo, args)?;
             todo_list.list(&todo_item_repo, None, None)?
