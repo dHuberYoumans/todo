@@ -1,4 +1,3 @@
-pub mod delete;
 pub mod domain;
 pub mod list;
 pub mod load;

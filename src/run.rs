@@ -54,7 +54,7 @@ fn execute(cmd: Cmd) -> Result<()> {
         Cmd::NewList { name, checkout } => {
             todo_list.new_list(&todo_list_repo, &todo_item_repo, name, checkout)?
         }
-        Cmd::DeleteList { name } => todo_list.clone().delete_list(&todo_list_repo, name)?,
+        Cmd::DeleteList { name } => cli::delete_list(&todo_list_repo, &todo_list, name)?,
         Cmd::Load { name } => {
             if name == "-" {
                 let previous = std::env::var("PREVIOUS")?;
