@@ -98,7 +98,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             todo_list.list(&todo_item_repo, None, None)?
         }
         Cmd::Delete { id } => cli::delete(&todo_item_repo, &mut todo_list, &id)?,
-        Cmd::DeleteAll => todo_list.delete_all(&todo_item_repo)?,
+        Cmd::DeleteAll => cli::delete_all(&todo_item_repo, &mut todo_list)?,
         Cmd::Reword { id, task } => {
             cli::reword(&todo_item_repo, &mut todo_list, &id, task)?;
             todo_list.show(&todo_item_repo, &id)?
