@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use std::fs;
 use std::io::Write;
 
@@ -13,8 +13,8 @@ impl TodoList {
         if !collection.contains(&list) {
             return Err(anyhow!("✘ Can't find list '{list}'"));
         }
-        let dotenv = util::dotenv()?;
-        let content = fs::read_to_string(&dotenv)?;
+        let dotenv = util::dotenv().context("✘ Could not resolve .env")?;
+        let content = fs::read_to_string(&dotenv).context("✘ Failed to read .env to string")?;
         log::debug!("dotenv contents: {content}");
         let mut new_content = String::new();
         let mut previous = String::from("");
