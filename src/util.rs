@@ -66,7 +66,7 @@ pub fn load_env() -> Result<()> {
 
 pub fn dotenv() -> Result<PathBuf> {
     if let Some(home) = home_dir() {
-        Ok(home.join("./todo/.env"))
+        Ok(home.join(".todo/.env"))
     } else {
         Err(anyhow!(
             "✘ No path to database found. Consider 'todo init' to initialize a data base"
