@@ -316,6 +316,13 @@ VALUES (:id, :task, :list_id, :status, :prio, :due, :tag, :created_at, :last_upd
         Ok(())
     }
 
+    fn delete_all_items(&self) -> Result<()> {
+        let sql = format!("DELETE FROM {}", self.name);
+        log::debug!("executing query `{}`", &sql);
+        self.conn.execute(&sql, [])?;
+        Ok(())
+    }
+
     fn close_all(&self, prio: Option<Prio>) -> Result<()> {
         let tasks = if let Some(prio) = prio {
             self.fetch_by_prio(prio)?

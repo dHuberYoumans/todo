@@ -368,6 +368,34 @@ fn delete_item() -> Result<()> {
 }
 
 #[test]
+fn delte_all_items() -> Result<()> {
+    let mock_env = MockItemEnv::new()?;
+    let mock_item_one = MockTodoItem::new(
+        "2a".to_string(),
+        "test-msg-1",
+        None,
+        None,
+        Some(Tag("test-tag-1".into())),
+    );
+    let mock_item_two = MockTodoItem::new(
+        "39".to_string(),
+        "test-msg-2",
+        None,
+        None,
+        Some(Tag("test-tag-2".into())),
+    );
+    let repo = mock_env.repo("todos");
+    repo.add(&mock_item_one.item)?;
+    repo.add(&mock_item_two.item)?;
+
+    repo.delete_all_items()?;
+    let count = count_entries(&mock_env.db.conn, "todos")?;
+    assert_eq!(count, 0);
+
+    Ok(())
+}
+
+#[test]
 fn fetch_tags() -> Result<()> {
     let mock_env = MockItemEnv::new()?;
     let mock_item_one = MockTodoItem::new(
