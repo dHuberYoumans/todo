@@ -3,11 +3,85 @@
 
 ### Bug Fixes
 
-- replace duplicate field in default config string
+- correct path to .env
+
+
+### Chores
+
+- clean up crates
+
+- add user-facing logs
+
+
+### Documentation
+
+- update README
+
+
+### Features
+
+- include support for aarch64 linux systems
+
+- add context for better errors display
+
+- print full error chain if run panics
+
+- add 'delete_all_items' method
+
+- add --check flag to check for possible available upgrade
+
+- only print updated item instead of full table
+
+
+### Refactoring
+
+- rename adapters/cli -> handlers/
+
+- move cmd.rs under src/domain/todo/
+
+- separate domain and application logic
+
+- separate domain and application logic
+
+- separate domain and application logic | add error context | clean code
+
+- add context to errors
+
+- separate domain and application logic
+
+- separate domain and application logic
+
+- separate domain and application logic
+
+- move logic for editing config to adapter/cli/config
+
+- separate domain and application logic
+
+- separate domain and application logic
+
+- separate domain and application logic
+
+- separate domain and application logic
+
+- prepare separation of concerns of commands
 
 
 
 ## What's Changed
+
+
+### Bug Fixes
+
+- replace duplicate field in default config string
+
+
+### Chores
+
+- Release todo version 0.9.1
+
+
+
+**Full Changelog**: v0.9.0 → v0.9.1## What's Changed
 
 
 ### Bug Fixes
