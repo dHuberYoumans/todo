@@ -34,15 +34,14 @@ fn set_up_repositories(
 
 fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
     match cmd {
-        Plumbing::Init => cli::init()?,
-        Plumbing::ShowPaths => TodoList::show_paths()?,
-        Plumbing::CleanData => TodoList::clean_data()?,
+        Plumbing::Init => cli::init(),
+        Plumbing::ShowPaths => cli::show_paths(),
+        Plumbing::CleanData => cli::clean_data(),
         Plumbing::Completions(cmd) => match cmd {
-            CompletionsCmd::Generate { shell } => TodoList::generate_completions(shell)?,
-            CompletionsCmd::Install { shell } => TodoList::install_completions(shell)?,
+            CompletionsCmd::Generate { shell } => cli::generate_completions(shell),
+            CompletionsCmd::Install { shell } => cli::install_completions(shell),
         },
     }
-    Ok(())
 }
 
 fn execute(cmd: Cmd) -> Result<()> {
