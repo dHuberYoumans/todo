@@ -1,7 +1,7 @@
 use anyhow::Result;
 use uuid::Uuid;
 
-use crate::commands::cmd::AddArgs;
+use crate::domain::AddArgs;
 use crate::domain::{Datetime, Status};
 use crate::domain::{TodoItem, TodoItemRepository, TodoList};
 use crate::util;

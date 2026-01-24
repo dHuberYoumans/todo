@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use std::cmp::Reverse;
 
 use crate::adapters::cli::config;
-use crate::commands::ListFilter;
+use crate::domain::ListFilter;
 use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
 
 pub fn list(

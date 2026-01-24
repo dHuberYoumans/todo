@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::commands::ListFilter;
+use crate::domain::ListFilter;
 use crate::domain::{Datetime, Metadata, Prio, Status, Tag, TodoItem};
 
 pub trait TodoItemRepository {

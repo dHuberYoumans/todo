@@ -3,8 +3,7 @@ use rusqlite::Connection;
 
 use crate::adapters::cli;
 use crate::app::App;
-use crate::commands::{Cmd, CompletionsCmd, Plumbing};
-use crate::domain::todo::TodoList;
+use crate::domain::{Cmd, CompletionsCmd, Plumbing, TodoList};
 use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
 use crate::util;
 

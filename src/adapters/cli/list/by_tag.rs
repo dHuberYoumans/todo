@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::adapters::cli::sort_tasks;
-use crate::commands::ListFilter;
+use crate::domain::ListFilter;
 use crate::domain::{Tag, TodoItem, TodoItemRepository, TodoList, TodoListTable};
 
 pub fn list_tag(

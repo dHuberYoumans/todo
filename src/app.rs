@@ -1,4 +1,4 @@
-use crate::commands::Cmd;
+use crate::domain::Cmd;
 use clap::Parser;
 
 #[derive(Parser, Debug)]

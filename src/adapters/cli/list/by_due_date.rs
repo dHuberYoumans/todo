@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 
 use crate::adapters::cli::sort_tasks;
-use crate::commands::ListFilter;
+use crate::domain::ListFilter;
 use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
 
 pub fn list_due_date(

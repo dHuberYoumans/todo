@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 
-use crate::commands::ListFilter;
+use crate::domain::ListFilter;
 use crate::domain::{Tag, TodoItem, TodoItemRepository, TodoList};
 
 impl TodoList {
