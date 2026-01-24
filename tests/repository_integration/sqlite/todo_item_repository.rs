@@ -3,13 +3,7 @@ use std::str::FromStr;
 use anyhow::Result;
 
 use crate::mock::*;
-use todo::commands::ListFilter;
-use todo::domain::TodoItemRepository;
-use todo::domain::{Datetime, Prio, Status, Tag};
-
-// fn create_table() -> Result<()>{
-// // fn fetch_by_status(&self, status: Status) -> Result<Vec<TodoItem>>;
-// // fn fetch_by_prio(&self, prio: Prio) -> Result<Vec<TodoItem>>;
+use todo::domain::{Datetime, ListFilter, Prio, Status, Tag, TodoItemRepository};
 
 /**************** TODO ITEM REPOSITORY *****************/
 
