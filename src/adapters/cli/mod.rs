@@ -1,12 +1,18 @@
 pub mod add;
 pub mod config;
 pub mod delete;
+pub mod load;
+pub mod new_list;
+pub mod plumbing;
 pub mod reword;
 pub mod update;
 pub mod whoami;
 
 pub use add::*;
 pub use delete::*;
+pub use load::*;
+pub use new_list::*;
+pub use plumbing::*;
 pub use reword::*;
 pub use update::*;
 pub use whoami::*;

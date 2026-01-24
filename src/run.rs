@@ -34,7 +34,7 @@ fn set_up_repositories(
 
 fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
     match cmd {
-        Plumbing::Init => TodoList::init()?,
+        Plumbing::Init => cli::init()?,
         Plumbing::ShowPaths => TodoList::show_paths()?,
         Plumbing::CleanData => TodoList::clean_data()?,
         Plumbing::Completions(cmd) => match cmd {
@@ -52,15 +52,20 @@ fn execute(cmd: Cmd) -> Result<()> {
     let (todo_list_repo, todo_item_repo) = set_up_repositories(&conn)?;
     match cmd {
         Cmd::NewList { name, checkout } => {
-            todo_list.new_list(&todo_list_repo, &todo_item_repo, name, checkout)?
+            cli::new_list(&todo_list_repo, &todo_item_repo, &todo_list, &name)?;
+            if checkout {
+                log::info!("checking out list '{}'", &name);
+                cli::load(&todo_list_repo, &mut todo_list, &name)?;
+                println!("✔ Now using '{}'", &name);
+            };
         }
         Cmd::DeleteList { name } => cli::delete_list(&todo_list_repo, &todo_list, name)?,
         Cmd::Load { name } => {
             if name == "-" {
                 let previous = std::env::var("PREVIOUS")?;
-                todo_list.load(&todo_list_repo, previous)?
+                cli::load(&todo_list_repo, &mut todo_list, &previous)?
             } else {
-                todo_list.load(&todo_list_repo, name)?
+                cli::load(&todo_list_repo, &mut todo_list, &name)?
             }
         }
         Cmd::Whoami => cli::whoami()?,
