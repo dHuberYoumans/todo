@@ -5,7 +5,12 @@ pub mod create_table;
 pub mod delete;
 pub mod entities;
 pub mod get_collection;
+pub mod get_entries_by_due_date;
+pub mod get_entries_by_tag;
 pub mod get_entry;
+pub mod get_entry_with_metadata;
+pub mod get_list;
+pub mod get_tags;
 pub mod update;
 
 pub use entities::*;

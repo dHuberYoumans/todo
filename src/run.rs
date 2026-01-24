@@ -70,42 +70,50 @@ fn execute(cmd: Cmd) -> Result<()> {
         Cmd::Whoami => cli::whoami()?,
         Cmd::Add(args) => {
             cli::add(&todo_list, &todo_item_repo, args)?;
-            todo_list.list(&todo_item_repo, None, None)?
+            cli::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::List(args) => match args.arg.as_deref() {
-            Some(arg) if arg.starts_with('@') => {
-                todo_list.list_due_date(&todo_item_repo, arg.to_string(), args.sort, args.filter)?
-            }
-            Some(arg) if arg.starts_with('#') => {
-                todo_list.list_tag(&todo_item_repo, arg.to_string(), args.sort, args.filter)?
-            }
+            Some(arg) if arg.starts_with('@') => cli::list_due_date(
+                &todo_item_repo,
+                &todo_list,
+                arg.to_string(),
+                args.sort,
+                args.filter,
+            )?,
+            Some(arg) if arg.starts_with('#') => cli::list_tag(
+                &todo_item_repo,
+                &todo_list,
+                arg.to_string(),
+                args.sort,
+                args.filter,
+            )?,
             _ => {
                 if args.collection {
-                    todo_list.list_collection(&todo_list_repo)?;
+                    cli::list_collection(&todo_list_repo, &todo_list)?;
                 } else if args.tags {
-                    todo_list.list_tags(&todo_item_repo)?;
+                    cli::list_tags(&todo_item_repo, &todo_list)?;
                 } else {
-                    todo_list.list(&todo_item_repo, args.sort, args.filter)?;
+                    cli::list(&todo_item_repo, &todo_list, args.sort, args.filter)?;
                 }
             }
         },
         Cmd::Close { ids } => {
             cli::close(&todo_item_repo, &todo_list, ids)?;
-            todo_list.list(&todo_item_repo, None, None)?
+            cli::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::CloseAll { prio } => {
             todo_list.close_all(&todo_item_repo, prio)?;
-            todo_list.list(&todo_item_repo, None, None)?
+            cli::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::Open { ids } => {
             cli::open(&todo_item_repo, &todo_list, ids)?;
-            todo_list.list(&todo_item_repo, None, None)?
+            cli::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::Delete { id } => cli::delete(&todo_item_repo, &mut todo_list, &id)?,
         Cmd::DeleteAll => cli::delete_all(&todo_item_repo, &mut todo_list)?,
         Cmd::Reword { id, task } => {
             cli::reword(&todo_item_repo, &mut todo_list, &id, task)?;
-            todo_list.show(&todo_item_repo, &id)?
+            cli::show(&todo_item_repo, &todo_list, &id)?
         }
         Cmd::Update {
             ids,
@@ -115,7 +123,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             tag,
         } => {
             cli::update_item(&todo_item_repo, &todo_list, due, prio, status, tag, ids)?;
-            todo_list.list(&todo_item_repo, None, None)?
+            cli::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::Clear {
             ids,
@@ -124,7 +132,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             tag,
         } => {
             cli::clear(&todo_item_repo, &todo_list, ids, due, prio, tag)?;
-            todo_list.list(&todo_item_repo, None, None)?
+            cli::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::Upgrade { version, check } => {
             if check {
@@ -134,7 +142,7 @@ fn execute(cmd: Cmd) -> Result<()> {
             }
         }
         Cmd::Config => cli::config::edit()?,
-        Cmd::Show { id } => todo_list.show(&todo_item_repo, &id)?,
+        Cmd::Show { id } => cli::show(&todo_item_repo, &todo_list, &id)?,
         _ => eprintln!("✘ Invalid command"),
     }
     Ok(())

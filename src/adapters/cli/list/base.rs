@@ -1,29 +1,30 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use std::cmp::Reverse;
 
 use crate::adapters::cli::config;
 use crate::commands::ListFilter;
 use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
 
-impl TodoList {
-    pub fn list(
-        &mut self,
-        repo: &impl TodoItemRepository,
-        sort: Option<String>,
-        filter: Option<ListFilter>,
-    ) -> Result<()> {
-        let current_list = std::env::var("CURRENT")?;
-        log::debug!("found current list '{}'", &current_list,);
-        self.tasks = repo.fetch_list(filter)?;
-        sort_tasks(&mut self.tasks, sort)?;
-        let table = TodoListTable::new(&self.tasks);
-        table.print();
-        Ok(())
-    }
+pub fn list(
+    repo: &impl TodoItemRepository,
+    todo_list: &TodoList,
+    sort: Option<String>,
+    filter: Option<ListFilter>,
+) -> Result<()> {
+    let current_list = std::env::var("CURRENT")?;
+    log::debug!("found current list '{}'", &current_list,);
+    let mut tasks = todo_list.get_list(repo, filter)?;
+    sort_tasks(&mut tasks, sort)?;
+    let table = TodoListTable::new(&tasks);
+    table.print();
+    Ok(())
 }
 
 pub fn sort_tasks(tasks: &mut [TodoItem], sort_key: Option<String>) -> Result<()> {
-    let mut sort_key_default = config::fs::read()?.style.sort_by;
+    let mut sort_key_default = config::fs::read()
+        .context("✘ Couldn't read config while retrieving the sort key")?
+        .style
+        .sort_by;
     if sort_key_default.is_empty() {
         sort_key_default = "id".to_string()
     };

@@ -4,12 +4,10 @@ use colored::*;
 
 use crate::util;
 
-impl TodoList {
-    pub fn show(&self, repo: &impl TodoItemRepository, id: &str) -> Result<()> {
-        let (item, metadata) = repo.fetch_item_and_metadata(id)?;
-        pretty_print(item, metadata);
-        Ok(())
-    }
+pub fn show(repo: &impl TodoItemRepository, todo_list: &TodoList, id: &str) -> Result<()> {
+    let (item, metadata) = todo_list.get_entry_with_metadata(repo, id)?;
+    pretty_print(item, metadata);
+    Ok(())
 }
 
 fn pretty_print(item: TodoItem, metadata: Metadata) {
