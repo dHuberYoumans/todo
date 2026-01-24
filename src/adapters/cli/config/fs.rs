@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use std::fs;
 use std::io::Write;
 
@@ -35,7 +35,8 @@ show_tag = true
 sort_by = "prio"  # prio | due | tag
 table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | markdown"#,
             db_path.to_string_lossy()
-        )?;
+        )
+        .context("✘ Couldn't write default config to file")?;
     } else {
         log::error!("Could not resolve XDG directories");
     }
@@ -45,9 +46,9 @@ table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | ma
 pub fn read() -> Result<Config> {
     let user_paths = UserPaths::new();
     if let Some(config_path) = user_paths.todo_config {
-        let config_file = fs::read_to_string(&config_path)?;
+        let config_file = fs::read_to_string(&config_path).context("✘ Couldn't read file")?;
         log::debug!("reading config at {config_path:?}");
-        let config: Config = toml::from_str(&config_file)?;
+        let config: Config = toml::from_str(&config_file).context("✘ Couldn't parse toml")?;
         Ok(config)
     } else {
         Err(anyhow!("✘ Path to config not found"))

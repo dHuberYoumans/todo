@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use dirs::home_dir;
 use glob;
 use log;
@@ -51,8 +51,9 @@ fn cleanup_tmp_files() -> Result<()> {
 
 pub fn connect_to_db(db: &PathBuf) -> Result<Connection> {
     log::info!("connecting to database at {}", log_opt_path(db));
-    let conn = Connection::open(db)?;
-    conn.execute("PRAGMA foreign_keys = ON;", [])?;
+    let conn = Connection::open(db).context("✘ Couldn't connect to database")?;
+    conn.execute("PRAGMA foreign_keys = ON;", [])
+        .context("✘ Couldn't set option 'foreign_keys' in database")?;
     Ok(conn)
 }
 
