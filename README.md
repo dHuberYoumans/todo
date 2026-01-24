@@ -4,6 +4,10 @@ _todo_ is a simple todo list cli written in rust.
 
 ## Installations
 
+Supported platforms:
+- macOS (Intel, Apple Silicon)
+- Linux (x86_64, ARM64)
+
 ### Using curl | sh
 The easiest way to install _todo_ is to use the `install.sh` script:
 ```console
