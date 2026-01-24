@@ -6,6 +6,7 @@ pub mod new_list;
 pub mod plumbing;
 pub mod reword;
 pub mod update;
+pub mod upgrade;
 pub mod whoami;
 
 pub use add::*;
@@ -15,4 +16,5 @@ pub use new_list::*;
 pub use plumbing::*;
 pub use reword::*;
 pub use update::*;
+pub use upgrade::*;
 pub use whoami::*;
