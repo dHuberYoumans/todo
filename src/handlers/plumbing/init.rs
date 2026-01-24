@@ -6,7 +6,7 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::adapters::config;
+use crate::handlers::config;
 use crate::paths::UserPaths;
 use crate::util;
 

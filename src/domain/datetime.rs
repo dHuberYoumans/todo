@@ -3,7 +3,7 @@ use chrono::Duration;
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::adapters::cli::config;
+use crate::handlers::config;
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub struct Datetime {

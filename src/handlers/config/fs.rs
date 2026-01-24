@@ -2,7 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use std::fs;
 use std::io::Write;
 
-use crate::adapters::cli::config::entities::Config;
+use crate::handlers::config::entities::Config;
 use crate::paths::UserPaths;
 
 pub fn init() -> Result<()> {

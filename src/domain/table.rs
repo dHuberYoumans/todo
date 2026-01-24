@@ -10,8 +10,9 @@ use tabled::{
     Table,
 };
 
-use crate::adapters::config::{self, entities::TableStyle};
+use crate::domain::table::config::entities::TableStyle;
 use crate::domain::{TodoItem, TodoItemRow};
+use crate::handlers::config;
 
 pub struct TodoListTable {
     pub table: Table,

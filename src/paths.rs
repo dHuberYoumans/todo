@@ -1,4 +1,4 @@
-use crate::adapters::cli::config;
+use crate::handlers::config;
 use anyhow::{anyhow, Context, Result};
 use microxdg::Xdg;
 use std::{path::PathBuf, str::FromStr};

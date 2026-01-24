@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
 use std::cmp::Reverse;
 
-use crate::adapters::cli::config;
 use crate::domain::ListFilter;
 use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
+use crate::handlers::config;
 
 pub fn list(
     repo: &impl TodoItemRepository,

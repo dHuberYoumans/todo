@@ -1,9 +1,9 @@
 use anyhow::Result;
 use rusqlite::Connection;
 
-use crate::adapters::cli;
 use crate::app::App;
 use crate::domain::{Cmd, CompletionsCmd, Plumbing, TodoList};
+use crate::handlers;
 use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
 use crate::util;
 
@@ -33,12 +33,12 @@ fn set_up_repositories(
 
 fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
     match cmd {
-        Plumbing::Init => cli::init(),
-        Plumbing::ShowPaths => cli::show_paths(),
-        Plumbing::CleanData => cli::clean_data(),
+        Plumbing::Init => handlers::init(),
+        Plumbing::ShowPaths => handlers::show_paths(),
+        Plumbing::CleanData => handlers::clean_data(),
         Plumbing::Completions(cmd) => match cmd {
-            CompletionsCmd::Generate { shell } => cli::generate_completions(shell),
-            CompletionsCmd::Install { shell } => cli::install_completions(shell),
+            CompletionsCmd::Generate { shell } => handlers::generate_completions(shell),
+            CompletionsCmd::Install { shell } => handlers::install_completions(shell),
         },
     }
 }
@@ -50,36 +50,36 @@ fn execute(cmd: Cmd) -> Result<()> {
     let (todo_list_repo, todo_item_repo) = set_up_repositories(&conn)?;
     match cmd {
         Cmd::NewList { name, checkout } => {
-            cli::new_list(&todo_list_repo, &todo_item_repo, &todo_list, &name)?;
+            handlers::new_list(&todo_list_repo, &todo_item_repo, &todo_list, &name)?;
             if checkout {
                 log::info!("checking out list '{}'", &name);
-                cli::load(&todo_list_repo, &mut todo_list, &name)?;
+                handlers::load(&todo_list_repo, &mut todo_list, &name)?;
                 println!("✔ Now using '{}'", &name);
             };
         }
-        Cmd::DeleteList { name } => cli::delete_list(&todo_list_repo, &todo_list, name)?,
+        Cmd::DeleteList { name } => handlers::delete_list(&todo_list_repo, &todo_list, name)?,
         Cmd::Load { name } => {
             if name == "-" {
                 let previous = std::env::var("PREVIOUS")?;
-                cli::load(&todo_list_repo, &mut todo_list, &previous)?
+                handlers::load(&todo_list_repo, &mut todo_list, &previous)?
             } else {
-                cli::load(&todo_list_repo, &mut todo_list, &name)?
+                handlers::load(&todo_list_repo, &mut todo_list, &name)?
             }
         }
-        Cmd::Whoami => cli::whoami()?,
+        Cmd::Whoami => handlers::whoami()?,
         Cmd::Add(args) => {
-            cli::add(&todo_list, &todo_item_repo, args)?;
-            cli::list(&todo_item_repo, &todo_list, None, None)?
+            handlers::add(&todo_list, &todo_item_repo, args)?;
+            handlers::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::List(args) => match args.arg.as_deref() {
-            Some(arg) if arg.starts_with('@') => cli::list_due_date(
+            Some(arg) if arg.starts_with('@') => handlers::list_due_date(
                 &todo_item_repo,
                 &todo_list,
                 arg.to_string(),
                 args.sort,
                 args.filter,
             )?,
-            Some(arg) if arg.starts_with('#') => cli::list_tag(
+            Some(arg) if arg.starts_with('#') => handlers::list_tag(
                 &todo_item_repo,
                 &todo_list,
                 arg.to_string(),
@@ -88,31 +88,31 @@ fn execute(cmd: Cmd) -> Result<()> {
             )?,
             _ => {
                 if args.collection {
-                    cli::list_collection(&todo_list_repo, &todo_list)?;
+                    handlers::list_collection(&todo_list_repo, &todo_list)?;
                 } else if args.tags {
-                    cli::list_tags(&todo_item_repo, &todo_list)?;
+                    handlers::list_tags(&todo_item_repo, &todo_list)?;
                 } else {
-                    cli::list(&todo_item_repo, &todo_list, args.sort, args.filter)?;
+                    handlers::list(&todo_item_repo, &todo_list, args.sort, args.filter)?;
                 }
             }
         },
         Cmd::Close { ids } => {
-            cli::close(&todo_item_repo, &todo_list, ids)?;
-            cli::list(&todo_item_repo, &todo_list, None, None)?
+            handlers::close(&todo_item_repo, &todo_list, ids)?;
+            handlers::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::CloseAll { prio } => {
             todo_list.close_all(&todo_item_repo, prio)?;
-            cli::list(&todo_item_repo, &todo_list, None, None)?
+            handlers::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::Open { ids } => {
-            cli::open(&todo_item_repo, &todo_list, ids)?;
-            cli::list(&todo_item_repo, &todo_list, None, None)?
+            handlers::open(&todo_item_repo, &todo_list, ids)?;
+            handlers::list(&todo_item_repo, &todo_list, None, None)?
         }
-        Cmd::Delete { id } => cli::delete(&todo_item_repo, &mut todo_list, &id)?,
-        Cmd::DeleteAll => cli::delete_all(&todo_item_repo, &mut todo_list)?,
+        Cmd::Delete { id } => handlers::delete(&todo_item_repo, &mut todo_list, &id)?,
+        Cmd::DeleteAll => handlers::delete_all(&todo_item_repo, &mut todo_list)?,
         Cmd::Reword { id, task } => {
-            cli::reword(&todo_item_repo, &mut todo_list, &id, task)?;
-            cli::show(&todo_item_repo, &todo_list, &id)?
+            handlers::reword(&todo_item_repo, &mut todo_list, &id, task)?;
+            handlers::show(&todo_item_repo, &todo_list, &id)?
         }
         Cmd::Update {
             ids,
@@ -121,8 +121,8 @@ fn execute(cmd: Cmd) -> Result<()> {
             status,
             tag,
         } => {
-            cli::update_item(&todo_item_repo, &todo_list, due, prio, status, tag, ids)?;
-            cli::list(&todo_item_repo, &todo_list, None, None)?
+            handlers::update_item(&todo_item_repo, &todo_list, due, prio, status, tag, ids)?;
+            handlers::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::Clear {
             ids,
@@ -130,18 +130,18 @@ fn execute(cmd: Cmd) -> Result<()> {
             prio,
             tag,
         } => {
-            cli::clear(&todo_item_repo, &todo_list, ids, due, prio, tag)?;
-            cli::list(&todo_item_repo, &todo_list, None, None)?
+            handlers::clear(&todo_item_repo, &todo_list, ids, due, prio, tag)?;
+            handlers::list(&todo_item_repo, &todo_list, None, None)?
         }
         Cmd::Upgrade { version, check } => {
             if check {
-                cli::check_latest_version()?
+                handlers::check_latest_version()?
             } else {
-                cli::upgrade(version)?
+                handlers::upgrade(version)?
             }
         }
-        Cmd::Config => cli::config::edit()?,
-        Cmd::Show { id } => cli::show(&todo_item_repo, &todo_list, &id)?,
+        Cmd::Config => handlers::config::edit()?,
+        Cmd::Show { id } => handlers::show(&todo_item_repo, &todo_list, &id)?,
         _ => eprintln!("✘ Invalid command"),
     }
     Ok(())
