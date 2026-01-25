@@ -79,7 +79,7 @@ fn execute(cmd: Cmd) -> Result<()> {
         }
         Cmd::Whoami => handlers::whoami()?,
         Cmd::Add(args) => {
-            handlers::add(&todo_item_repo, &todo_list, &editor, args)?;
+            handlers::add(&todo_item_repo, &todo_list, &config, &editor, args)?;
             handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
         }
         Cmd::List(args) => match args.arg.as_deref() {

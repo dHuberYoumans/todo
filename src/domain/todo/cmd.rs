@@ -92,7 +92,7 @@ pub struct AddArgs {
     #[arg(long, short = 'p', help = "Priority")]
     pub prio: Option<Prio>,
     #[arg(long, short = 'd', help = "Due date")]
-    pub due: Option<Datetime>,
+    pub due: Option<String>, // Use String instead of Datetime for config-dependent parsing
     #[arg(long, short = 't', help = "Tag")]
     pub tag: Option<Tag>,
 }
