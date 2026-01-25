@@ -1,8 +1,8 @@
 use clap::Parser;
 use std::process;
 
-use todo::app::App;
-use todo::run::run;
+use todo::application::app::App;
+use todo::application::run::run;
 
 fn main() {
     let app = App::parse();

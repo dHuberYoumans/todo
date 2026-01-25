@@ -3,8 +3,6 @@ use chrono::Duration;
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::handlers::config;
-
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub struct Datetime {
     pub timestamp: i64,
@@ -26,7 +24,7 @@ impl FromStr for Datetime {
     type Err = DatetimeParseError;
 
     fn from_str(date: &str) -> Result<Self, Self::Err> {
-        Datetime::parse(date)
+        Datetime::parse(date, "DMY".to_string())
     }
 }
 
@@ -51,10 +49,7 @@ impl Datetime {
         }
     }
 
-    pub fn parse(input: &str) -> Result<Datetime, DatetimeParseError> {
-        let date_input_format: String = config::fs::read()
-            .map(|c| c.style.due_date_input_format)
-            .unwrap_or("DMY".to_string());
+    pub fn parse(input: &str, date_input_format: String) -> Result<Datetime, DatetimeParseError> {
         let target = match input.to_lowercase().as_str() {
             day if day.starts_with("mon") => Some(Weekday::Mon),
             day if day.starts_with("tue") => Some(Weekday::Tue),

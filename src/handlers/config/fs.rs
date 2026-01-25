@@ -1,9 +1,8 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use std::fs;
 use std::io::Write;
 
-use crate::handlers::config::entities::Config;
-use crate::paths::UserPaths;
+use crate::infrastructure::paths::UserPaths;
 
 pub fn init() -> Result<()> {
     let user_paths = UserPaths::new();
@@ -41,16 +40,4 @@ table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | ma
         log::error!("Could not resolve XDG directories");
     }
     Ok(())
-}
-
-pub fn read() -> Result<Config> {
-    let user_paths = UserPaths::new();
-    if let Some(config_path) = user_paths.todo_config {
-        let config_file = fs::read_to_string(&config_path).context("✘ Couldn't read file")?;
-        log::debug!("reading config at {config_path:?}");
-        let config: Config = toml::from_str(&config_file).context("✘ Couldn't parse toml")?;
-        Ok(config)
-    } else {
-        Err(anyhow!("✘ Path to config not found"))
-    }
 }

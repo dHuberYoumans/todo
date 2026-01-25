@@ -4,8 +4,9 @@ use std::fs;
 use clap::CommandFactory;
 use clap_complete::{generate, Shell};
 
-use crate::app::App;
-use crate::paths::UserPaths;
+use crate::application::app::App;
+use crate::infrastructure::config;
+use crate::infrastructure::paths::UserPaths;
 
 pub fn generate_completions(shell: Shell) -> Result<()> {
     let mut cli_builder = App::command();
@@ -30,7 +31,7 @@ pub fn install_completions(shell: Shell) -> Result<()> {
         ),
         Shell::Fish => install(
             Shell::Fish,
-            user_paths.get_config()?.join("fish/completions"),
+            config::get_config(&user_paths)?.join("fish/completions"),
             "todo.fish",
         ),
         _ => anyhow::bail!("{shell} shell not supported"),

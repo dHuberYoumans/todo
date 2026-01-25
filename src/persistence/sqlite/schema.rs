@@ -7,7 +7,7 @@ use rusqlite::{
 use std::fmt;
 
 use crate::domain::{Datetime, Prio, Status, Tag};
-use crate::handlers;
+use crate::infrastructure::{config, UserPaths};
 
 impl FromSql for Status {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
@@ -109,7 +109,8 @@ impl ToSql for Datetime {
 
 impl fmt::Display for Datetime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let config = handlers::config::fs::read();
+        let user_paths = UserPaths::new();
+        let config = config::read_config(&user_paths);
         let due_date_format: &str = config
             .as_ref()
             .map(|c| c.style.due_date_display_format.as_str())

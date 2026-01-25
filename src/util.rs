@@ -10,7 +10,7 @@ use std::{
     process,
 };
 
-use crate::paths::UserPaths;
+use crate::infrastructure::paths::UserPaths;
 
 const TMP_FILE: &str = "./EDIT_TASK";
 

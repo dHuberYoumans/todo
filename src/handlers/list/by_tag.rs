@@ -1,5 +1,6 @@
 use anyhow::Result;
 
+use crate::application::config::Config;
 use crate::domain::ListFilter;
 use crate::domain::{Tag, TodoItem, TodoItemRepository, TodoList, TodoListTable};
 use crate::handlers::sort_tasks;
@@ -7,6 +8,7 @@ use crate::handlers::sort_tasks;
 pub fn list_tag(
     repo: &impl TodoItemRepository,
     todo_list: &TodoList,
+    config: &Config,
     tag: String,
     sort: Option<String>,
     filter: Option<ListFilter>,
@@ -18,7 +20,7 @@ pub fn list_tag(
         tasks.push(entry);
     }
     sort_tasks(&mut tasks, sort)?;
-    let table = TodoListTable::new(&tasks);
+    let table = TodoListTable::new(&tasks, config);
     table.print();
     Ok(())
 }

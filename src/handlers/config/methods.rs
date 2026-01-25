@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use std::fs;
 
-use crate::paths::UserPaths;
+use crate::infrastructure::paths::UserPaths;
 use crate::util;
 
 pub fn edit() -> Result<()> {

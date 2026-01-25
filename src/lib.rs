@@ -1,7 +1,6 @@
-pub mod app;
+pub mod application;
 pub mod domain;
 pub mod handlers;
-pub mod paths;
+pub mod infrastructure;
 pub mod persistence;
-pub mod run;
 pub mod util;

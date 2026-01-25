@@ -10,19 +10,18 @@ use tabled::{
     Table,
 };
 
-use crate::domain::table::config::entities::TableStyle;
+use crate::application::config::{Config, TableStyle};
 use crate::domain::{TodoItem, TodoItemRow};
-use crate::handlers::config;
 
 pub struct TodoListTable {
     pub table: Table,
 }
 
 impl TodoListTable {
-    pub fn new(entries: &[TodoItem]) -> Self {
-        let mut table = build_table(entries);
+    pub fn new(entries: &[TodoItem], config: &Config) -> Self {
+        let mut table = build_table(entries, config);
         table
-            .with(Modify::new(Rows::new(1..).intersect(Columns::single(0))).with(format_id()))
+            .with(Modify::new(Rows::new(1..).intersect(Columns::single(0))).with(format_id(config)))
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(0))).with(color_id()))
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(2))).with(color_status()))
             .with(Modify::new(Rows::new(1..).intersect(Columns::single(3))).with(color_prio()))
@@ -32,7 +31,7 @@ impl TodoListTable {
             .with(Modify::new(Columns::single(3)).with(Width::increase(3))) // prio
             .with(Modify::new(Columns::single(4)).with(Width::increase(3))) // due
             .with(Modify::new(Columns::single(5)).with(Width::wrap(12))); // tag
-        apply_table_style(&mut table);
+        apply_table_style(&mut table, config);
         Self { table }
     }
     pub fn print(&self) {
@@ -40,9 +39,9 @@ impl TodoListTable {
     }
 }
 
-fn build_table(entries: &[TodoItem]) -> Table {
-    let show_due = config::fs::read().map(|c| c.style.show_due).unwrap_or(true);
-    let show_tag = config::fs::read().map(|c| c.style.show_tag).unwrap_or(true);
+fn build_table(entries: &[TodoItem], config: &Config) -> Table {
+    let show_due = config.style.show_due;
+    let show_tag = config.style.show_tag;
     let mut builder = Builder::default();
     let mut headers = vec!["id", "title", "status", "prio"];
     if show_due {
@@ -71,10 +70,9 @@ fn build_table(entries: &[TodoItem]) -> Table {
     builder.build()
 }
 
-fn apply_table_style(table: &mut Table) {
-    let config = config::fs::read().expect("✘ Couldn't parse the config.");
-    let style = config.style.table.into();
-    match style {
+fn apply_table_style(table: &mut Table, config: &Config) {
+    let style = config.style.table.clone();
+    match style.into() {
         TableStyle::Ascii => table.with(Style::ascii()),
         TableStyle::AsciiRounded => table.with(Style::ascii_rounded()),
         TableStyle::Modern => table.with(Style::modern()),
@@ -106,12 +104,9 @@ fn color_status() -> FormatContent<impl FnMut(&str) -> String + Clone> {
     })
 }
 
-fn format_id() -> FormatContent<impl FnMut(&str) -> String + Clone> {
+fn format_id(config: &Config) -> FormatContent<impl FnMut(&str) -> String + Clone + use<'_>> {
     Format::content(|cell: &str| {
-        let id_length = config::fs::read()
-            .expect("✘ Couldn't read id")
-            .style
-            .id_length;
+        let id_length = config.style.id_length;
         cell.chars().take(id_length).collect()
     })
 }

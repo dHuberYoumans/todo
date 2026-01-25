@@ -1,4 +1,8 @@
+use anyhow::Result;
 use serde::Deserialize;
+
+use crate::infrastructure;
+use crate::infrastructure::UserPaths;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -42,4 +46,14 @@ pub struct Style {
     pub show_tag: bool,
     pub sort_by: String,
     pub table: String,
+}
+
+pub fn load_config() -> Result<Config> {
+    let paths = UserPaths::new();
+    let config = infrastructure::config::read_config(&paths)?;
+
+    Ok(Config {
+        database: config.database,
+        style: config.style,
+    })
 }

@@ -6,8 +6,9 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::handlers::config;
-use crate::paths::UserPaths;
+use crate::handlers;
+use crate::infrastructure::config;
+use crate::infrastructure::paths::UserPaths;
 use crate::util;
 
 const INIT_LIST: &str = "todo";
@@ -16,10 +17,11 @@ pub fn init() -> Result<()> {
     println!("▶ Initializing...");
     let user_paths = UserPaths::new();
     let env_path = prepare_environment_path(&user_paths);
-    println!("▶ Setting up database...");
-    config::fs::init()?;
     set_up_environment(&env_path)?;
-    let db_path = user_paths.get_db()?;
+    println!("▶ Setting up database...");
+    handlers::config::fs::init()?;
+    let config = config::read_config(&user_paths)?;
+    let db_path = PathBuf::from(&config.database.todo_db);
     log::info!("creating database at {}", util::log_opt_path(&db_path));
     let conn = util::connect_to_db(&db_path)?;
     let todo_list_repo = SqlTodoListRepository::new(&conn);

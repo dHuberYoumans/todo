@@ -1,13 +1,15 @@
 use anyhow::{Context, Result};
 use std::cmp::Reverse;
 
+use crate::application::config::Config;
 use crate::domain::ListFilter;
 use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
-use crate::handlers::config;
+use crate::infrastructure::{config, UserPaths};
 
 pub fn list(
     repo: &impl TodoItemRepository,
     todo_list: &TodoList,
+    config: &Config,
     sort: Option<String>,
     filter: Option<ListFilter>,
 ) -> Result<()> {
@@ -15,13 +17,14 @@ pub fn list(
     log::debug!("found current list '{}'", &current_list,);
     let mut tasks = todo_list.get_list(repo, filter)?;
     sort_tasks(&mut tasks, sort)?;
-    let table = TodoListTable::new(&tasks);
+    let table = TodoListTable::new(&tasks, config);
     table.print();
     Ok(())
 }
 
 pub fn sort_tasks(tasks: &mut [TodoItem], sort_key: Option<String>) -> Result<()> {
-    let mut sort_key_default = config::fs::read()
+    let user_paths = UserPaths::new();
+    let mut sort_key_default = config::read_config(&user_paths)
         .context("✘ Couldn't read config while retrieving the sort key")?
         .style
         .sort_by;
