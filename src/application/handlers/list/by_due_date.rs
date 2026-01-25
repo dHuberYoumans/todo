@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Result};
 
 use crate::application::config::Config;
+use crate::application::handlers::sort_tasks;
 use crate::domain::ListFilter;
 use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
-use crate::handlers::sort_tasks;
 
 pub fn list_due_date(
     repo: &impl TodoItemRepository,

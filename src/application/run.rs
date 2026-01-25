@@ -3,11 +3,11 @@ use rusqlite::Connection;
 use std::path::PathBuf;
 
 use crate::application::app::App;
+use crate::application::{self, handlers};
 use crate::domain::{Cmd, CompletionsCmd, Plumbing, TodoList};
 use crate::infrastructure::{self, UserPaths};
 use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
 use crate::util;
-use crate::{application, handlers};
 
 pub fn run(app: App) -> Result<()> {
     if let Some(cmd) = app.command {
