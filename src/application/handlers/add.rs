@@ -1,12 +1,17 @@
 use anyhow::Result;
 use uuid::Uuid;
 
+use crate::application::editor::Editor;
 use crate::domain::AddArgs;
 use crate::domain::{Datetime, Status};
 use crate::domain::{TodoItem, TodoItemRepository, TodoList};
-use crate::util;
 
-pub fn add(todo_list: &TodoList, repo: &impl TodoItemRepository, args: AddArgs) -> Result<()> {
+pub fn add(
+    repo: &impl TodoItemRepository,
+    todo_list: &TodoList,
+    editor: &impl Editor,
+    args: AddArgs,
+) -> Result<()> {
     // logging
     match args.due.as_ref() {
         Some(date) => log::info!("found due date '{}'", date),
@@ -15,7 +20,7 @@ pub fn add(todo_list: &TodoList, repo: &impl TodoItemRepository, args: AddArgs) 
     let msg = if let Some(task) = args.task {
         task
     } else {
-        util::edit_in_editor(None)
+        editor.edit(None)?
     };
     log::info!("found task '{}'", msg);
     let item = TodoItem {

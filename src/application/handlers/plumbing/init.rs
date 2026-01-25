@@ -6,7 +6,6 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::application::handlers;
 use crate::infrastructure::config;
 use crate::infrastructure::paths::UserPaths;
 use crate::util;
@@ -19,7 +18,7 @@ pub fn init() -> Result<()> {
     let env_path = prepare_environment_path(&user_paths);
     set_up_environment(&env_path)?;
     println!("▶ Setting up database...");
-    handlers::config::fs::init()?;
+    config::init()?;
     let config = config::read_config(&user_paths)?;
     let db_path = PathBuf::from(&config.database.todo_db);
     log::info!("creating database at {}", util::log_opt_path(&db_path));
@@ -53,7 +52,7 @@ fn prepare_environment_path(user_paths: &UserPaths) -> PathBuf {
     env_path
 }
 
-fn set_up_environment(env_path: &PathBuf) -> Result<()> {
+pub fn set_up_environment(env_path: &PathBuf) -> Result<()> {
     let parent = env_path.parent().ok_or(anyhow!(
         "✘ No parent directory found for {}",
         env_path.display()

@@ -1,11 +1,12 @@
 use anyhow::Result;
 
+use crate::application::editor::Editor;
 use crate::domain::{TodoItemRepository, TodoList};
-use crate::util;
 
 pub fn reword(
     repo: &impl TodoItemRepository,
     todo_list: &mut TodoList,
+    editor: &impl Editor,
     id: &str,
     task: Option<String>,
 ) -> Result<()> {
@@ -13,7 +14,7 @@ pub fn reword(
         task
     } else {
         let text = todo_list.get_entry(repo, id)?;
-        util::edit_in_editor(text)
+        editor.edit(text)?
     };
     log::info!("found task '{}'", &msg);
     todo_list.update_task(repo, &msg, id)?;

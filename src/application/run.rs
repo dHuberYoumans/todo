@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::application::app::App;
 use crate::application::{self, handlers};
 use crate::domain::{Cmd, CompletionsCmd, Plumbing, TodoList};
-use crate::infrastructure::{self, UserPaths};
+use crate::infrastructure::{self, editor, UserPaths};
 use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
 use crate::util;
 
@@ -36,12 +36,14 @@ fn set_up_repositories(
 fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
     let user_paths = UserPaths::new();
     let config_file = infrastructure::config::get_todo_config(&user_paths)?;
-    let config = application::config::load_config()?;
-    let db_file = PathBuf::from(config.database.todo_db);
     match cmd {
         Plumbing::Init => handlers::init(),
         Plumbing::ShowPaths => handlers::show_paths(),
-        Plumbing::CleanData => handlers::clean_data(config_file, db_file),
+        Plumbing::CleanData => {
+            let config = application::config::load_config()?;
+            let db_file = PathBuf::from(config.database.todo_db);
+            handlers::clean_data(config_file, db_file)
+        }
         Plumbing::Completions(cmd) => match cmd {
             CompletionsCmd::Generate { shell } => handlers::generate_completions(shell),
             CompletionsCmd::Install { shell } => handlers::install_completions(shell),
@@ -51,6 +53,7 @@ fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
 
 fn execute(cmd: Cmd) -> Result<()> {
     util::load_env()?;
+    let editor = editor::SysEditor;
     let mut todo_list = TodoList::new();
     let config = application::config::load_config()?;
     let db_path = PathBuf::from(&config.database.todo_db);
@@ -76,7 +79,7 @@ fn execute(cmd: Cmd) -> Result<()> {
         }
         Cmd::Whoami => handlers::whoami()?,
         Cmd::Add(args) => {
-            handlers::add(&todo_list, &todo_item_repo, args)?;
+            handlers::add(&todo_item_repo, &todo_list, &editor, args)?;
             handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
         }
         Cmd::List(args) => match args.arg.as_deref() {
@@ -121,7 +124,7 @@ fn execute(cmd: Cmd) -> Result<()> {
         Cmd::Delete { id } => handlers::delete(&todo_item_repo, &mut todo_list, &id)?,
         Cmd::DeleteAll => handlers::delete_all(&todo_item_repo, &mut todo_list)?,
         Cmd::Reword { id, task } => {
-            handlers::reword(&todo_item_repo, &mut todo_list, &id, task)?;
+            handlers::reword(&todo_item_repo, &mut todo_list, &editor, &id, task)?;
             handlers::show(&todo_item_repo, &todo_list, &id)?
         }
         Cmd::Update {
@@ -150,7 +153,7 @@ fn execute(cmd: Cmd) -> Result<()> {
                 handlers::upgrade(version)?
             }
         }
-        Cmd::Config => handlers::config::edit()?,
+        Cmd::Config => infrastructure::config::edit_config(&editor)?,
         Cmd::Show { id } => handlers::show(&todo_item_repo, &todo_list, &id)?,
         _ => eprintln!("✘ Invalid command"),
     }
