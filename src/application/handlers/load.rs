@@ -3,16 +3,17 @@ use std::fs;
 use std::io::Write;
 
 use crate::domain::{TodoList, TodoListRepository};
-use crate::util;
+use crate::infrastructure::{env, UserPaths};
 
 pub fn load(repo: &impl TodoListRepository, todo_list: &mut TodoList, list: &str) -> Result<()> {
+    let user_paths = UserPaths::new();
     let collection = todo_list.get_collection(repo)?;
     log::info!("checking if lists exists in collection");
     log::debug!("collection {:?}", &collection);
     if !collection.contains(&list.to_string()) {
         return Err(anyhow!("✘ Can't find list '{list}'"));
     }
-    let dotenv = util::dotenv().context("✘ Could not resolve .env")?;
+    let dotenv = env::dotenv(&user_paths);
     let content = fs::read_to_string(&dotenv).context("✘ Failed to read .env to string")?;
     log::debug!("dotenv contents: {content}");
     let mut new_content = String::new();

@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 use crate::infrastructure::config;
 use crate::infrastructure::paths::UserPaths;
-use crate::util;
+use crate::persistence::connection::connect_to_db;
 
 const INIT_LIST: &str = "todo";
 
@@ -21,8 +21,8 @@ pub fn init() -> Result<()> {
     config::init()?;
     let config = config::read_config(&user_paths)?;
     let db_path = PathBuf::from(&config.database.todo_db);
-    log::info!("creating database at {}", util::log_opt_path(&db_path));
-    let conn = util::connect_to_db(&db_path)?;
+    log::info!("creating database at {}", &db_path.display());
+    let conn = connect_to_db(&db_path)?;
     let todo_list_repo = SqlTodoListRepository::new(&conn);
     let todo_item_repo = SqlTodoItemRepository::new(&conn, INIT_LIST.to_string());
     let todo_list = TodoList::new();

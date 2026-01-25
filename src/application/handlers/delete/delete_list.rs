@@ -3,14 +3,15 @@ use std::fs;
 use std::io::Write;
 
 use crate::domain::{TodoList, TodoListRepository};
-use crate::util;
+use crate::infrastructure::{env, UserPaths};
 
 pub fn delete_list(
     repo: &impl TodoListRepository,
     todo_list: &TodoList,
     list: String,
 ) -> Result<()> {
-    let dotenv = util::dotenv()?;
+    let user_paths = UserPaths::new();
+    let dotenv = env::dotenv(&user_paths);
     let content = fs::read_to_string(&dotenv)?;
     log::debug!("reading env {:?}", dotenv);
     let mut new_content = String::new();

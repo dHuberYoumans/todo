@@ -6,8 +6,7 @@ use crate::application::app::App;
 use crate::application::{self, handlers};
 use crate::domain::{Cmd, CompletionsCmd, Plumbing, TodoList};
 use crate::infrastructure::{self, editor, UserPaths};
-use crate::persistence::{SqlTodoItemRepository, SqlTodoListRepository};
-use crate::util;
+use crate::persistence::{connect_to_db, SqlTodoItemRepository, SqlTodoListRepository};
 
 pub fn run(app: App) -> Result<()> {
     if let Some(cmd) = app.command {
@@ -52,12 +51,13 @@ fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
 }
 
 fn execute(cmd: Cmd) -> Result<()> {
-    util::load_env()?;
+    let user_paths = UserPaths::new();
+    infrastructure::env::load_env(&user_paths)?;
     let editor = editor::SysEditor;
     let mut todo_list = TodoList::new();
     let config = application::config::load_config()?;
     let db_path = PathBuf::from(&config.database.todo_db);
-    let conn = util::connect_to_db(&db_path)?;
+    let conn = connect_to_db(&db_path)?;
     let (todo_list_repo, todo_item_repo) = set_up_repositories(&conn)?;
     match cmd {
         Cmd::NewList { name, checkout } => {
