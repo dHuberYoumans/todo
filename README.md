@@ -1,6 +1,11 @@
 # TODO
 
-_todo_ is a simple todo list cli written in rust.
+[![GitHub release](https://img.shields.io/github/v/release/dHuberYoumans/todo)](https://github.com/dHuberYoumans/todo/releases/latest)
+[![GitHub tag](https://img.shields.io/github/v/tag/dHuberYoumans/todo)](https://github.com/dHuberYoumans/todo/tags)
+[![Last commit](https://img.shields.io/github/last-commit/dHuberYoumans/todo)](https://github.com/dHuberYoumans/todo/commits/main)
+[![CI](https://github.com/dHuberYoumans/todo/actions/workflows/ci.yml/badge.svg)](https://github.com/dHuberYoumans/todo/actions/workflows/ci.yml)
+
+A rusty todo list CLI.
 
 ## Installations
 
@@ -28,7 +33,7 @@ $ todo -V|--version
 ```
 to see the current installed version.
 
-### From source code
+### Build from source
 Prerequisites: `rustrc`, `cargo` and `just` installed.
 
 After having cloned the repo you can simply run
