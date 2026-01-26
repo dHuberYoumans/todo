@@ -1,6 +1,11 @@
 # TODO
 
-_todo_ is a simple todo list cli written in rust.
+[![GitHub release](https://img.shields.io/github/v/release/dHuberYoumans/todo)](https://github.com/dHuberYoumans/todo/releases/latest)
+[![GitHub tag](https://img.shields.io/github/v/tag/dHuberYoumans/todo)](https://github.com/dHuberYoumans/todo/tags)
+[![Last commit](https://img.shields.io/github/last-commit/dHuberYoumans/todo)](https://github.com/dHuberYoumans/todo/commits/main)
+[![CI](https://github.com/dHuberYoumans/todo/actions/workflows/ci.yml/badge.svg)](https://github.com/dHuberYoumans/todo/actions/workflows/ci.yml)
+
+A rusty todo list CLI.
 
 ## Installations
 
@@ -11,7 +16,7 @@ Supported platforms:
 ### Using curl | sh
 The easiest way to install _todo_ is to use the `install.sh` script:
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/dHuberYoumans/todo/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/dHuberYoumans/todo/main/install.sh | sh
 ```
 It will install the _todo_ CLI (into `$HOME/.local/bin/`) alongside with its auto-completions. You may have to restart your terminal or open a new session afterwards. 
 
@@ -28,7 +33,7 @@ $ todo -V|--version
 ```
 to see the current installed version.
 
-### From source code
+### Build from source
 Prerequisites: `rustrc`, `cargo` and `just` installed.
 
 After having cloned the repo you can simply run
@@ -248,15 +253,16 @@ The CLI allows a configuration file which is automatically generated in `~/.conf
 The default configuration file is of the following form
 ```toml
 [database]
-todo_db = "/Users/donny/.todo/todo.db"
+todo_db = "/User/name/.todo/todo.db"
 
 [style]
 id_length = 6
-due_date_format = "%x" # strftime-style
+due_date_display_format = "%x" # chrono strftime-style
+due_date_input_format = "DMY" # MDY | ISO
 show_due = true
 show_tag = true
 sort_by = "prio"  # prio | due | tag
-table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | markdown
+table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | markdown"
 ```
 The `database` section contains the field `todo_db` which is the path to the sqlite database.
 The `style` section cintains several fields concerning the style of the todo list (or the table) when printed to stdout:
