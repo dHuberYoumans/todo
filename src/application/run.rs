@@ -3,6 +3,7 @@ use rusqlite::Connection;
 use std::path::PathBuf;
 
 use crate::application::app::App;
+use crate::application::handlers::VersionStatus;
 use crate::application::{self, handlers};
 use crate::domain::{Cmd, CompletionsCmd, Plumbing, TodoList};
 use crate::infrastructure::{self, editor, UserPaths};
@@ -148,9 +149,12 @@ fn execute(cmd: Cmd) -> Result<()> {
         }
         Cmd::Upgrade { version, check } => {
             if check {
-                handlers::check_latest_version()?
+                let _ = handlers::check_latest_version()?;
             } else {
-                handlers::upgrade(version)?
+                let version_status = handlers::check_latest_version()?;
+                if version_status == VersionStatus::Behind {
+                    handlers::upgrade(version)?
+                }
             }
         }
         Cmd::Config => infrastructure::config::edit_config(&editor)?,

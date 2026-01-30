@@ -60,7 +60,14 @@ pub fn target() -> Result<&'static str> {
     }
 }
 
-pub fn check_latest_version() -> Result<()> {
+#[derive(PartialEq)]
+pub enum VersionStatus {
+    Ahead,
+    Behind,
+    UpToDate,
+}
+
+pub fn check_latest_version() -> Result<VersionStatus> {
     println!("▶ Checking latest version...");
     let latest_version_bind = get_latest_version()?;
     let latest_version = latest_version_bind
@@ -72,11 +79,19 @@ pub fn check_latest_version() -> Result<()> {
     let latest = deconstruct_version(latest_version)
         .ok_or_else(|| anyhow!("✘ Couldn't parse latest version into major.minor.patch"))?;
     match latest.cmp(&current) {
-        Ordering::Greater => println!("ℹ Upgrade available: {current_version} → {latest_version}"),
-        Ordering::Equal => println!("✔ todo is up-to-date"),
-        Ordering::Less => println!("» todo is ahead"),
+        Ordering::Greater => {
+            println!("ℹ Upgrade available: {current_version} → {latest_version}");
+            Ok(VersionStatus::Behind)
+        }
+        Ordering::Equal => {
+            println!("✔ todo is up-to-date");
+            Ok(VersionStatus::UpToDate)
+        }
+        Ordering::Less => {
+            println!("» todo is ahead");
+            Ok(VersionStatus::Ahead)
+        }
     }
-    Ok(())
 }
 
 fn deconstruct_version(version: &str) -> Option<(i8, i8, i8)> {
