@@ -16,6 +16,8 @@ fn pretty_print(item: TodoItem, metadata: Metadata) {
         Status::Closed => "done",
     };
     let (title, message) = util::parse_task(&item.task);
+    let title = util::prettify(&title);
+    let message = util::prettify(&message);
     println!("Id: {}", item.id);
     println!("Created at: {}", metadata.created_at);
     println!("Last updated at: {}", metadata.last_updated);
