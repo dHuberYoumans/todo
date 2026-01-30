@@ -3,10 +3,49 @@
 
 ### Bug Fixes
 
+- check version before upgrade
+
+- enable config-dependent parsing
+
+
+### Chores
+
+- remove unused files
+
+
+### Documentation
+
+- update README
+
+
+### Refactoring
+
+- refactor(util): move utility functions to architectual correct place
+
+- furhter separate application layer and infrastructure
+
+- move handlers to application layer
+
+- introduce infrastructure and application layer
+
+
+### ui
+
+- add mini markdown support
+
+
+
+## What's Changed
+
+
+### Bug Fixes
+
 - correct path to .env
 
 
 ### Chores
+
+- Release todo version 0.10.0
 
 - clean up crates
 
@@ -67,7 +106,7 @@
 
 
 
-## What's Changed
+**Full Changelog**: v0.9.1 → v0.10.0## What's Changed
 
 
 ### Bug Fixes
