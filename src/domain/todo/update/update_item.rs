@@ -1,11 +1,11 @@
 use anyhow::Result;
 
-use crate::domain::{Datetime, Prio, Status, Tag, TodoItemRepository, TodoList};
+use crate::domain::{Datetime, Prio, Status, Tag, TodoItemUpdate, TodoList};
 
 impl TodoList {
     pub fn update_item(
         &self,
-        repo: &impl TodoItemRepository,
+        repo: &impl TodoItemUpdate,
         due: Option<Datetime>,
         prio: Option<Prio>,
         status: Option<Status>,

@@ -1,12 +1,11 @@
 use anyhow::{Context, Result};
 
-use crate::domain::ListFilter;
-use crate::domain::{Tag, TodoItem, TodoItemRepository, TodoList};
+use crate::domain::{ListFilter, Tag, TodoItem, TodoItemQuery, TodoList};
 
 impl TodoList {
     pub fn get_entries_by_tag(
         &self,
-        repo: &impl TodoItemRepository,
+        repo: &impl TodoItemQuery,
         tag: Tag,
         filter: Option<ListFilter>,
     ) -> Result<Vec<TodoItem>> {

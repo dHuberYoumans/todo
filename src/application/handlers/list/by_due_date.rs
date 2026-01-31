@@ -2,17 +2,19 @@ use anyhow::{anyhow, Result};
 
 use crate::application::config::Config;
 use crate::application::handlers::sort_tasks;
-use crate::domain::ListFilter;
-use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
+use crate::domain::{Datetime, ListFilter, TodoItem, TodoItemQuery, TodoList, TodoListTable};
 
-pub fn list_due_date(
-    repo: &impl TodoItemRepository,
+pub fn list_due_date<R>(
+    repo: &R,
     todo_list: &TodoList,
     config: &Config,
     date_str: String,
     sort: Option<String>,
     filter: Option<ListFilter>,
-) -> Result<()> {
+) -> Result<()>
+where
+    R: TodoItemQuery,
+{
     let epoch_seconds = if let Some(date) = date_str.strip_prefix("@") {
         Datetime::parse(date, config.style.due_date_input_format.clone())?.timestamp
     } else {

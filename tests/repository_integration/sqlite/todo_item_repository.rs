@@ -3,7 +3,11 @@ use std::str::FromStr;
 use anyhow::Result;
 
 use crate::mock::*;
-use todo::domain::{Datetime, ListFilter, Prio, Status, Tag, TodoItemRepository};
+use todo::domain::{Datetime, ListFilter, Prio, Status, Tag};
+use todo::domain::{
+    TodoItemCreate, TodoItemDelete, TodoItemMetadata, TodoItemQuery, TodoItemQueryColumns,
+    TodoItemRead, TodoItemResolve, TodoItemUpdate,
+};
 
 /**************** TODO ITEM REPOSITORY *****************/
 

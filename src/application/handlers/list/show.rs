@@ -1,10 +1,13 @@
-use crate::domain::{Metadata, Status, TodoItem, TodoItemRepository, TodoList};
+use crate::domain::{Metadata, Status, TodoItem, TodoItemMetadata, TodoList};
 use anyhow::Result;
 use colored::*;
 
 use crate::util;
 
-pub fn show(repo: &impl TodoItemRepository, todo_list: &TodoList, id: &str) -> Result<()> {
+pub fn show<R>(repo: &R, todo_list: &TodoList, id: &str) -> Result<()>
+where
+    R: TodoItemMetadata,
+{
     let (item, metadata) = todo_list.get_entry_with_metadata(repo, id)?;
     pretty_print(item, metadata);
     Ok(())

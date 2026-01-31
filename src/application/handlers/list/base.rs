@@ -2,18 +2,20 @@ use anyhow::{Context, Result};
 use std::cmp::Reverse;
 
 use crate::application::config::Config;
-use crate::domain::ListFilter;
-use crate::domain::{Datetime, TodoItem, TodoItemRepository, TodoList, TodoListTable};
+use crate::domain::{Datetime, ListFilter, TodoItem, TodoItemRead, TodoList, TodoListTable};
 use crate::infrastructure::{config, UserPaths};
 use crate::util;
 
-pub fn list(
-    repo: &impl TodoItemRepository,
+pub fn list<R>(
+    repo: &R,
     todo_list: &TodoList,
     config: &Config,
     sort: Option<String>,
     filter: Option<ListFilter>,
-) -> Result<()> {
+) -> Result<()>
+where
+    R: TodoItemRead,
+{
     let current_list = std::env::var("CURRENT")?;
     log::debug!("found current list '{}'", &current_list,);
     let mut todos = todo_list.get_list(repo, filter)?;

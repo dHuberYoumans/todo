@@ -1,15 +1,18 @@
 use anyhow::Result;
 
 use crate::application::editor::Editor;
-use crate::domain::{TodoItemRepository, TodoList};
+use crate::domain::{TodoItemQuery, TodoItemUpdate, TodoList};
 
-pub fn reword(
-    repo: &impl TodoItemRepository,
+pub fn reword<R>(
+    repo: &R,
     todo_list: &mut TodoList,
     editor: &impl Editor,
     id: &str,
     task: Option<String>,
-) -> Result<()> {
+) -> Result<()>
+where
+    R: TodoItemQuery + TodoItemUpdate,
+{
     let msg = if let Some(task) = task {
         task
     } else {

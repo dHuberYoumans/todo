@@ -1,9 +1,9 @@
 use anyhow::Result;
 
-use crate::domain::{Prio, TodoItemRepository, TodoList};
+use crate::domain::{Prio, TodoItemUpdate, TodoList};
 
 impl TodoList {
-    pub fn close_all(&self, repo: &impl TodoItemRepository, prio: Option<Prio>) -> Result<()> {
+    pub fn close_all(&self, repo: &impl TodoItemUpdate, prio: Option<Prio>) -> Result<()> {
         repo.close_all(prio)?;
         Ok(())
     }

@@ -3,17 +3,20 @@ use uuid::Uuid;
 
 use crate::application::config::Config;
 use crate::application::editor::Editor;
-use crate::domain::AddArgs;
+use crate::domain::{AddArgs, TodoItemCreate};
 use crate::domain::{Datetime, Status};
-use crate::domain::{TodoItem, TodoItemRepository, TodoList};
+use crate::domain::{TodoItem, TodoList};
 
-pub fn add(
-    repo: &impl TodoItemRepository,
+pub fn add<R>(
+    repo: &R,
     todo_list: &TodoList,
     config: &Config,
     editor: &impl Editor,
     args: AddArgs,
-) -> Result<()> {
+) -> Result<()>
+where
+    R: TodoItemCreate,
+{
     // logging
     match args.due.as_ref() {
         Some(date) => log::info!("found due date '{}'", date),
