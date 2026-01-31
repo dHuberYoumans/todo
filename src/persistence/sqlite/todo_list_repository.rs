@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rusqlite::{named_params, Connection};
 
-use crate::domain::TodoListRepository;
+use crate::domain::{TodoListCreate, TodoListDelete, TodoListRead, TodoListSchema};
 
 pub struct SqlTodoListRepository<'conn> {
     pub conn: &'conn Connection,
@@ -15,7 +15,7 @@ impl<'conn> SqlTodoListRepository<'conn> {
     }
 }
 
-impl TodoListRepository for SqlTodoListRepository<'_> {
+impl TodoListSchema for SqlTodoListRepository<'_> {
     fn create_table(&self) -> Result<()> {
         let sql = format!(
             "CREATE TABLE IF NOT EXISTS {} (
@@ -27,7 +27,9 @@ impl TodoListRepository for SqlTodoListRepository<'_> {
         self.conn.execute_batch(&sql)?;
         Ok(())
     }
+}
 
+impl TodoListCreate for SqlTodoListRepository<'_> {
     fn add(&self, list_name: &str) -> Result<()> {
         let sql = format!("INSERT INTO {} (name) VALUES (:name);", Self::TABLE);
         log::debug!("executing query `{}`", &sql);
@@ -35,7 +37,9 @@ impl TodoListRepository for SqlTodoListRepository<'_> {
             .execute(&sql, named_params! { ":name": list_name, })?;
         Ok(())
     }
+}
 
+impl TodoListRead for SqlTodoListRepository<'_> {
     fn fetch_all(&self) -> Result<Vec<String>> {
         let sql = format!("SELECT name FROM {}", Self::TABLE);
         log::debug!("executing query {}", &sql);
@@ -53,7 +57,9 @@ impl TodoListRepository for SqlTodoListRepository<'_> {
             .query_row(&sql, named_params! { ":name": list_name }, |row| row.get(0))
             .map_err(Into::into)
     }
+}
 
+impl TodoListDelete for SqlTodoListRepository<'_> {
     fn delete(&self, list_name: &str) -> Result<()> {
         let id = self.fetch_id(list_name)?;
         let sql = format!("DELETE FROM {} WHERE id = (:id);", Self::TABLE);

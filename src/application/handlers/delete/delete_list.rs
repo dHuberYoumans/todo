@@ -2,14 +2,13 @@ use anyhow::{anyhow, Result};
 use std::fs;
 use std::io::Write;
 
-use crate::domain::{TodoList, TodoListRepository};
+use crate::domain::{TodoList, TodoListDelete};
 use crate::infrastructure::{env, UserPaths};
 
-pub fn delete_list(
-    repo: &impl TodoListRepository,
-    todo_list: &TodoList,
-    list: String,
-) -> Result<()> {
+pub fn delete_list<R>(repo: &R, todo_list: &TodoList, list: String) -> Result<()>
+where
+    R: TodoListDelete,
+{
     let user_paths = UserPaths::new();
     let dotenv = env::dotenv(&user_paths);
     let content = fs::read_to_string(&dotenv)?;

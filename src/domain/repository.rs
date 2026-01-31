@@ -3,6 +3,8 @@ use anyhow::Result;
 use crate::domain::ListFilter;
 use crate::domain::{Datetime, Metadata, Prio, Status, Tag, TodoItem};
 
+// --------- TodoListRepository --------- //
+
 // schema
 pub trait TodoItemSchema {
     fn create_table(&self) -> Result<()>;
@@ -88,10 +90,32 @@ impl<T> TodoItemRepository for T where
 {
 }
 
-pub trait TodoListRepository {
+// --------- TodoListRepository --------- //
+
+// CRUD
+pub trait TodoListSchema {
     fn create_table(&self) -> Result<()>;
+}
+
+pub trait TodoListCreate {
     fn add(&self, list_name: &str) -> Result<()>;
+}
+
+pub trait TodoListRead {
     fn fetch_all(&self) -> Result<Vec<String>>;
     fn fetch_id(&self, list_name: &str) -> Result<i64>;
+}
+
+pub trait TodoListDelete {
     fn delete(&self, list_name: &str) -> Result<()>;
+}
+
+pub trait TodoListRepository:
+    TodoListSchema + TodoListCreate + TodoListRead + TodoListDelete
+{
+}
+
+impl<T> TodoListRepository for T where
+    T: TodoListSchema + TodoListCreate + TodoListRead + TodoListDelete
+{
 }

@@ -1,8 +1,7 @@
 use anyhow::Result;
 
 use crate::mock::*;
-use todo::domain::TodoListRepository;
-// fn create_table(&self) -> Result<()>;
+use todo::domain::{TodoListCreate, TodoListDelete, TodoListRead};
 
 #[test]
 fn add() -> Result<()> {

@@ -2,11 +2,11 @@ use anyhow::{anyhow, Result};
 use rusqlite::{named_params, Connection, OptionalExtension, ToSql};
 use thiserror::Error;
 
-use crate::domain::TodoListRepository;
 use crate::domain::{Datetime, Metadata, Prio, Status, Tag, TodoItem};
 use crate::domain::{
     ListFilter, TodoItemCreate, TodoItemDelete, TodoItemMetadata, TodoItemQuery,
     TodoItemQueryColumns, TodoItemRead, TodoItemResolve, TodoItemSchema, TodoItemUpdate,
+    TodoListRead,
 };
 use crate::persistence::SqlTodoListRepository;
 

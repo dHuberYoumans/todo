@@ -2,10 +2,13 @@ use anyhow::{anyhow, Context, Result};
 use std::fs;
 use std::io::Write;
 
-use crate::domain::{TodoList, TodoListRepository};
+use crate::domain::{TodoList, TodoListRead};
 use crate::infrastructure::{env, UserPaths};
 
-pub fn load(repo: &impl TodoListRepository, todo_list: &mut TodoList, list: &str) -> Result<()> {
+pub fn load<R>(repo: &R, todo_list: &mut TodoList, list: &str) -> Result<()>
+where
+    R: TodoListRead,
+{
     let user_paths = UserPaths::new();
     let collection = todo_list.get_collection(repo)?;
     log::info!("checking if lists exists in collection");
