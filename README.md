@@ -247,6 +247,13 @@ Once upon a time...
 
 There was a message to the world: hello!
 ```
+The show command supports minimal markdown syntax:
+- italic: wrap the word in underscores → \_italic\_ renders as _italic_
+- bold: wrap the word in single star → \*bold\* renders as **bold**
+- bulleted list: use a hyphen → - foo renders as • foo
+- checkboxes: use - [ ] or - [x] which renders as □ and ■ respectively
+- quotes: use > quote 
+- links: use the standard notation \[text\]\(url\)
 
 ## Configuration
 The CLI allows a configuration file which is automatically generated in `~/.config/todo/todo.config` when running `todo init`. 
