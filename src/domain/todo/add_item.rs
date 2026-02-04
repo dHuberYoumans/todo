@@ -1,10 +1,13 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 
 use crate::domain::{TodoItem, TodoItemCreate, TodoList};
 
 impl TodoList {
     pub fn add_item(&self, repo: &impl TodoItemCreate, item: &TodoItem) -> Result<()> {
-        repo.add(item)?;
-        Ok(())
+        if item.task.is_empty() {
+            Err(anyhow!("✘ Empty todo found"))
+        } else {
+            repo.add(item)
+        }
     }
 }
