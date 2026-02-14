@@ -126,8 +126,8 @@ fn execute(cmd: Cmd) -> Result<()> {
         }
         Cmd::RND => {
             let rnd_item = handlers::rnd(&todo_item_repo, &todo_list)?;
-            if rnd_item.is_some() {
-                handlers::show(&todo_item_repo, &todo_list, &rnd_item.unwrap().id)?
+            if let Some(item) = rnd_item {
+                handlers::show(&todo_item_repo, &todo_list, &item.id)?
             }
         }
         Cmd::Update {
