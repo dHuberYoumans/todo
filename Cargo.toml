@@ -19,6 +19,7 @@ flate2 = "1.1.5"
 glob = "0.3.3"
 log = "0.4.28"
 microxdg = "0.2.0"
+rand = "0.10.0"
 regex = "1.12.2"
 reqwest = { version = "0.13.1", features = ["blocking", "json"] }
 rusqlite = { version = "0.37.0", features = ["bundled"] }

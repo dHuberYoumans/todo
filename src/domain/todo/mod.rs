@@ -11,6 +11,7 @@ pub mod get_entries_by_tag;
 pub mod get_entry;
 pub mod get_entry_with_metadata;
 pub mod get_list;
+pub mod get_rnd_item;
 pub mod get_tags;
 pub mod update;
 

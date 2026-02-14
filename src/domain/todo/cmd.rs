@@ -45,6 +45,8 @@ pub enum Cmd {
         #[arg(long, short = 'm', help = "Task description")]
         task: Option<String>,
     },
+    /// Get a random todo among those with prio = RNG
+    RND,
     /// Update the fields of an item
     Update {
         ids: Vec<String>,
