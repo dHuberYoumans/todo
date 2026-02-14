@@ -9,6 +9,8 @@ pub enum Prio {
     P2,
     #[value(aliases = ["P3","p3","3","low"])]
     P3,
+    #[value(aliases = ["RND", "rnd"])]
+    RND,
     #[default]
     Empty,
 }
@@ -19,6 +21,7 @@ impl fmt::Display for Prio {
             Prio::P1 => write!(f, "P1"),
             Prio::P2 => write!(f, "P2"),
             Prio::P3 => write!(f, "P3"),
+            Prio::RND => write!(f, "RND"),
             Prio::Empty => write!(f, ""),
         }
     }

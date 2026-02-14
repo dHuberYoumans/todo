@@ -90,6 +90,7 @@ fn color_prio() -> FormatContent<impl FnMut(&str) -> String + Clone> {
         "P1" => cell.red().to_string(),
         "P2" => cell.yellow().to_string(),
         "P3" => cell.green().to_string(),
+        "RND" => cell.purple().to_string(),
         _ => cell.to_string(),
     })
 }

@@ -74,6 +74,7 @@ impl FromSql for Prio {
             ValueRef::Integer(1) => Ok(Prio::P1),
             ValueRef::Integer(2) => Ok(Prio::P2),
             ValueRef::Integer(3) => Ok(Prio::P3),
+            ValueRef::Integer(99) => Ok(Prio::RND),
             ValueRef::Integer(0) => Ok(Prio::Empty),
             _ => Err(FromSqlError::InvalidType),
         }
@@ -86,6 +87,7 @@ impl ToSql for Prio {
             Prio::P1 => 1,
             Prio::P2 => 2,
             Prio::P3 => 3,
+            Prio::RND => 99,
             Prio::Empty => 0,
         };
         Ok(ToSqlOutput::from(value))
