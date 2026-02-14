@@ -28,9 +28,34 @@ pub mod test {
     }
 
     impl FakeItemRepo {
-        fn new(todos: Vec<TodoItem>) -> Self {
+        fn new() -> Self {
+            let todo_1 = TodoItem {
+                id: "todo-1".to_string(),
+                task: "task-1".to_string(),
+                due: Datetime::from_str("13/06/2026").unwrap(),
+                status: Status::Open,
+                prio: Prio::Empty,
+                tag: Tag::empty(),
+            };
+            let todo_2 = TodoItem {
+                id: "todo-2".to_string(),
+                task: "task-2".to_string(),
+                due: Datetime::from_str("13/06/2026").unwrap(),
+                status: Status::Closed,
+                prio: Prio::Empty,
+                tag: Tag::empty(),
+            };
+            let todo_3 = TodoItem {
+                id: "todo-3".to_string(),
+                task: "task-3".to_string(),
+                due: Datetime::epoch(),
+                status: Status::Open,
+                prio: Prio::Empty,
+                tag: Tag::empty(),
+            };
+
             Self {
-                todos: RefCell::new(todos),
+                todos: RefCell::new(vec![todo_1, todo_2, todo_3]),
             }
         }
     }
@@ -112,32 +137,8 @@ pub mod test {
 
     #[test]
     fn should_fetch_all_todos_by_due_date_for_no_filter() {
-        let todo_1 = TodoItem {
-            id: "todo-1".to_string(),
-            task: "task-1".to_string(),
-            due: Datetime::from_str("13/06/2026").unwrap(),
-            status: Status::Open,
-            prio: Prio::Empty,
-            tag: Tag::empty(),
-        };
-        let todo_2 = TodoItem {
-            id: "todo-2".to_string(),
-            task: "task-2".to_string(),
-            due: Datetime::from_str("13/06/2026").unwrap(),
-            status: Status::Closed,
-            prio: Prio::Empty,
-            tag: Tag::empty(),
-        };
-        let todo_3 = TodoItem {
-            id: "todo-3".to_string(),
-            task: "task-3".to_string(),
-            due: Datetime::epoch(),
-            status: Status::Open,
-            prio: Prio::Empty,
-            tag: Tag::empty(),
-        };
-        let epoch_seconds = 1781301600;
-        let repo = FakeItemRepo::new(vec![todo_1, todo_2, todo_3]);
+        let epoch_seconds = Datetime::from_str("13/06/2026").unwrap().timestamp;
+        let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
         let todos_by_due = todo_list
             .get_entries_by_due_date(&repo, epoch_seconds, None)
@@ -147,32 +148,8 @@ pub mod test {
 
     #[test]
     fn should_fetch_closed_todos_by_due_date_for_filter_done() {
-        let todo_1 = TodoItem {
-            id: "todo-1".to_string(),
-            task: "task-1".to_string(),
-            due: Datetime::from_str("13/06/2026").unwrap(),
-            status: Status::Open,
-            prio: Prio::Empty,
-            tag: Tag::empty(),
-        };
-        let todo_2 = TodoItem {
-            id: "todo-2".to_string(),
-            task: "task-2".to_string(),
-            due: Datetime::from_str("13/06/2026").unwrap(),
-            status: Status::Closed,
-            prio: Prio::Empty,
-            tag: Tag::empty(),
-        };
-        let todo_3 = TodoItem {
-            id: "todo-3".to_string(),
-            task: "task-3".to_string(),
-            due: Datetime::epoch(),
-            status: Status::Open,
-            prio: Prio::Empty,
-            tag: Tag::empty(),
-        };
-        let epoch_seconds = 1781301600;
-        let repo = FakeItemRepo::new(vec![todo_1, todo_2, todo_3]);
+        let epoch_seconds = Datetime::from_str("13/06/2026").unwrap().timestamp;
+        let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
         let todos_by_due = todo_list
             .get_entries_by_due_date(&repo, epoch_seconds, Some(ListFilter::Done))
@@ -182,32 +159,8 @@ pub mod test {
 
     #[test]
     fn should_fetch_open_todos_by_due_date_for_filter_do() {
-        let todo_1 = TodoItem {
-            id: "todo-1".to_string(),
-            task: "task-1".to_string(),
-            due: Datetime::from_str("13/06/2026").unwrap(),
-            status: Status::Open,
-            prio: Prio::Empty,
-            tag: Tag::empty(),
-        };
-        let todo_2 = TodoItem {
-            id: "todo-2".to_string(),
-            task: "task-2".to_string(),
-            due: Datetime::from_str("13/06/2026").unwrap(),
-            status: Status::Closed,
-            prio: Prio::Empty,
-            tag: Tag::empty(),
-        };
-        let todo_3 = TodoItem {
-            id: "todo-3".to_string(),
-            task: "task-3".to_string(),
-            due: Datetime::epoch(),
-            status: Status::Open,
-            prio: Prio::Empty,
-            tag: Tag::empty(),
-        };
-        let epoch_seconds = 1781301600;
-        let repo = FakeItemRepo::new(vec![todo_1, todo_2, todo_3]);
+        let epoch_seconds = Datetime::from_str("13/06/2026").unwrap().timestamp;
+        let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
         let todos_by_due = todo_list
             .get_entries_by_due_date(&repo, epoch_seconds, Some(ListFilter::Do))
