@@ -97,24 +97,31 @@ pub struct AddArgs {
     pub tag: Option<Tag>,
 }
 
+#[derive(Subcommand, Debug, Clone)]
+pub enum ListCmd {
+    /// List collection (of todo lists)
+    Collection,
+    /// List all tags present in the todo list
+    Tags,
+}
+
+#[derive(clap::Args, Clone, Debug)]
+pub struct ListArgs {
+    #[command(subcommand)]
+    pub cmd: Option<ListCmd>,
+    #[arg(long, value_enum, help = "Filter tasks")]
+    pub filter: Option<ListFilter>,
+    #[arg(long, short = 's', help = "Sort tasks")]
+    pub sort: Option<String>,
+    /// Optional positional argument like @today or #work
+    pub arg: Option<String>,
+}
+
 #[derive(clap::ValueEnum, Clone, Debug)]
 pub enum ListFilter {
     None,
     Do,
     Done,
-}
-
-#[derive(clap::Args, Clone, Debug)]
-pub struct ListArgs {
-    #[arg(long, value_enum, help = "Filter tasks")]
-    pub filter: Option<ListFilter>,
-    #[arg(long, short = 's', help = "Sort tasks")]
-    pub sort: Option<String>,
-    #[arg(long, help = "Show collection")]
-    pub collection: bool,
-    #[arg(long, help = "Display available tags")]
-    pub tags: bool,
-    pub arg: Option<String>,
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -134,10 +141,9 @@ pub enum CompletionsCmd {
 impl Default for Cmd {
     fn default() -> Self {
         Cmd::List(ListArgs {
+            cmd: None,
             filter: Some(ListFilter::Do),
             sort: None,
-            collection: false,
-            tags: false,
             arg: None,
         })
     }

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::application::app::App;
 use crate::application::handlers::VersionStatus;
 use crate::application::{self, handlers};
-use crate::domain::{Cmd, CompletionsCmd, Plumbing, TodoList};
+use crate::domain::{Cmd, CompletionsCmd, ListCmd, Plumbing, TodoList};
 use crate::infrastructure::{self, editor, UserPaths};
 use crate::persistence::{connect_to_db, SqlTodoItemRepository, SqlTodoListRepository};
 
@@ -83,32 +83,28 @@ fn execute(cmd: Cmd) -> Result<()> {
             handlers::add(&todo_item_repo, &todo_list, &config, &editor, args)?;
             handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
         }
-        Cmd::List(args) => match args.arg.as_deref() {
-            Some(arg) if arg.starts_with('@') => handlers::list_due_date(
-                &todo_item_repo,
-                &todo_list,
-                &config,
-                arg.to_string(),
-                args.sort,
-                args.filter,
-            )?,
-            Some(arg) if arg.starts_with('#') => handlers::list_tag(
-                &todo_item_repo,
-                &todo_list,
-                &config,
-                arg.to_string(),
-                args.sort,
-                args.filter,
-            )?,
-            _ => {
-                if args.collection {
-                    handlers::list_collection(&todo_list_repo, &todo_list)?;
-                } else if args.tags {
-                    handlers::list_tags(&todo_item_repo, &todo_list)?;
-                } else {
-                    handlers::list(&todo_item_repo, &todo_list, &config, args.sort, args.filter)?;
-                }
-            }
+        Cmd::List(args) => match args.cmd {
+            Some(ListCmd::Collection) => handlers::list_collection(&todo_list_repo, &todo_list)?,
+            Some(ListCmd::Tags) => handlers::list_tags(&todo_item_repo, &todo_list)?,
+            None => match args.arg.as_deref() {
+                Some(arg) if arg.starts_with('@') => handlers::list_due_date(
+                    &todo_item_repo,
+                    &todo_list,
+                    &config,
+                    arg.to_string(),
+                    args.sort,
+                    args.filter,
+                )?,
+                Some(arg) if arg.starts_with('#') => handlers::list_tag(
+                    &todo_item_repo,
+                    &todo_list,
+                    &config,
+                    arg.to_string(),
+                    args.sort,
+                    args.filter,
+                )?,
+                _ => handlers::list(&todo_item_repo, &todo_list, &config, args.sort, args.filter)?,
+            },
         },
         Cmd::Close { ids } => {
             handlers::close(&todo_item_repo, &todo_list, ids)?;
