@@ -74,10 +74,13 @@ Commands:
   list         Print the current todo list
   show         Show metadata of a task
   close        Mark a task as completed
+  close-all    Mark all tasks as completed
   open         Open a task
   delete       Delete a task
   delete-all   Delete all tasks in the current todo list
+  grep         Search a pattern inside todos
   reword       Reword a task
+  rnd          Get a random todo among those with prio = RNG
   update       Update the fields of an item
   clear        Clear due, prio or the tag column
   upgrade      Upgrade the CLI
@@ -231,7 +234,7 @@ Options:
 ```
 
 ### Show
-Finally, we want to point out the `show` command. It is similar to `git`, the `show` command displays the todo task with more meta data. In particular it shows the body of the task. For example
+Next, we want to point out the `show` command. It is similar to `git`, the `show` command displays the todo task with metadata. In particular it shows the body of the task. For example
 ```console
 $ todo show 59
 
@@ -254,6 +257,21 @@ The show command supports minimal markdown syntax:
 - checkboxes: use - [ ] or - [x] which renders as □ and ■ respectively
 - quotes: use > quote 
 - links: use the standard notation \[text\]\(url\)
+
+### Search
+The CLI also supports a basic search to find todos that contain a pattern
+```console
+$ todo grep <option> "<pattern>"
+```
+The command will comb each todo in the todo list for "pattern" and prints a table containing only those todos which yielded a match.
+At the current state the search is still quite basic - the only option it supports so far is the `-i|--ignore` flag which enables case-insensitive search.
+
+### Rnd
+If you have troubles deciding on which todo to start next, try to update a bunch of todos' priority to `RND` and run
+```console
+$ todo rnd
+```
+The CLI will give you a random todo from among those with priority `RND` to start.
 
 ## Configuration
 The CLI allows a configuration file which is automatically generated in `~/.config/todo/todo.config` when running `todo init`. 
