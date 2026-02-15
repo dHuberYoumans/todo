@@ -108,7 +108,7 @@ pub mod test {
         fn close_all(&self, prio: Option<Prio>) -> Result<()> {
             let mut todos = self.todos.borrow_mut();
             for todo in todos.iter_mut() {
-                if prio.map_or(true, |prio| todo.prio == prio) {
+                if prio.is_none_or(|prio| todo.prio == prio) {
                     todo.status = Status::Closed;
                 }
             }

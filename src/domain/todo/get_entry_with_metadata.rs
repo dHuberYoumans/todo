@@ -57,8 +57,7 @@ pub mod test {
                 .todos
                 .borrow()
                 .iter()
-                .filter(|todo| todo.id == id)
-                .next()
+                .find(|todo| todo.id == id)
                 .unwrap()
                 .clone();
             let metadata = Metadata {

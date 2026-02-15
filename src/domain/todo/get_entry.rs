@@ -67,8 +67,7 @@ pub mod test {
                 .todos
                 .borrow()
                 .iter()
-                .filter(|todo| todo.id == id)
-                .next()
+                .find(|todo| todo.id == id)
                 .map(|todo| todo.task.clone());
             Ok(entry)
         }

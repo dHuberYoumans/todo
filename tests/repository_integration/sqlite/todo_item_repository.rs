@@ -346,7 +346,7 @@ fn update_conditions(
     if let Some(tag) = tag {
         conditions.push(format!("tag = '{}'", tag.0));
     } else {
-        conditions.push(format!("tag = {}", "'tag-test'".to_string()));
+        conditions.push(format!("tag = {}", "'tag-test'"));
     }
     conditions.join(" AND ")
 }

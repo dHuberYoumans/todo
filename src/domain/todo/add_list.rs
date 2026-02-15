@@ -47,7 +47,7 @@ pub mod test {
     fn should_err_on_empty_list_name() {
         let repo = FakeListRepo::new();
         let todo_list = TodoList::new();
-        assert!(todo_list.add_list(&repo, &String::new()).is_err());
+        assert!(todo_list.add_list(&repo, "").is_err());
     }
 
     #[test]
