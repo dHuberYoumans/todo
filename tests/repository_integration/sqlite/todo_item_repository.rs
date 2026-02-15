@@ -327,8 +327,8 @@ fn update_conditions(
     tag: Option<Tag>,
 ) -> String {
     let mut conditions = Vec::new();
-    if due.is_some() {
-        conditions.push(format!("due = {}", due.unwrap().timestamp))
+    if let Some(due) = due {
+        conditions.push(format!("due = {}", due.timestamp))
     } else {
         conditions.push(format!("due = {}", Datetime::default().timestamp))
     };
