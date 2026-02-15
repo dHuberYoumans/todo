@@ -1,18 +1,15 @@
 use anyhow::{Context, Result};
 
-use crate::domain::{Datetime, Prio, Status, Tag, TodoItemUpdate, TodoList};
+use crate::domain::{update::UpdateOptions, TodoItemUpdate, TodoList};
 
 impl TodoList {
     pub fn update_item(
         &self,
         repo: &impl TodoItemUpdate,
-        due: Option<Datetime>,
-        prio: Option<Prio>,
-        status: Option<Status>,
-        tag: Option<Tag>,
         ids: Vec<String>,
+        options: UpdateOptions,
     ) -> Result<()> {
-        repo.update(due, prio, status, tag, ids)
+        repo.update(options.due, options.prio, options.status, options.tag, ids)
             .context("✘ Couldn't update items")
     }
 }
@@ -23,7 +20,7 @@ pub mod test {
     use anyhow::bail;
     use std::cell::RefCell;
 
-    use crate::domain::TodoItem;
+    use crate::domain::{Datetime, Prio, Status, Tag, TodoItem};
 
     struct FakeItemRepo {
         todos: RefCell<Vec<TodoItem>>,
@@ -123,7 +120,13 @@ pub mod test {
     fn should_provide_context_upon_failure() {
         let repo = FailingRepo;
         let todo_list = TodoList::new();
-        let err = todo_list.update_item(&repo, None, None, None, None, vec!["test-id".to_string()]);
+        let options = UpdateOptions {
+            due: None,
+            prio: None,
+            status: None,
+            tag: None,
+        };
+        let err = todo_list.update_item(&repo, vec!["test-id".to_string()], options);
         assert!(err.is_err());
         let err_msg = err.unwrap_err().to_string();
         assert!(err_msg.contains("Couldn't update items"))
@@ -136,7 +139,13 @@ pub mod test {
         let ids = vec!["test-id-1".to_string()];
         let new_tag = Tag("changed_tag".to_string());
         let old_tag = Tag("some-tag-2".to_string());
-        todo_list.update_item(&repo, None, None, None, Some(new_tag.clone()), ids)?;
+        let options = UpdateOptions {
+            due: None,
+            prio: None,
+            status: None,
+            tag: Some(new_tag.clone()),
+        };
+        todo_list.update_item(&repo, ids, options)?;
         assert_eq!(repo.get_todo()[0].tag, new_tag);
         assert_eq!(repo.get_todo()[1].tag, old_tag);
         Ok(())
@@ -147,7 +156,13 @@ pub mod test {
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
         let ids = vec!["test-id-1".to_string(), "test-id-2".to_string()];
-        todo_list.update_item(&repo, None, Some(Prio::P1), None, None, ids)?;
+        let options = UpdateOptions {
+            due: None,
+            prio: Some(Prio::P1),
+            status: None,
+            tag: None,
+        };
+        todo_list.update_item(&repo, ids, options)?;
         assert_eq!(repo.get_todo()[0].prio, Prio::P1);
         assert_eq!(repo.get_todo()[1].prio, Prio::P1);
         Ok(())

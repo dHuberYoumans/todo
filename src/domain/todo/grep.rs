@@ -1,24 +1,25 @@
 use anyhow::{Context, Result};
 
-use crate::domain::{GrepOptions, ListFilter, TodoItem, TodoItemRead, TodoList};
+use crate::domain::{ListFilter, TodoItem, TodoItemRead, TodoList};
+
+#[derive(Clone, Debug)]
+pub struct GrepOptions {
+    pub case_insensitive: bool,
+}
 
 impl TodoList {
     pub fn grep(
         &self,
         repo: &impl TodoItemRead,
         pattern: &str,
-        options: Vec<GrepOptions>,
+        options: GrepOptions,
     ) -> Result<Vec<TodoItem>> {
         let mut todos = repo
             .fetch_list(Some(ListFilter::None))
             .context("✘ Couldn't fetch todos while searching for pattern '{pattern}'")?;
-        let case_insensitive = options.contains(&GrepOptions::CaseInsensitive);
-        if case_insensitive {
-            todos.retain(|todo| {
-                todo.task
-                    .to_lowercase()
-                    .contains(&pattern.to_string().to_lowercase())
-            })
+        if options.case_insensitive {
+            let pattern = pattern.to_string().to_lowercase();
+            todos.retain(|todo| todo.task.to_lowercase().contains(&pattern))
         } else {
             todos.retain(|todo| todo.task.contains(pattern))
         };
@@ -94,7 +95,10 @@ pub mod tests {
     fn should_provide_context_upon_failure() {
         let repo = FailingItemRepo;
         let todo_list = TodoList::new();
-        let err = todo_list.grep(&repo, "any pattern", Vec::new());
+        let options = GrepOptions {
+            case_insensitive: false,
+        };
+        let err = todo_list.grep(&repo, "any pattern", options);
         assert!(err.is_err());
         let err_msg = err.unwrap_err().to_string();
         assert!(err_msg.contains("Couldn't fetch todos while searching for pattern"));
@@ -105,7 +109,10 @@ pub mod tests {
         let miss = "miss";
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
-        let todos_miss = todo_list.grep(&repo, miss, Vec::new())?;
+        let options = GrepOptions {
+            case_insensitive: false,
+        };
+        let todos_miss = todo_list.grep(&repo, miss, options)?;
         assert!(todos_miss.is_empty());
         Ok(())
     }
@@ -116,9 +123,12 @@ pub mod tests {
         let pattern_long = "long long";
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
-        let todos_match = todo_list.grep(&repo, pattern_long, Vec::new())?;
+        let options = GrepOptions {
+            case_insensitive: false,
+        };
+        let todos_match = todo_list.grep(&repo, pattern_long, options.clone())?;
         assert_eq!(todos_match.len(), 1);
-        let todos_match = todo_list.grep(&repo, pattern, Vec::new())?;
+        let todos_match = todo_list.grep(&repo, pattern, options)?;
         assert_eq!(todos_match.len(), 2);
         Ok(())
     }
@@ -127,8 +137,10 @@ pub mod tests {
         let pattern_long = "Long long";
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
-        let todos_match =
-            todo_list.grep(&repo, pattern_long, vec![GrepOptions::CaseInsensitive])?;
+        let options = GrepOptions {
+            case_insensitive: true,
+        };
+        let todos_match = todo_list.grep(&repo, pattern_long, options)?;
         assert_eq!(todos_match.len(), 1);
         Ok(())
     }

@@ -1,6 +1,5 @@
 pub mod add_item;
 pub mod add_list;
-pub mod cmd;
 pub mod create_collection;
 pub mod create_table;
 pub mod delete;
@@ -16,5 +15,4 @@ pub mod get_tags;
 pub mod grep;
 pub mod update;
 
-pub use cmd::*;
 pub use entities::*;

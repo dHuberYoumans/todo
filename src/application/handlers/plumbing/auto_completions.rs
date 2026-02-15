@@ -4,12 +4,12 @@ use std::fs;
 use clap::CommandFactory;
 use clap_complete::{generate, Shell};
 
-use crate::application::app::App;
+use crate::cli::app::Cli;
 use crate::infrastructure::config;
 use crate::infrastructure::paths::UserPaths;
 
 pub fn generate_completions(shell: Shell) -> Result<()> {
-    let mut cli_builder = App::command();
+    let mut cli_builder = Cli::command();
     generate(shell, &mut cli_builder, "todo", &mut std::io::stdout());
     Ok(())
 }
@@ -43,7 +43,7 @@ fn install(shell: Shell, dir: std::path::PathBuf, filename: &str) -> Result<()> 
     fs::create_dir_all(&dir).context("✘ Couldn't create directory")?;
     let path = dir.join(filename);
     let mut file = fs::File::create(&path).context("✘ Couldn't create file")?;
-    let mut cli_builder = App::command();
+    let mut cli_builder = Cli::command();
     generate(shell, &mut cli_builder, "todo", &mut file);
     println!("✔ Installed {} completions to {}", shell, path.display());
     println!("ℹ Restart your terminal to activate");

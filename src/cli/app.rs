@@ -1,4 +1,4 @@
-use crate::domain::Cmd;
+use crate::cli::Cmd;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -7,7 +7,7 @@ use clap::Parser;
     version,
     about = "A simple todo cli to help you get things done from the comfort of your terminal"
 )]
-pub struct App {
+pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Cmd>,
 }

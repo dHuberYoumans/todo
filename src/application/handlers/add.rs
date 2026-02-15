@@ -1,19 +1,10 @@
 use anyhow::Result;
 use uuid::Uuid;
 
-use crate::application::config::Config;
 use crate::application::editor::Editor;
-use crate::domain::{AddArgs, TodoItemCreate};
-use crate::domain::{Datetime, Status};
-use crate::domain::{TodoItem, TodoList};
+use crate::domain::{add_item::AddOptions, Datetime, Status, TodoItem, TodoItemCreate, TodoList};
 
-pub fn add<R>(
-    repo: &R,
-    todo_list: &TodoList,
-    config: &Config,
-    editor: &impl Editor,
-    args: AddArgs,
-) -> Result<()>
+pub fn add<R>(repo: &R, todo_list: &TodoList, editor: &impl Editor, args: AddOptions) -> Result<()>
 where
     R: TodoItemCreate,
 {
@@ -28,15 +19,11 @@ where
         editor.edit(None)?
     };
     log::info!("found task '{}'", msg);
-    let due = args
-        .due
-        .as_deref()
-        .map(|s| Datetime::parse(s, config.style.due_date_input_format.clone()))
-        .transpose()?;
+    let due = args.due.unwrap_or(Datetime::epoch());
     let item = TodoItem {
         id: Uuid::new_v4().to_string(),
         task: msg,
-        due: due.unwrap_or(Datetime::epoch()),
+        due,
         status: Status::Open,
         tag: args.tag.unwrap_or_default(),
         prio: args.prio.unwrap_or_default(),

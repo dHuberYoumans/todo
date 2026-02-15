@@ -2,14 +2,19 @@ use anyhow::Result;
 use rusqlite::Connection;
 use std::path::PathBuf;
 
-use crate::application::app::App;
 use crate::application::handlers::VersionStatus;
 use crate::application::{self, handlers};
-use crate::domain::{Cmd, CompletionsCmd, ListCmd, Plumbing, TodoList};
+use crate::cli::app::Cli;
+use crate::cli::{Cmd, CompletionsCmd, ListSubCmd, Plumbing};
+use crate::domain::{
+    grep::GrepOptions,
+    update::{ClearOptions, UpdateOptions},
+    TodoList,
+};
 use crate::infrastructure::{self, editor, UserPaths};
 use crate::persistence::{connect_to_db, SqlTodoItemRepository, SqlTodoListRepository};
 
-pub fn run(app: App) -> Result<()> {
+pub fn run(app: Cli) -> Result<()> {
     if let Some(cmd) = app.command {
         match Plumbing::try_from(&cmd) {
             Ok(plumbing_cmd) => execute_plumbing_cmd(plumbing_cmd)?,
@@ -80,12 +85,13 @@ fn execute(cmd: Cmd) -> Result<()> {
         }
         Cmd::Whoami => handlers::whoami()?,
         Cmd::Add(args) => {
-            handlers::add(&todo_item_repo, &todo_list, &config, &editor, args)?;
+            let options = args.into_options(&config)?;
+            handlers::add(&todo_item_repo, &todo_list, &editor, options)?;
             handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
         }
         Cmd::List(args) => match args.cmd {
-            Some(ListCmd::Collection) => handlers::list_collection(&todo_list_repo, &todo_list)?,
-            Some(ListCmd::Tags) => handlers::list_tags(&todo_item_repo, &todo_list)?,
+            Some(ListSubCmd::Collection) => handlers::list_collection(&todo_list_repo, &todo_list)?,
+            Some(ListSubCmd::Tags) => handlers::list_tags(&todo_item_repo, &todo_list)?,
             None => match args.arg.as_deref() {
                 Some(arg) if arg.starts_with('@') => handlers::list_due_date(
                     &todo_item_repo,
@@ -120,13 +126,10 @@ fn execute(cmd: Cmd) -> Result<()> {
         }
         Cmd::Delete { id } => handlers::delete(&todo_item_repo, &mut todo_list, &id)?,
         Cmd::DeleteAll => handlers::delete_all(&todo_item_repo, &mut todo_list)?,
-        Cmd::Grep(args) => handlers::grep(
-            &todo_item_repo,
-            &todo_list,
-            &config,
-            &args.pattern,
-            args.options(),
-        )?,
+        Cmd::Grep(args) => {
+            let options = GrepOptions::from(&args);
+            handlers::grep(&todo_item_repo, &todo_list, &config, &args.pattern, options)?
+        }
         Cmd::Reword { id, task } => {
             handlers::reword(&todo_item_repo, &mut todo_list, &editor, &id, task)?;
             handlers::show(&todo_item_repo, &todo_list, &id)?
@@ -137,23 +140,14 @@ fn execute(cmd: Cmd) -> Result<()> {
                 handlers::show(&todo_item_repo, &todo_list, &item.id)?
             }
         }
-        Cmd::Update {
-            ids,
-            due,
-            prio,
-            status,
-            tag,
-        } => {
-            handlers::update_item(&todo_item_repo, &todo_list, due, prio, status, tag, ids)?;
+        Cmd::Update(args) => {
+            let options = UpdateOptions::from(&args);
+            handlers::update_item(&todo_item_repo, &todo_list, args.ids, options)?;
             handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
         }
-        Cmd::Clear {
-            ids,
-            due,
-            prio,
-            tag,
-        } => {
-            handlers::clear(&todo_item_repo, &todo_list, ids, due, prio, tag)?;
+        Cmd::Clear(args) => {
+            let options = ClearOptions::from(&args);
+            handlers::clear(&todo_item_repo, &todo_list, args.ids, options)?;
             handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
         }
         Cmd::Upgrade { version, check } => {

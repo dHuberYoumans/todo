@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::domain::{GrepOptions, TodoItemRead, TodoList, TodoListTable};
+use crate::domain::{grep::GrepOptions, TodoItemRead, TodoList, TodoListTable};
 
 use crate::application::config::Config;
 
@@ -9,7 +9,7 @@ pub fn grep<R>(
     todo_list: &TodoList,
     config: &Config,
     pattern: &str,
-    options: Vec<GrepOptions>,
+    options: GrepOptions,
 ) -> Result<()>
 where
     R: TodoItemRead,

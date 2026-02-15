@@ -1,6 +1,13 @@
 use anyhow::{bail, Result};
 
-use crate::domain::{TodoItem, TodoItemCreate, TodoList};
+use crate::domain::{Datetime, Prio, Tag, TodoItem, TodoItemCreate, TodoList};
+
+pub struct AddOptions {
+    pub task: Option<String>,
+    pub prio: Option<Prio>,
+    pub due: Option<Datetime>,
+    pub tag: Option<Tag>,
+}
 
 impl TodoList {
     pub fn add_item(&self, repo: &impl TodoItemCreate, item: &TodoItem) -> Result<()> {

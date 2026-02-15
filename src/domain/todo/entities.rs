@@ -52,3 +52,10 @@ impl From<&TodoItem> for TodoItemRow {
         }
     }
 }
+
+#[derive(clap::ValueEnum, Clone, Debug)]
+pub enum ListFilter {
+    None,
+    Do,
+    Done,
+}

@@ -1,11 +1,17 @@
 use anyhow::Result;
 
-use crate::domain::{Status, TodoItemUpdate, TodoList};
+use crate::domain::{update::UpdateOptions, Status, TodoItemUpdate, TodoList};
 
 pub fn close<R>(repo: &R, todo_list: &TodoList, ids: Vec<String>) -> Result<()>
 where
     R: TodoItemUpdate,
 {
-    todo_list.update_item(repo, None, None, Some(Status::Closed), None, ids)?;
+    let options = UpdateOptions {
+        due: None,
+        prio: None,
+        status: Some(Status::Closed),
+        tag: None,
+    };
+    todo_list.update_item(repo, ids, options)?;
     Ok(())
 }
