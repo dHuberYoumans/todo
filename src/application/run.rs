@@ -120,6 +120,13 @@ fn execute(cmd: Cmd) -> Result<()> {
         }
         Cmd::Delete { id } => handlers::delete(&todo_item_repo, &mut todo_list, &id)?,
         Cmd::DeleteAll => handlers::delete_all(&todo_item_repo, &mut todo_list)?,
+        Cmd::Grep(args) => handlers::grep(
+            &todo_item_repo,
+            &todo_list,
+            &config,
+            &args.pattern,
+            args.options(),
+        )?,
         Cmd::Reword { id, task } => {
             handlers::reword(&todo_item_repo, &mut todo_list, &editor, &id, task)?;
             handlers::show(&todo_item_repo, &todo_list, &id)?

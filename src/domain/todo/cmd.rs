@@ -39,6 +39,8 @@ pub enum Cmd {
     Delete { id: String },
     /// Delete all tasks in the current todo list
     DeleteAll,
+    /// Search a pattern inside todos
+    Grep(GrepArgs),
     /// Reword a task
     Reword {
         id: String,
@@ -124,6 +126,28 @@ pub enum ListFilter {
     None,
     Do,
     Done,
+}
+
+#[derive(clap::ValueEnum, Clone, Debug, PartialEq)]
+pub enum GrepOptions {
+    CaseInsensitive,
+}
+
+#[derive(clap::Args, Clone, Debug)]
+pub struct GrepArgs {
+    pub pattern: String,
+    #[arg(long, short = 'i', help = "Search case-insensitively")]
+    pub ignore: bool,
+}
+
+impl GrepArgs {
+    pub fn options(&self) -> Vec<GrepOptions> {
+        let mut opts = Vec::new();
+        if self.ignore {
+            opts.push(GrepOptions::CaseInsensitive);
+        }
+        opts
+    }
 }
 
 #[derive(Subcommand, Debug, Clone)]

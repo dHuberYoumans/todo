@@ -13,6 +13,7 @@ pub mod get_entry_with_metadata;
 pub mod get_list;
 pub mod get_rnd_item;
 pub mod get_tags;
+pub mod grep;
 pub mod update;
 
 pub use cmd::*;

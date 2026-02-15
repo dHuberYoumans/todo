@@ -1,5 +1,6 @@
 pub mod add;
 pub mod delete;
+pub mod grep;
 pub mod list;
 pub mod load;
 pub mod new_list;
@@ -12,6 +13,7 @@ pub mod whoami;
 
 pub use add::*;
 pub use delete::*;
+pub use grep::*;
 pub use list::*;
 pub use load::*;
 pub use new_list::*;
