@@ -3,12 +3,68 @@
 
 ### Bug Fixes
 
+- fixup! fix(clippy): simplify and align with clippy
+
+- simplify and align with clippy
+
+- fix ci clippy
+
+- fix unit test for 'get_entries_by_due_date'
+
+
+### Chores
+
+- update ci to include more extensive tests and linters
+
+
+### Documentation
+
+- update README
+
+- update README
+
+
+### Features
+
+- support searching todo list for patterns
+
+- add new command 'rnd' that prints a random todo
+
+- feat!(Prio): add new prio value 'RND'
+
+- use subcommands instead of 'collection' and 'tag' flags
+
+- feat!(add): err on empty todo
+
+
+### Refactoring
+
+- separate CLI logic from domain layer
+
+- split TodoListRepository into minimal traits
+
+- split TodoItemRepository into minimal traits
+
+
+### Tests
+
+- add unit tests for domain logic
+
+
+
+## What's Changed
+
+
+### Bug Fixes
+
 - check version before upgrade
 
 - enable config-dependent parsing
 
 
 ### Chores
+
+- Release todo version 0.11.0
 
 - remove unused files
 
@@ -35,7 +91,7 @@
 
 
 
-## What's Changed
+**Full Changelog**: v0.10.0 → v0.11.0## What's Changed
 
 
 ### Bug Fixes
