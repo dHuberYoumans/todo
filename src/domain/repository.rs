@@ -7,7 +7,7 @@ use crate::domain::{Datetime, Metadata, Prio, Status, Tag, TodoItem};
 
 // schema
 pub trait TodoItemSchema {
-    fn create_table(&self) -> Result<()>;
+    fn create_table(&self, name: Option<&str>) -> Result<()>;
 }
 
 // CRUD

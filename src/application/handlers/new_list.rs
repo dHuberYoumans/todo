@@ -14,7 +14,7 @@ where
 {
     println!("▶ Creating new list '{list}'...");
     todo_list.add_list(todo_list_repo, list)?;
-    todo_list.create_table(todo_item_repo)?;
+    todo_list.create_table(todo_item_repo, Some(list))?;
     println!("✔ Done");
     Ok(())
 }

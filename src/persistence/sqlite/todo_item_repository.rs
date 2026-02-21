@@ -33,7 +33,7 @@ pub enum ItemNotFoundError {
 }
 
 impl TodoItemSchema for SqlTodoItemRepository<'_> {
-    fn create_table(&self) -> Result<()> {
+    fn create_table(&self, name: Option<&str>) -> Result<()> {
         let sql = format!(
             "CREATE TABLE IF NOT EXISTS {table} (
 id TEXT PRIMARY KEY UNIQUE,
@@ -48,7 +48,7 @@ tag TEXT,
 created_at INTEGER,
 last_updated INTEGER
 );",
-            table = self.name,
+            table = name.unwrap_or(&self.name),
             collection = SqlTodoListRepository::TABLE
         );
         log::debug!("executing query `{}`", &sql);

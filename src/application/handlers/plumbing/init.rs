@@ -30,7 +30,7 @@ pub fn init() -> Result<()> {
     todo_list.create_collection(&todo_list_repo)?;
     todo_list.add_list(&todo_list_repo, INIT_LIST)?;
     log::info!("creating new table");
-    todo_list.create_table(&todo_item_repo)?;
+    todo_list.create_table(&todo_item_repo, None)?;
     println!("✔ All done");
     Ok(())
 }

@@ -32,7 +32,7 @@ impl TodoListSchema for SqlTodoListRepository<'_> {
 impl TodoListCreate for SqlTodoListRepository<'_> {
     fn add(&self, list_name: &str) -> Result<()> {
         let sql = format!("INSERT INTO {} (name) VALUES (:name);", Self::TABLE);
-        log::debug!("executing query `{}`", &sql);
+        log::debug!("executing query `{}` with 'name' = {}", &sql, list_name);
         self.conn
             .execute(&sql, named_params! { ":name": list_name, })?;
         Ok(())
