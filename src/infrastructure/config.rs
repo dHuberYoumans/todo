@@ -34,7 +34,12 @@ due_date_input_format = "DMY" # MDY | ISO
 show_due = true
 show_tag = true
 sort_by = "prio"  # prio | due | tag
-table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | markdown"#,
+table = "modern_rounded" # ascii | ascii_rounded | modern |  modern_rounded | markdown
+
+[aliases]
+p1 = "add --prio=p1",
+p2 = "add --prio=p2",
+p3 = "add --prio=p3"#,
             db_path.to_string_lossy()
         )
         .context("✘ Couldn't write default config to file")?;

@@ -1,5 +1,6 @@
 use anyhow::Result;
 use serde::Deserialize;
+use std::collections::HashMap;
 
 use crate::infrastructure;
 use crate::infrastructure::UserPaths;
@@ -8,6 +9,7 @@ use crate::infrastructure::UserPaths;
 pub struct Config {
     pub database: Database,
     pub style: Style,
+    pub aliases: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -55,5 +57,6 @@ pub fn load_config() -> Result<Config> {
     Ok(Config {
         database: config.database,
         style: config.style,
+        aliases: config.aliases,
     })
 }

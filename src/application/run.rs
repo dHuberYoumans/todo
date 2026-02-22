@@ -3,7 +3,7 @@ use rusqlite::Connection;
 use std::path::PathBuf;
 
 use crate::application::handlers::VersionStatus;
-use crate::application::{self, handlers};
+use crate::application::{config::Config, handlers};
 use crate::cli::app::Cli;
 use crate::cli::{Cmd, CompletionsCmd, ListSubCmd, Plumbing};
 use crate::domain::{
@@ -14,15 +14,15 @@ use crate::domain::{
 use crate::infrastructure::{self, editor, UserPaths};
 use crate::persistence::{connect_to_db, SqlTodoItemRepository, SqlTodoListRepository};
 
-pub fn run(app: Cli) -> Result<()> {
+pub fn run(app: Cli, config: &Config) -> Result<()> {
     if let Some(cmd) = app.command {
         match Plumbing::try_from(&cmd) {
-            Ok(plumbing_cmd) => execute_plumbing_cmd(plumbing_cmd)?,
-            Err(_) => execute(cmd)?,
+            Ok(plumbing_cmd) => execute_plumbing_cmd(plumbing_cmd, config)?,
+            Err(_) => execute(cmd, config)?,
         };
     } else {
         let default = Cmd::default();
-        execute(default)?;
+        execute(default, config)?;
     }
     Ok(())
 }
@@ -38,15 +38,14 @@ fn set_up_repositories(
     ))
 }
 
-fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
+fn execute_plumbing_cmd(cmd: Plumbing, config: &Config) -> Result<()> {
     let user_paths = UserPaths::new();
     let config_file = infrastructure::config::get_todo_config(&user_paths)?;
     match cmd {
         Plumbing::Init => handlers::init(),
         Plumbing::ShowPaths => handlers::show_paths(),
         Plumbing::CleanData => {
-            let config = application::config::load_config()?;
-            let db_file = PathBuf::from(config.database.todo_db);
+            let db_file = PathBuf::from(config.database.todo_db.clone());
             handlers::clean_data(config_file, db_file)
         }
         Plumbing::Completions(cmd) => match cmd {
@@ -56,13 +55,12 @@ fn execute_plumbing_cmd(cmd: Plumbing) -> Result<()> {
     }
 }
 
-fn execute(cmd: Cmd) -> Result<()> {
+fn execute(cmd: Cmd, config: &Config) -> Result<()> {
     let user_paths = UserPaths::new();
     infrastructure::env::load_env(&user_paths)?;
     let editor = editor::SysEditor;
     let mut todo_list = TodoList::new();
-    let config = application::config::load_config()?;
-    let db_path = PathBuf::from(&config.database.todo_db);
+    let db_path = PathBuf::from(config.database.todo_db.clone());
     let conn = connect_to_db(&db_path)?;
     let (todo_list_repo, todo_item_repo) = set_up_repositories(&conn)?;
     match cmd {
@@ -85,9 +83,9 @@ fn execute(cmd: Cmd) -> Result<()> {
         }
         Cmd::Whoami => handlers::whoami()?,
         Cmd::Add(args) => {
-            let options = args.into_options(&config)?;
+            let options = args.into_options(config)?;
             handlers::add(&todo_item_repo, &todo_list, &editor, options)?;
-            handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
+            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
         }
         Cmd::List(args) => match args.cmd {
             Some(ListSubCmd::Collection) => handlers::list_collection(&todo_list_repo, &todo_list)?,
@@ -96,7 +94,7 @@ fn execute(cmd: Cmd) -> Result<()> {
                 Some(arg) if arg.starts_with('@') => handlers::list_due_date(
                     &todo_item_repo,
                     &todo_list,
-                    &config,
+                    config,
                     arg.to_string(),
                     args.sort,
                     args.filter,
@@ -104,31 +102,31 @@ fn execute(cmd: Cmd) -> Result<()> {
                 Some(arg) if arg.starts_with('#') => handlers::list_tag(
                     &todo_item_repo,
                     &todo_list,
-                    &config,
+                    config,
                     arg.to_string(),
                     args.sort,
                     args.filter,
                 )?,
-                _ => handlers::list(&todo_item_repo, &todo_list, &config, args.sort, args.filter)?,
+                _ => handlers::list(&todo_item_repo, &todo_list, config, args.sort, args.filter)?,
             },
         },
         Cmd::Close { ids } => {
             handlers::close(&todo_item_repo, &todo_list, ids)?;
-            handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
+            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
         }
         Cmd::CloseAll { prio } => {
             todo_list.close_all(&todo_item_repo, prio)?;
-            handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
+            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
         }
         Cmd::Open { ids } => {
             handlers::open(&todo_item_repo, &todo_list, ids)?;
-            handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
+            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
         }
         Cmd::Delete { id } => handlers::delete(&todo_item_repo, &mut todo_list, &id)?,
         Cmd::DeleteAll => handlers::delete_all(&todo_item_repo, &mut todo_list)?,
         Cmd::Grep(args) => {
             let options = GrepOptions::from(&args);
-            handlers::grep(&todo_item_repo, &todo_list, &config, &args.pattern, options)?
+            handlers::grep(&todo_item_repo, &todo_list, config, &args.pattern, options)?
         }
         Cmd::Reword { id, task } => {
             handlers::reword(&todo_item_repo, &mut todo_list, &editor, &id, task)?;
@@ -143,12 +141,12 @@ fn execute(cmd: Cmd) -> Result<()> {
         Cmd::Update(args) => {
             let options = UpdateOptions::from(&args);
             handlers::update_item(&todo_item_repo, &todo_list, args.ids, options)?;
-            handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
+            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
         }
         Cmd::Clear(args) => {
             let options = ClearOptions::from(&args);
             handlers::clear(&todo_item_repo, &todo_list, args.ids, options)?;
-            handlers::list(&todo_item_repo, &todo_list, &config, None, None)?
+            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
         }
         Cmd::Upgrade { version, check } => {
             if check {
