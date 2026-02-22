@@ -18,6 +18,8 @@ impl TodoList {
             .fetch_list(ListFilters {
                 status: Some(StatusFilter::All),
                 prio: None,
+                due: None,
+                tag: None,
             })
             .context("✘ Couldn't fetch todos while searching for pattern '{pattern}'")?;
         if options.case_insensitive {

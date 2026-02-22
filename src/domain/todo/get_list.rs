@@ -110,6 +110,8 @@ pub mod test {
                 ListFilters {
                     status: Some(StatusFilter::Do),
                     prio: None,
+                    due: None,
+                    tag: None,
                 },
             )
             .unwrap();
@@ -127,6 +129,8 @@ pub mod test {
                 ListFilters {
                     status: Some(StatusFilter::Done),
                     prio: None,
+                    due: None,
+                    tag: None,
                 },
             )
             .unwrap();

@@ -127,6 +127,8 @@ pub mod test {
             ListFilters {
                 status: None,
                 prio: None,
+                tag: None,
+                due: Some(Datetime { timestamp: 0 }),
             },
         );
         assert!(err.is_err());
@@ -146,6 +148,8 @@ pub mod test {
                 ListFilters {
                     status: None,
                     prio: None,
+                    tag: None,
+                    due: Some(Datetime { timestamp: 0 }),
                 },
             )
             .unwrap();
@@ -164,6 +168,8 @@ pub mod test {
                 ListFilters {
                     status: Some(StatusFilter::Done),
                     prio: None,
+                    tag: None,
+                    due: Some(Datetime { timestamp: 0 }),
                 },
             )
             .unwrap();
@@ -182,6 +188,8 @@ pub mod test {
                 ListFilters {
                     status: Some(StatusFilter::Do),
                     prio: None,
+                    tag: None,
+                    due: Some(Datetime { timestamp: 0 }),
                 },
             )
             .unwrap();

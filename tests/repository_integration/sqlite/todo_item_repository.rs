@@ -77,6 +77,8 @@ fn fetch_list() -> Result<()> {
     let items = repo.fetch_list(ListFilters {
         status: Some(StatusFilter::Done),
         prio: None,
+        due: None,
+        tag: None,
     })?;
     assert_eq!(items.len(), 1);
     assert_eq!(items[0], mock_item_one.item);
@@ -84,6 +86,8 @@ fn fetch_list() -> Result<()> {
     let items = repo.fetch_list(ListFilters {
         status: Some(StatusFilter::Do),
         prio: None,
+        due: None,
+        tag: None,
     })?;
     assert_eq!(items.len(), 1);
     assert_eq!(items[0], mock_item_two.item);
@@ -91,6 +95,8 @@ fn fetch_list() -> Result<()> {
     let items = repo.fetch_list(ListFilters {
         status: None,
         prio: Some(Prio::P1),
+        due: None,
+        tag: None,
     })?;
     assert_eq!(items.len(), 1);
     assert_eq!(items[0], mock_item_one.item);
@@ -153,6 +159,8 @@ fn fetch_by_tag() -> Result<()> {
         ListFilters {
             status: None,
             prio: Some(Prio::P1),
+            due: None,
+            tag: None,
         },
     )?;
     assert_eq!(response.len(), 1);

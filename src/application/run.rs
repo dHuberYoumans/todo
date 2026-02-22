@@ -106,6 +106,8 @@ fn execute(cmd: Cmd, config: &Config) -> Result<()> {
                     ListFilters {
                         status: args.status,
                         prio: args.prio,
+                        due: args.due,
+                        tag: args.tag,
                     },
                 )?,
                 Some(arg) if arg.starts_with('#') => handlers::list_tag(
@@ -117,6 +119,8 @@ fn execute(cmd: Cmd, config: &Config) -> Result<()> {
                     ListFilters {
                         status: args.status,
                         prio: args.prio,
+                        due: args.due,
+                        tag: args.tag,
                     },
                 )?,
                 _ => handlers::list(
@@ -127,6 +131,8 @@ fn execute(cmd: Cmd, config: &Config) -> Result<()> {
                     ListFilters {
                         status: args.status,
                         prio: args.prio,
+                        due: args.due,
+                        tag: args.tag,
                     },
                 )?,
             },

@@ -446,6 +446,12 @@ fn parse_filters(filters: ListFilters) -> Option<NamedQuery> {
     if let Some(prio) = filters.prio {
         builder.add("prio", prio);
     }
+    if let Some(tag) = filters.tag {
+        builder.add("tag", tag)
+    }
+    if let Some(due) = filters.due {
+        builder.add("due", due);
+    }
     builder.build()
 }
 

@@ -25,6 +25,8 @@ where
     let filters_or_default = ListFilters {
         status: Some(filters.status.unwrap_or(StatusFilter::Do)),
         prio: filters.prio,
+        due: None,
+        tag: filters.tag,
     };
     let entries = todo_list.get_entries_by_due_date(repo, epoch_seconds, filters_or_default)?;
     let mut tasks: Vec<TodoItem> = Vec::new();

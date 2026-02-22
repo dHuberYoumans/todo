@@ -21,6 +21,8 @@ where
     let filters_or_default = ListFilters {
         status: Some(filters.status.unwrap_or(StatusFilter::Do)),
         prio: filters.prio,
+        due: filters.due,
+        tag: None,
     };
     let entries =
         todo_list.get_entries_by_tag(repo, Tag(clean_tag.to_string()), filters_or_default)?;

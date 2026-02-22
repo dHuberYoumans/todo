@@ -78,6 +78,8 @@ impl Default for Cmd {
             cmd: None,
             status: Some(StatusFilter::Do),
             prio: None,
+            due: None,
+            tag: None,
             sort: None,
             arg: None,
         })

@@ -1,4 +1,4 @@
-use crate::domain::{Prio, StatusFilter};
+use crate::domain::{Datetime, Prio, StatusFilter, Tag};
 use clap::Subcommand;
 
 #[derive(Subcommand, Debug, Clone)]
@@ -17,6 +17,10 @@ pub struct ListArgs {
     pub status: Option<StatusFilter>,
     #[arg(long, value_enum, help = "Filter tasks (prio)")]
     pub prio: Option<Prio>,
+    #[arg(long, value_enum, help = "Filter tasks (prio)")]
+    pub due: Option<Datetime>,
+    #[arg(long, value_enum, help = "Filter tasks (prio)")]
+    pub tag: Option<Tag>,
     #[arg(long, short = 's', help = "Sort tasks")]
     pub sort: Option<String>,
     /// Optional positional argument like @today or #work

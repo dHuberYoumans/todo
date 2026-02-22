@@ -57,6 +57,8 @@ impl From<&TodoItem> for TodoItemRow {
 pub struct ListFilters {
     pub status: Option<StatusFilter>,
     pub prio: Option<Prio>,
+    pub due: Option<Datetime>,
+    pub tag: Option<Tag>,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]

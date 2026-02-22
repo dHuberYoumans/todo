@@ -23,6 +23,8 @@ where
     let filters_or_default = ListFilters {
         status: Some(filters.status.unwrap_or(StatusFilter::Do)),
         prio: filters.prio,
+        due: filters.due,
+        tag: filters.tag,
     };
     let mut todos = todo_list.get_list(repo, filters_or_default)?;
     sort_tasks(&mut todos, sort)?;

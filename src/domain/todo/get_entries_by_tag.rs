@@ -146,6 +146,8 @@ pub mod test {
                 ListFilters {
                     status: Some(StatusFilter::Done),
                     prio: None,
+                    tag: Some(Tag("should not be queried".to_string())),
+                    due: None,
                 },
             )
             .unwrap();
@@ -163,6 +165,8 @@ pub mod test {
                 ListFilters {
                     status: Some(StatusFilter::Do),
                     prio: None,
+                    tag: Some(Tag("should not be queried".to_string())),
+                    due: None,
                 },
             )
             .unwrap();

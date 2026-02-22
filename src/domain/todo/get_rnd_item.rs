@@ -8,6 +8,8 @@ impl TodoList {
             .fetch_list(ListFilters {
                 status: Some(StatusFilter::Do),
                 prio: None,
+                due: None,
+                tag: None,
             })
             .context("✘ Couldn't fetch todos while trying to retrieve a random todo")?;
         let rnd_todos: Vec<TodoItem> = todos
