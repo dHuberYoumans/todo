@@ -3,6 +3,24 @@
 
 ### Bug Fixes
 
+- create table with proper name
+
+
+### Features
+
+- add '--due' and '--tag'
+
+- add proper filters to 'list' command
+
+- add support for aliases
+
+
+
+## What's Changed
+
+
+### Bug Fixes
+
 - fixup! fix(clippy): simplify and align with clippy
 
 - simplify and align with clippy
@@ -13,6 +31,8 @@
 
 
 ### Chores
+
+- Release todo version 0.12.0
 
 - update ci to include more extensive tests and linters
 
@@ -52,7 +72,7 @@
 
 
 
-## What's Changed
+**Full Changelog**: v0.11.0 → v0.12.0## What's Changed
 
 
 ### Bug Fixes
