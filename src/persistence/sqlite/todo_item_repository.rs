@@ -2,11 +2,10 @@ use anyhow::{anyhow, Result};
 use rusqlite::{named_params, Connection, OptionalExtension, ToSql};
 use thiserror::Error;
 
-use crate::domain::{Datetime, Metadata, Prio, Status, Tag, TodoItem};
 use crate::domain::{
-    ListFilter, TodoItemCreate, TodoItemDelete, TodoItemMetadata, TodoItemQuery,
-    TodoItemQueryColumns, TodoItemRead, TodoItemResolve, TodoItemSchema, TodoItemUpdate,
-    TodoListRead,
+    Datetime, ListFilters, Metadata, Prio, Status, StatusFilter, Tag, TodoItem, TodoItemCreate,
+    TodoItemDelete, TodoItemMetadata, TodoItemQuery, TodoItemQueryColumns, TodoItemRead,
+    TodoItemResolve, TodoItemSchema, TodoItemUpdate, TodoListRead,
 };
 use crate::persistence::SqlTodoListRepository;
 
@@ -104,16 +103,24 @@ impl TodoItemRead for SqlTodoItemRepository<'_> {
         Ok(item)
     }
 
-    fn fetch_list(&self, filter: Option<ListFilter>) -> Result<Vec<TodoItem>> {
-        let mut sql: Vec<String> = vec![format!("SELECT * FROM {}", self.name)];
-        match filter.unwrap_or(ListFilter::Do) {
-            ListFilter::None => sql.push("WHERE status=0 OR status=1".to_string()),
-            ListFilter::Done => sql.push("WHERE status=0".to_string()),
-            ListFilter::Do => sql.push("WHERE status=1".to_string()),
+    fn fetch_list(&self, filters: ListFilters) -> Result<Vec<TodoItem>> {
+        let mut sql = format!("SELECT * FROM {}", self.name);
+        let mut query = NamedQuery {
+            clause: String::new(),
+            params: Vec::new(),
         };
-        let mut stmt = self.conn.prepare(&sql.join(" "))?;
+        let mut conditions = Vec::new();
+        if let Some(filter_query) = parse_filters(filters) {
+            conditions.push(filter_query.clause);
+            query.params.extend(filter_query.params);
+        }
+        if !conditions.is_empty() {
+            sql.push_str(" WHERE ");
+            sql.push_str(&conditions.join(" AND "));
+        }
+        let mut stmt = self.conn.prepare(&sql)?;
         let tasks = stmt
-            .query_map([], |row| {
+            .query_map(query.named_params().as_slice(), |row| {
                 let item = TodoItem {
                     id: row.get::<_, String>("id")?,
                     task: row.get::<_, String>("task")?,
@@ -201,7 +208,7 @@ impl TodoItemUpdate for SqlTodoItemRepository<'_> {
         let tasks = if let Some(prio) = prio {
             self.fetch_by_prio(prio)?
         } else {
-            self.fetch_list(None)?
+            self.fetch_list(ListFilters::default())?
         };
         let ids: Vec<String> = tasks.iter().map(|item| item.id.clone()).collect();
         let sets = "last_updated=:last_updated, status=:status".to_string();
@@ -278,19 +285,23 @@ impl TodoItemQuery for SqlTodoItemRepository<'_> {
         entries.map(|res| res.map_err(Into::into)).collect()
     }
 
-    fn fetch_by_due_date(
-        &self,
-        epoch_seconds: i64,
-        filter: Option<ListFilter>,
-    ) -> Result<Vec<TodoItem>> {
-        let mut sql: Vec<String> = vec![format!("SELECT * FROM {} WHERE due=:date", self.name)];
-        match filter.unwrap_or(ListFilter::Do) {
-            ListFilter::None => {}
-            ListFilter::Done => sql.push("AND status=0".to_string()),
-            ListFilter::Do => sql.push("AND status=1".to_string()),
+    fn fetch_by_due_date(&self, epoch_seconds: i64, filters: ListFilters) -> Result<Vec<TodoItem>> {
+        let mut sql = format!("SELECT * FROM {}", self.name);
+        let mut query = NamedQuery {
+            clause: String::new(),
+            params: vec![(":date".into(), Box::new(epoch_seconds))],
         };
-        let mut stmt = self.conn.prepare(&sql.join(" "))?;
-        let entries = stmt.query_map(named_params! {":date": epoch_seconds}, |row| {
+        let mut conditions = vec!["due = :date".to_string()];
+        if let Some(filter_query) = parse_filters(filters) {
+            conditions.push(filter_query.clause);
+            query.params.extend(filter_query.params);
+        };
+        if !conditions.is_empty() {
+            sql.push_str(" WHERE ");
+            sql.push_str(&conditions.join(" AND "));
+        }
+        let mut stmt = self.conn.prepare(&sql)?;
+        let entries = stmt.query_map(query.named_params().as_slice(), |row| {
             Ok(TodoItem {
                 id: row.get("id")?,
                 task: row.get("task")?,
@@ -303,15 +314,23 @@ impl TodoItemQuery for SqlTodoItemRepository<'_> {
         entries.map(|res| res.map_err(Into::into)).collect()
     }
 
-    fn fetch_by_tag(&self, tag: Tag, filter: Option<ListFilter>) -> Result<Vec<TodoItem>> {
-        let mut sql: Vec<String> = vec![format!("SELECT * FROM {} WHERE tag=:tag", self.name)];
-        match filter.unwrap_or(ListFilter::Do) {
-            ListFilter::None => {}
-            ListFilter::Done => sql.push("AND status=0".to_string()),
-            ListFilter::Do => sql.push("AND status=1".to_string()),
+    fn fetch_by_tag(&self, tag: Tag, filters: ListFilters) -> Result<Vec<TodoItem>> {
+        let mut sql = format!("SELECT * FROM {}", self.name);
+        let mut query = NamedQuery {
+            clause: String::new(),
+            params: vec![(":tag".into(), Box::new(tag))],
         };
-        let mut stmt = self.conn.prepare(&sql.join(" "))?;
-        let entries = stmt.query_map(named_params! { ":tag": tag}, |row| {
+        let mut conditions = vec!["tag = :tag".to_string()];
+        if let Some(filter_query) = parse_filters(filters) {
+            conditions.push(filter_query.clause);
+            query.params.extend(filter_query.params);
+        };
+        if !conditions.is_empty() {
+            sql.push_str(" WHERE ");
+            sql.push_str(&conditions.join(" AND "));
+        }
+        let mut stmt = self.conn.prepare(&sql)?;
+        let entries = stmt.query_map(query.named_params().as_slice(), |row| {
             Ok(TodoItem {
                 id: row.get("id")?,
                 task: row.get("task")?,
@@ -392,6 +411,71 @@ impl TodoItemResolve for SqlTodoItemRepository<'_> {
                 Ok(id)
             }
             _ => Err(anyhow!("✘ Ambiguous prefix")),
+        }
+    }
+}
+
+pub struct NamedQuery {
+    pub clause: String,
+    pub params: Vec<(String, Box<dyn ToSql>)>,
+}
+
+impl NamedQuery {
+    pub fn named_params(&self) -> Vec<(&str, &dyn ToSql)> {
+        self.params
+            .iter()
+            .map(|(k, v)| (k.as_str(), v.as_ref()))
+            .collect()
+    }
+}
+
+pub struct QueryConditions {
+    pub clause: String,
+    pub params: Vec<(String, Box<dyn ToSql>)>,
+}
+
+fn parse_filters(filters: ListFilters) -> Option<NamedQuery> {
+    let mut builder = ConditionsBuilder::new();
+    if let Some(status) = filters.status {
+        match status {
+            StatusFilter::All => {}
+            StatusFilter::Done => builder.add("status", 0),
+            StatusFilter::Do => builder.add("status", 1),
+        }
+    };
+    if let Some(prio) = filters.prio {
+        builder.add("prio", prio);
+    }
+    builder.build()
+}
+
+struct ConditionsBuilder {
+    conditions: Vec<String>,
+    params: Vec<(String, Box<dyn ToSql>)>,
+}
+
+impl ConditionsBuilder {
+    fn new() -> Self {
+        Self {
+            conditions: Vec::new(),
+            params: Vec::new(),
+        }
+    }
+
+    fn add<T: ToSql + 'static>(&mut self, column: &str, value: T) {
+        let param_name = format!(":{}", column);
+        self.conditions.push(format!("{column} = {param_name}"));
+        self.params.push((param_name, Box::new(value)));
+    }
+
+    fn build(self) -> Option<NamedQuery> {
+        if self.conditions.is_empty() {
+            None
+        } else {
+            Some(NamedQuery {
+                clause: self.conditions.join(" AND "),
+                params: self.params,
+            })
         }
     }
 }

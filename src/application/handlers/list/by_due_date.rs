@@ -2,7 +2,9 @@ use anyhow::{anyhow, Result};
 
 use crate::application::config::Config;
 use crate::application::handlers::sort_tasks;
-use crate::domain::{Datetime, ListFilter, TodoItem, TodoItemQuery, TodoList, TodoListTable};
+use crate::domain::{
+    Datetime, ListFilters, StatusFilter, TodoItem, TodoItemQuery, TodoList, TodoListTable,
+};
 
 pub fn list_due_date<R>(
     repo: &R,
@@ -10,7 +12,7 @@ pub fn list_due_date<R>(
     config: &Config,
     date_str: String,
     sort: Option<String>,
-    filter: Option<ListFilter>,
+    filters: ListFilters,
 ) -> Result<()>
 where
     R: TodoItemQuery,
@@ -20,7 +22,11 @@ where
     } else {
         return Err(anyhow!("✘ Invalid date"));
     };
-    let entries = todo_list.get_entries_by_due_date(repo, epoch_seconds, filter)?;
+    let filters_or_default = ListFilters {
+        status: Some(filters.status.unwrap_or(StatusFilter::Do)),
+        prio: filters.prio,
+    };
+    let entries = todo_list.get_entries_by_due_date(repo, epoch_seconds, filters_or_default)?;
     let mut tasks: Vec<TodoItem> = Vec::new();
     for entry in entries {
         tasks.push(entry);

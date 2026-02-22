@@ -1,7 +1,7 @@
 use clap::Subcommand;
 
 use crate::cli::{AddArgs, ClearArgs, CompletionsCmd, GrepArgs, ListArgs, UpdateArgs};
-use crate::domain::{ListFilter, Prio};
+use crate::domain::{Prio, StatusFilter};
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum Cmd {
@@ -76,7 +76,8 @@ impl Default for Cmd {
     fn default() -> Self {
         Cmd::List(ListArgs {
             cmd: None,
-            filter: Some(ListFilter::Do),
+            status: Some(StatusFilter::Do),
+            prio: None,
             sort: None,
             arg: None,
         })

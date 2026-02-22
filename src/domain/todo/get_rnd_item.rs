@@ -1,11 +1,14 @@
 use anyhow::{Context, Result};
 
-use crate::domain::{ListFilter, Prio, TodoItem, TodoItemRead, TodoList};
+use crate::domain::{ListFilters, Prio, StatusFilter, TodoItem, TodoItemRead, TodoList};
 
 impl TodoList {
     pub fn get_rnd_item(&self, repo: &impl TodoItemRead) -> Result<Option<TodoItem>> {
         let todos = repo
-            .fetch_list(Some(ListFilter::Do))
+            .fetch_list(ListFilters {
+                status: Some(StatusFilter::Do),
+                prio: None,
+            })
             .context("✘ Couldn't fetch todos while trying to retrieve a random todo")?;
         let rnd_todos: Vec<TodoItem> = todos
             .iter()
@@ -79,16 +82,16 @@ pub mod test {
             unreachable!()
         }
 
-        fn fetch_list(&self, filter: Option<ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_list(&self, filters: ListFilters) -> Result<Vec<TodoItem>> {
             let todos: Vec<TodoItem> = self
                 .todos
                 .borrow()
                 .iter()
-                .filter(|todo| match filter {
+                .filter(|todo| match filters.status {
                     None => true,
-                    Some(ListFilter::None) => true,
-                    Some(ListFilter::Do) => todo.status == Status::Open,
-                    Some(ListFilter::Done) => todo.status == Status::Closed,
+                    Some(StatusFilter::All) => true,
+                    Some(StatusFilter::Do) => todo.status == Status::Open,
+                    Some(StatusFilter::Done) => todo.status == Status::Closed,
                 })
                 .cloned()
                 .collect();
@@ -97,7 +100,7 @@ pub mod test {
     }
 
     impl TodoItemRead for FailingItemRepo {
-        fn fetch_list(&self, _: Option<ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_list(&self, _: ListFilters) -> Result<Vec<TodoItem>> {
             bail!("Fake error while trying to get items")
         }
 

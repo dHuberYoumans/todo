@@ -1,15 +1,14 @@
 use anyhow::{Context, Result};
 
-use crate::domain::ListFilter;
-use crate::domain::{TodoItem, TodoItemRead, TodoList};
+use crate::domain::{ListFilters, TodoItem, TodoItemRead, TodoList};
 
 impl TodoList {
     pub fn get_list(
         &self,
         repo: &impl TodoItemRead,
-        filter: Option<ListFilter>,
+        filters: ListFilters,
     ) -> Result<Vec<TodoItem>> {
-        repo.fetch_list(filter).context("✘ Couldn't fetch todos")
+        repo.fetch_list(filters).context("✘ Couldn't fetch todos")
     }
 }
 
@@ -19,7 +18,7 @@ pub mod test {
     use anyhow::bail;
     use std::cell::RefCell;
 
-    use crate::domain::{Datetime, Prio, Status, Tag};
+    use crate::domain::{Datetime, Prio, Status, StatusFilter, Tag};
 
     struct FakeItemRepo {
         todos: RefCell<Vec<TodoItem>>,
@@ -56,22 +55,22 @@ pub mod test {
             unreachable!()
         }
 
-        fn fetch_list(&self, _: Option<ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_list(&self, _: ListFilters) -> Result<Vec<TodoItem>> {
             bail!("Fake error while fetching list")
         }
     }
 
     impl TodoItemRead for FakeItemRepo {
-        fn fetch_list(&self, filter: Option<ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_list(&self, filters: ListFilters) -> Result<Vec<TodoItem>> {
             let todos: Vec<TodoItem> = self
                 .todos
                 .borrow()
                 .iter()
-                .filter(|todo| match filter {
+                .filter(|todo| match filters.status {
                     None => true,
-                    Some(ListFilter::None) => true,
-                    Some(ListFilter::Do) => todo.status == Status::Open,
-                    Some(ListFilter::Done) => todo.status == Status::Closed,
+                    Some(StatusFilter::All) => true,
+                    Some(StatusFilter::Do) => todo.status == Status::Open,
+                    Some(StatusFilter::Done) => todo.status == Status::Closed,
                 })
                 .cloned()
                 .collect();
@@ -87,7 +86,7 @@ pub mod test {
     fn should_provide_context_upon_failing() {
         let repo = FailingItemRepo;
         let todo_list = TodoList::new();
-        let err = todo_list.get_list(&repo, None);
+        let err = todo_list.get_list(&repo, ListFilters::default());
         assert!(err.is_err());
         let err_msg = err.unwrap_err().to_string();
         assert!(err_msg.contains("Couldn't fetch todos"));
@@ -97,7 +96,7 @@ pub mod test {
     fn should_fetch_all_todos_for_no_filter() {
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
-        let todos = todo_list.get_list(&repo, None).unwrap();
+        let todos = todo_list.get_list(&repo, ListFilters::default()).unwrap();
         assert_eq!(todos.len(), 2)
     }
 
@@ -105,7 +104,15 @@ pub mod test {
     fn should_fetch_open_todos_for_filter_do() {
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
-        let todos = todo_list.get_list(&repo, Some(ListFilter::Do)).unwrap();
+        let todos = todo_list
+            .get_list(
+                &repo,
+                ListFilters {
+                    status: Some(StatusFilter::Do),
+                    prio: None,
+                },
+            )
+            .unwrap();
         assert_eq!(todos.len(), 1);
         assert_eq!(todos[0].id, "todo-open");
     }
@@ -114,7 +121,15 @@ pub mod test {
     fn should_fetch_closed_todos_for_filter_done() {
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
-        let todos = todo_list.get_list(&repo, Some(ListFilter::Done)).unwrap();
+        let todos = todo_list
+            .get_list(
+                &repo,
+                ListFilters {
+                    status: Some(StatusFilter::Done),
+                    prio: None,
+                },
+            )
+            .unwrap();
         assert_eq!(todos.len(), 1);
         assert_eq!(todos[0].id, "todo-closed");
     }

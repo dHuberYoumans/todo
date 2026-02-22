@@ -17,7 +17,7 @@ pub mod test {
     use anyhow::bail;
     use std::cell::RefCell;
 
-    use crate::domain::{Datetime, ListFilter, Prio, Status, Tag, TodoItem};
+    use crate::domain::{Datetime, ListFilters, Prio, Status, Tag, TodoItem};
 
     struct FakeItemRepo {
         todos: RefCell<Vec<TodoItem>>,
@@ -50,11 +50,7 @@ pub mod test {
     struct FailingItemRepo;
 
     impl TodoItemQuery for FakeItemRepo {
-        fn fetch_by_tag(
-            &self,
-            _: crate::domain::Tag,
-            _: Option<ListFilter>,
-        ) -> Result<Vec<TodoItem>> {
+        fn fetch_by_tag(&self, _: crate::domain::Tag, _: ListFilters) -> Result<Vec<TodoItem>> {
             unreachable!()
         }
 
@@ -72,17 +68,13 @@ pub mod test {
             Ok(entry)
         }
 
-        fn fetch_by_due_date(&self, _: i64, _: Option<ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_by_due_date(&self, _: i64, _: ListFilters) -> Result<Vec<TodoItem>> {
             unreachable!()
         }
     }
 
     impl TodoItemQuery for FailingItemRepo {
-        fn fetch_by_tag(
-            &self,
-            _: crate::domain::Tag,
-            _: Option<ListFilter>,
-        ) -> Result<Vec<TodoItem>> {
+        fn fetch_by_tag(&self, _: crate::domain::Tag, _: ListFilters) -> Result<Vec<TodoItem>> {
             unreachable!()
         }
 
@@ -94,7 +86,7 @@ pub mod test {
             bail!("Fake error while fetching by id")
         }
 
-        fn fetch_by_due_date(&self, _: i64, _: Option<ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_by_due_date(&self, _: i64, _: ListFilters) -> Result<Vec<TodoItem>> {
             unreachable!()
         }
     }

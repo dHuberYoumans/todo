@@ -1,7 +1,6 @@
 use anyhow::Result;
 
-use crate::domain::ListFilter;
-use crate::domain::{Datetime, Metadata, Prio, Status, Tag, TodoItem};
+use crate::domain::{Datetime, ListFilters, Metadata, Prio, Status, Tag, TodoItem};
 
 // --------- TodoListRepository --------- //
 
@@ -17,7 +16,7 @@ pub trait TodoItemCreate {
 
 pub trait TodoItemRead {
     fn fetch_item(&self, id: &str) -> Result<TodoItem>;
-    fn fetch_list(&self, filter: Option<ListFilter>) -> Result<Vec<TodoItem>>;
+    fn fetch_list(&self, filters: ListFilters) -> Result<Vec<TodoItem>>;
 }
 
 pub trait TodoItemUpdate {
@@ -40,13 +39,9 @@ pub trait TodoItemDelete {
 
 // Query
 pub trait TodoItemQuery {
-    fn fetch_by_due_date(
-        &self,
-        epoch_seconds: i64,
-        filter: Option<ListFilter>,
-    ) -> Result<Vec<TodoItem>>;
+    fn fetch_by_due_date(&self, epoch_seconds: i64, filters: ListFilters) -> Result<Vec<TodoItem>>;
     fn fetch_by_prio(&self, prio: Prio) -> Result<Vec<TodoItem>>;
-    fn fetch_by_tag(&self, tag: Tag, filter: Option<ListFilter>) -> Result<Vec<TodoItem>>;
+    fn fetch_by_tag(&self, tag: Tag, filters: ListFilters) -> Result<Vec<TodoItem>>;
     fn fetch_task_by_id(&self, id: &str) -> Result<Option<String>>;
 }
 

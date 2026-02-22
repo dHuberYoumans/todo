@@ -3,7 +3,7 @@ use std::str::FromStr;
 use anyhow::Result;
 
 use crate::mock::*;
-use todo::domain::{Datetime, ListFilter, Prio, Status, Tag};
+use todo::domain::{Datetime, ListFilters, Prio, Status, StatusFilter, Tag};
 use todo::domain::{
     TodoItemCreate, TodoItemDelete, TodoItemMetadata, TodoItemQuery, TodoItemQueryColumns,
     TodoItemRead, TodoItemResolve, TodoItemUpdate,
@@ -44,14 +44,14 @@ fn fetch_list() -> Result<()> {
     let mut mock_item_one = MockTodoItem::new(
         "2a".to_string(),
         "test-msg-1",
-        None,
+        Some(Prio::P1),
         None,
         Some(Tag("test-tag-1".into())),
     );
     let mock_item_two = MockTodoItem::new(
         "39".to_string(),
         "test-msg-2",
-        None,
+        Some(Prio::P2),
         None,
         Some(Tag("test-tag-2".into())),
     );
@@ -69,18 +69,31 @@ fn fetch_list() -> Result<()> {
         None,
         vec!["2a".to_string()],
     )?;
-    let items = repo.fetch_list(Some(ListFilter::None))?;
+    let items = repo.fetch_list(ListFilters::default())?;
     assert_eq!(items.len(), 2);
     assert_eq!(items[0], mock_item_one.item);
     assert_eq!(items[1], mock_item_two.item);
 
-    let items = repo.fetch_list(Some(ListFilter::Done))?;
+    let items = repo.fetch_list(ListFilters {
+        status: Some(StatusFilter::Done),
+        prio: None,
+    })?;
     assert_eq!(items.len(), 1);
     assert_eq!(items[0], mock_item_one.item);
 
-    let items = repo.fetch_list(Some(ListFilter::Do))?;
+    let items = repo.fetch_list(ListFilters {
+        status: Some(StatusFilter::Do),
+        prio: None,
+    })?;
     assert_eq!(items.len(), 1);
     assert_eq!(items[0], mock_item_two.item);
+
+    let items = repo.fetch_list(ListFilters {
+        status: None,
+        prio: Some(Prio::P1),
+    })?;
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0], mock_item_one.item);
 
     Ok(())
 }
@@ -109,25 +122,40 @@ fn fetch_by_tag() -> Result<()> {
     let mock_item_one = MockTodoItem::new(
         "2a".to_string(),
         "test-msg-1",
+        Some(Prio::P1),
         None,
-        None,
-        Some(Tag("test-tag-1".into())),
+        Some(Tag("test-tag".into())),
     );
     let mock_item_two = MockTodoItem::new(
         "39".to_string(),
         "test-msg-2",
         None,
         None,
-        Some(Tag("test-tag-2".into())),
+        Some(Tag("different-tag".into())),
     );
+    let mock_item_three = MockTodoItem::new(
+        "og".to_string(),
+        "test-msg-3",
+        Some(Prio::P3),
+        None,
+        Some(Tag("test-tag".into())),
+    );
+
     let repo = mock_env.repo("todos");
 
     repo.add(&mock_item_one.item)?;
     repo.add(&mock_item_two.item)?;
-    let response = repo.fetch_by_tag(Tag("test-tag-2".into()), None)?;
-
+    repo.add(&mock_item_three.item)?;
+    let response = repo.fetch_by_tag(Tag("test-tag".into()), ListFilters::default())?;
+    assert_eq!(response.len(), 2);
+    let response = repo.fetch_by_tag(
+        Tag("test-tag".into()),
+        ListFilters {
+            status: None,
+            prio: Some(Prio::P1),
+        },
+    )?;
     assert_eq!(response.len(), 1);
-
     Ok(())
 }
 

@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 
-use crate::domain::{ListFilter, TodoItem, TodoItemRead, TodoList};
+use crate::domain::{ListFilters, StatusFilter, TodoItem, TodoItemRead, TodoList};
 
 #[derive(Clone, Debug)]
 pub struct GrepOptions {
@@ -15,7 +15,10 @@ impl TodoList {
         options: GrepOptions,
     ) -> Result<Vec<TodoItem>> {
         let mut todos = repo
-            .fetch_list(Some(ListFilter::None))
+            .fetch_list(ListFilters {
+                status: Some(StatusFilter::All),
+                prio: None,
+            })
             .context("✘ Couldn't fetch todos while searching for pattern '{pattern}'")?;
         if options.case_insensitive {
             let pattern = pattern.to_string().to_lowercase();
@@ -76,7 +79,7 @@ pub mod tests {
             unreachable!()
         }
 
-        fn fetch_list(&self, _: Option<crate::domain::ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_list(&self, _: ListFilters) -> Result<Vec<TodoItem>> {
             Ok(self.todos.borrow().clone())
         }
     }
@@ -86,7 +89,7 @@ pub mod tests {
             unreachable!()
         }
 
-        fn fetch_list(&self, _: Option<crate::domain::ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_list(&self, _: ListFilters) -> Result<Vec<TodoItem>> {
             bail!("Fake error while trying to fetch list")
         }
     }

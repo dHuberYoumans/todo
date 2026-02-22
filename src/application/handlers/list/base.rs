@@ -2,7 +2,9 @@ use anyhow::{Context, Result};
 use std::cmp::Reverse;
 
 use crate::application::config::Config;
-use crate::domain::{Datetime, ListFilter, TodoItem, TodoItemRead, TodoList, TodoListTable};
+use crate::domain::{
+    Datetime, ListFilters, StatusFilter, TodoItem, TodoItemRead, TodoList, TodoListTable,
+};
 use crate::infrastructure::{config, UserPaths};
 use crate::util;
 
@@ -11,14 +13,18 @@ pub fn list<R>(
     todo_list: &TodoList,
     config: &Config,
     sort: Option<String>,
-    filter: Option<ListFilter>,
+    filters: ListFilters,
 ) -> Result<()>
 where
     R: TodoItemRead,
 {
     let current_list = std::env::var("CURRENT")?;
     log::debug!("found current list '{}'", &current_list,);
-    let mut todos = todo_list.get_list(repo, filter)?;
+    let filters_or_default = ListFilters {
+        status: Some(filters.status.unwrap_or(StatusFilter::Do)),
+        prio: filters.prio,
+    };
+    let mut todos = todo_list.get_list(repo, filters_or_default)?;
     sort_tasks(&mut todos, sort)?;
     prettify(&mut todos);
     let table = TodoListTable::new(&todos, config);

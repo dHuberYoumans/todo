@@ -2,7 +2,9 @@ use anyhow::Result;
 
 use crate::application::config::Config;
 use crate::application::handlers::sort_tasks;
-use crate::domain::{ListFilter, Tag, TodoItem, TodoItemQuery, TodoList, TodoListTable};
+use crate::domain::{
+    ListFilters, StatusFilter, Tag, TodoItem, TodoItemQuery, TodoList, TodoListTable,
+};
 
 pub fn list_tag<R>(
     repo: &R,
@@ -10,13 +12,18 @@ pub fn list_tag<R>(
     config: &Config,
     tag: String,
     sort: Option<String>,
-    filter: Option<ListFilter>,
+    filters: ListFilters,
 ) -> Result<()>
 where
     R: TodoItemQuery,
 {
     let clean_tag = tag.strip_prefix('#').unwrap_or(&tag);
-    let entries = todo_list.get_entries_by_tag(repo, Tag(clean_tag.to_string()), filter)?;
+    let filters_or_default = ListFilters {
+        status: Some(filters.status.unwrap_or(StatusFilter::Do)),
+        prio: filters.prio,
+    };
+    let entries =
+        todo_list.get_entries_by_tag(repo, Tag(clean_tag.to_string()), filters_or_default)?;
     let mut tasks: Vec<TodoItem> = Vec::new();
     for entry in entries {
         tasks.push(entry);

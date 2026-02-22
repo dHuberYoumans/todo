@@ -53,9 +53,15 @@ impl From<&TodoItem> for TodoItemRow {
     }
 }
 
+#[derive(Default, Clone, Debug)]
+pub struct ListFilters {
+    pub status: Option<StatusFilter>,
+    pub prio: Option<Prio>,
+}
+
 #[derive(clap::ValueEnum, Clone, Debug)]
-pub enum ListFilter {
-    None,
+pub enum StatusFilter {
+    All,
     Do,
     Done,
 }

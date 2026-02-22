@@ -9,7 +9,7 @@ use crate::cli::{Cmd, CompletionsCmd, ListSubCmd, Plumbing};
 use crate::domain::{
     grep::GrepOptions,
     update::{ClearOptions, UpdateOptions},
-    TodoList,
+    ListFilters, TodoList,
 };
 use crate::infrastructure::{self, editor, UserPaths};
 use crate::persistence::{connect_to_db, SqlTodoItemRepository, SqlTodoListRepository};
@@ -85,7 +85,13 @@ fn execute(cmd: Cmd, config: &Config) -> Result<()> {
         Cmd::Add(args) => {
             let options = args.into_options(config)?;
             handlers::add(&todo_item_repo, &todo_list, &editor, options)?;
-            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
+            handlers::list(
+                &todo_item_repo,
+                &todo_list,
+                config,
+                None,
+                ListFilters::default(),
+            )?
         }
         Cmd::List(args) => match args.cmd {
             Some(ListSubCmd::Collection) => handlers::list_collection(&todo_list_repo, &todo_list)?,
@@ -97,7 +103,10 @@ fn execute(cmd: Cmd, config: &Config) -> Result<()> {
                     config,
                     arg.to_string(),
                     args.sort,
-                    args.filter,
+                    ListFilters {
+                        status: args.status,
+                        prio: args.prio,
+                    },
                 )?,
                 Some(arg) if arg.starts_with('#') => handlers::list_tag(
                     &todo_item_repo,
@@ -105,22 +114,52 @@ fn execute(cmd: Cmd, config: &Config) -> Result<()> {
                     config,
                     arg.to_string(),
                     args.sort,
-                    args.filter,
+                    ListFilters {
+                        status: args.status,
+                        prio: args.prio,
+                    },
                 )?,
-                _ => handlers::list(&todo_item_repo, &todo_list, config, args.sort, args.filter)?,
+                _ => handlers::list(
+                    &todo_item_repo,
+                    &todo_list,
+                    config,
+                    args.sort,
+                    ListFilters {
+                        status: args.status,
+                        prio: args.prio,
+                    },
+                )?,
             },
         },
         Cmd::Close { ids } => {
             handlers::close(&todo_item_repo, &todo_list, ids)?;
-            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
+            handlers::list(
+                &todo_item_repo,
+                &todo_list,
+                config,
+                None,
+                ListFilters::default(),
+            )?
         }
         Cmd::CloseAll { prio } => {
             todo_list.close_all(&todo_item_repo, prio)?;
-            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
+            handlers::list(
+                &todo_item_repo,
+                &todo_list,
+                config,
+                None,
+                ListFilters::default(),
+            )?
         }
         Cmd::Open { ids } => {
             handlers::open(&todo_item_repo, &todo_list, ids)?;
-            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
+            handlers::list(
+                &todo_item_repo,
+                &todo_list,
+                config,
+                None,
+                ListFilters::default(),
+            )?
         }
         Cmd::Delete { id } => handlers::delete(&todo_item_repo, &mut todo_list, &id)?,
         Cmd::DeleteAll => handlers::delete_all(&todo_item_repo, &mut todo_list)?,
@@ -141,12 +180,24 @@ fn execute(cmd: Cmd, config: &Config) -> Result<()> {
         Cmd::Update(args) => {
             let options = UpdateOptions::from(&args);
             handlers::update_item(&todo_item_repo, &todo_list, args.ids, options)?;
-            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
+            handlers::list(
+                &todo_item_repo,
+                &todo_list,
+                config,
+                None,
+                ListFilters::default(),
+            )?
         }
         Cmd::Clear(args) => {
             let options = ClearOptions::from(&args);
             handlers::clear(&todo_item_repo, &todo_list, args.ids, options)?;
-            handlers::list(&todo_item_repo, &todo_list, config, None, None)?
+            handlers::list(
+                &todo_item_repo,
+                &todo_list,
+                config,
+                None,
+                ListFilters::default(),
+            )?
         }
         Cmd::Upgrade { version, check } => {
             if check {

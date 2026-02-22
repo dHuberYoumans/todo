@@ -1,15 +1,15 @@
 use anyhow::{Context, Result};
 
-use crate::domain::{ListFilter, Tag, TodoItem, TodoItemQuery, TodoList};
+use crate::domain::{ListFilters, Tag, TodoItem, TodoItemQuery, TodoList};
 
 impl TodoList {
     pub fn get_entries_by_tag(
         &self,
         repo: &impl TodoItemQuery,
         tag: Tag,
-        filter: Option<ListFilter>,
+        filters: ListFilters,
     ) -> Result<Vec<TodoItem>> {
-        repo.fetch_by_tag(tag, filter)
+        repo.fetch_by_tag(tag, filters)
             .context("✘ Couldn't fetch entries")
     }
 }
@@ -20,7 +20,7 @@ pub mod test {
     use anyhow::bail;
     use std::cell::RefCell;
 
-    use crate::domain::{Datetime, Prio, Status, Tag};
+    use crate::domain::{Datetime, Prio, Status, StatusFilter, Tag};
 
     struct FakeItemRepo {
         todos: RefCell<Vec<TodoItem>>,
@@ -64,7 +64,7 @@ pub mod test {
         fn fetch_by_tag(
             &self,
             tag: crate::domain::Tag,
-            filter: Option<ListFilter>,
+            filters: ListFilters,
         ) -> Result<Vec<TodoItem>> {
             let todos_by_tag: Vec<TodoItem> = self
                 .todos
@@ -72,10 +72,10 @@ pub mod test {
                 .iter()
                 .filter(|todo| {
                     todo.tag == tag
-                        && match filter {
-                            Some(ListFilter::None) => true,
-                            Some(ListFilter::Done) => todo.status == Status::Closed,
-                            Some(ListFilter::Do) => todo.status == Status::Open,
+                        && match filters.status {
+                            Some(StatusFilter::All) => true,
+                            Some(StatusFilter::Done) => todo.status == Status::Closed,
+                            Some(StatusFilter::Do) => todo.status == Status::Open,
                             None => true,
                         }
                 })
@@ -92,17 +92,13 @@ pub mod test {
             unreachable!()
         }
 
-        fn fetch_by_due_date(&self, _: i64, _: Option<ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_by_due_date(&self, _: i64, _: ListFilters) -> Result<Vec<TodoItem>> {
             unreachable!()
         }
     }
 
     impl TodoItemQuery for FailingItemRepo {
-        fn fetch_by_tag(
-            &self,
-            _: crate::domain::Tag,
-            _: Option<ListFilter>,
-        ) -> Result<Vec<TodoItem>> {
+        fn fetch_by_tag(&self, _: crate::domain::Tag, _: ListFilters) -> Result<Vec<TodoItem>> {
             bail!("Fake error while fetching by tag")
         }
 
@@ -114,7 +110,7 @@ pub mod test {
             unreachable!()
         }
 
-        fn fetch_by_due_date(&self, _: i64, _: Option<ListFilter>) -> Result<Vec<TodoItem>> {
+        fn fetch_by_due_date(&self, _: i64, _: ListFilters) -> Result<Vec<TodoItem>> {
             unreachable!()
         }
     }
@@ -123,7 +119,7 @@ pub mod test {
     fn should_provide_context_upon_failing() {
         let repo = FailingItemRepo;
         let todo_list = TodoList::new();
-        let err = todo_list.get_entries_by_tag(&repo, Tag::empty(), None);
+        let err = todo_list.get_entries_by_tag(&repo, Tag::empty(), ListFilters::default());
         assert!(err.is_err());
         let err_msg = err.unwrap_err().to_string();
         assert!(err_msg.contains("Couldn't fetch entries"));
@@ -134,7 +130,7 @@ pub mod test {
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
         let todos_by_tag = todo_list
-            .get_entries_by_tag(&repo, Tag("tag".to_string()), None)
+            .get_entries_by_tag(&repo, Tag("tag".to_string()), ListFilters::default())
             .unwrap();
         assert_eq!(todos_by_tag.len(), 2);
     }
@@ -144,7 +140,14 @@ pub mod test {
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
         let todos_by_tag = todo_list
-            .get_entries_by_tag(&repo, Tag("tag".to_string()), Some(ListFilter::Done))
+            .get_entries_by_tag(
+                &repo,
+                Tag("tag".to_string()),
+                ListFilters {
+                    status: Some(StatusFilter::Done),
+                    prio: None,
+                },
+            )
             .unwrap();
         assert_eq!(todos_by_tag.len(), 1);
     }
@@ -154,7 +157,14 @@ pub mod test {
         let repo = FakeItemRepo::new();
         let todo_list = TodoList::new();
         let todos_by_tag = todo_list
-            .get_entries_by_tag(&repo, Tag("tag".to_string()), Some(ListFilter::Do))
+            .get_entries_by_tag(
+                &repo,
+                Tag("tag".to_string()),
+                ListFilters {
+                    status: Some(StatusFilter::Do),
+                    prio: None,
+                },
+            )
             .unwrap();
         assert_eq!(todos_by_tag.len(), 1);
     }
